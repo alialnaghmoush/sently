@@ -18,6 +18,15 @@ import net from "node:net";
 import tls from "node:tls";
 import type { SocketAdapter, TLSOptions } from "../core/types.js";
 
+function warnRejectUnauthorizedDisabled(tls: TLSOptions): void {
+  if (tls.rejectUnauthorized === false) {
+    console.warn(
+      "[sently] TLS certificate verification is disabled. " +
+        "Never use rejectUnauthorized: false in production.",
+    );
+  }
+}
+
 declare const Bun: { version: string } | undefined;
 
 /** Configuration options for {@link BunAdapter}. */
@@ -75,6 +84,7 @@ export class BunAdapter implements SocketAdapter {
 
     const plain = this.socket;
     const merged = { ...this.tlsOptions, ...options };
+    warnRejectUnauthorizedDisabled(merged);
 
     await new Promise<void>((resolve, reject) => {
       const tlsSocket = tls.connect({
@@ -207,6 +217,7 @@ export class BunAdapter implements SocketAdapter {
   }
 
   private connectTls(host: string, port: number): Promise<void> {
+    warnRejectUnauthorizedDisabled(this.tlsOptions);
     return new Promise((resolve, reject) => {
       const socket = tls.connect(
         {

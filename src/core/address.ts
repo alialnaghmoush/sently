@@ -51,6 +51,7 @@ export function extractEmails(input: AddressInput): string[] {
  * Basic email format validation (format only, no DNS lookup).
  */
 export function isValidEmail(email: string): boolean {
+  if (/[\r\n\t]/.test(email)) return false;
   return /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email);
 }
 

@@ -2,7 +2,18 @@
 import { extractEmails, parseAddresses, toMIMEHeader } from "./address.js";
 import { encodeBase64, encodeHeader, encodeUtf8 } from "./base64.js";
 import { signDKIM } from "./dkim.js";
-import type { Attachment, DKIMConfig, Envelope, MailOptions } from "./types.js";
+import type { Address, Attachment, DKIMConfig, Envelope, MailOptions } from "./types.js";
+
+function sanitizeHeaderValue(value: string): string {
+  return value.replace(/\r\n?|\n/g, " ").trim();
+}
+
+function sanitizeAddress(addr: Address): Address {
+  if (!addr.name) {
+    return addr;
+  }
+  return { ...addr, name: sanitizeHeaderValue(addr.name) };
+}
 
 /** Result of building a complete MIME message. */
 export interface MIMEBuildResult {
@@ -70,22 +81,29 @@ export async function buildMIME(options: MailOptions, dkim?: DKIMConfig): Promis
   }
 
   const headers: string[] = [
-    foldHeader("From", fromAddrs.map(toMIMEHeader).join(", ")),
-    foldHeader("To", toAddrs.map(toMIMEHeader).join(", ")),
+    foldHeader("From", fromAddrs.map((a) => toMIMEHeader(sanitizeAddress(a))).join(", ")),
+    foldHeader("To", toAddrs.map((a) => toMIMEHeader(sanitizeAddress(a))).join(", ")),
   ];
 
   if (ccAddrs.length > 0) {
-    headers.push(foldHeader("Cc", ccAddrs.map(toMIMEHeader).join(", ")));
+    headers.push(
+      foldHeader("Cc", ccAddrs.map((a) => toMIMEHeader(sanitizeAddress(a))).join(", ")),
+    );
   }
 
   if (options.replyTo) {
     headers.push(
-      foldHeader("Reply-To", parseAddresses(options.replyTo).map(toMIMEHeader).join(", ")),
+      foldHeader(
+        "Reply-To",
+        parseAddresses(options.replyTo)
+          .map((a) => toMIMEHeader(sanitizeAddress(a)))
+          .join(", "),
+      ),
     );
   }
 
   headers.push(
-    foldHeader("Subject", encodeHeader(options.subject)),
+    foldHeader("Subject", encodeHeader(sanitizeHeaderValue(options.subject))),
     foldHeader("Date", date),
     foldHeader("Message-ID", messageId),
     "MIME-Version: 1.0",
@@ -99,7 +117,9 @@ export async function buildMIME(options: MailOptions, dkim?: DKIMConfig): Promis
 
   if (options.headers) {
     for (const [key, value] of Object.entries(options.headers)) {
-      headers.push(foldHeader(key, value));
+      headers.push(
+        foldHeader(sanitizeHeaderValue(key), sanitizeHeaderValue(value)),
+      );
     }
   }
 

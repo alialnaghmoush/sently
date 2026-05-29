@@ -71,9 +71,15 @@ export function encodeCommand(cmd: SMTPCommand): Uint8Array {
       line = `AUTH XOAUTH2 ${cmd.xoauth2String}`;
       break;
     case "MAIL_FROM":
+      if (/[\r\n]/.test(cmd.address)) {
+        throw new SMTPError(`Invalid address: contains CRLF`, 0, "MAIL FROM", cmd.address);
+      }
       line = `MAIL FROM:<${cmd.address}>`;
       break;
     case "RCPT_TO":
+      if (/[\r\n]/.test(cmd.address)) {
+        throw new SMTPError(`Invalid address: contains CRLF`, 0, "RCPT TO", cmd.address);
+      }
       line = `RCPT TO:<${cmd.address}>`;
       break;
     case "DATA":

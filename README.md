@@ -340,6 +340,9 @@ const mailer = await createMailer({
 
 ## Attachments
 
+> ⚠️ **Security note**: `attachment.path` reads files from disk.
+> Never pass user-controlled paths without validation.
+
 ### In-memory (all runtimes)
 
 ```typescript

@@ -40,6 +40,7 @@ export class OAuth2Client {
   private readonly config: OAuth2Config;
   private cachedToken: string | null = null;
   private expiresAt = 0;
+  private refreshPromise: Promise<string> | null = null;
 
   /** Creates an OAuth2 client from configuration. */
   constructor(config: OAuth2Config) {
@@ -62,7 +63,12 @@ export class OAuth2Client {
       return this.cachedToken;
     }
 
-    return this.refreshAccessToken();
+    if (!this.refreshPromise) {
+      this.refreshPromise = this.refreshAccessToken().finally(() => {
+        this.refreshPromise = null;
+      });
+    }
+    return this.refreshPromise;
   }
 
   /**

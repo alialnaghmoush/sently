@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.1] — 2026-05-29
+
+### Security
+
+- Fixed CRLF header injection: `sanitizeHeaderValue()` strips CR/LF
+  from Subject, display names, and custom headers in MIME builder
+- Fixed SMTP command injection: `MAIL FROM` and `RCPT TO` throw
+  `SMTPError` when address contains CR or LF
+- Fixed email address validation: `isValidEmail()` rejects strings
+  containing CR, LF, or TAB
+- Fixed OAuth2 refresh race condition: concurrent `getAccessToken()`
+  calls now share a single in-flight refresh Promise
+- Added `console.warn` when `rejectUnauthorized: false` is set
+  in Node.js and Bun adapters
+- Added security note in README for `attachment.path`
+
 ## [0.3.0] — 2026-05-29
 
 ### Added
