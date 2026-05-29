@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.0] — 2026-05-29
+
+### Added
+
+- Plugin system: `plugins` array in `createMailer()` config
+  Plugins are `(options: MailOptions) => MailOptions | Promise<MailOptions>` functions
+  that run sequentially before message construction
+- `MailgunTransport` — Mailgun HTTP API (multipart/form-data)
+- `SESTransport` — AWS SES v2 HTTP API with SigV4 signing (Web Crypto)
+- `BrevoTransport` — Brevo (formerly Sendinblue) HTTP API
+- `TLSOptions.minVersion` — set minimum TLS version for legacy SMTP servers
+
+### Parity milestone
+
+sently now covers ~98% of Nodemailer feature parity for modern use cases.
+Remaining gaps (SOCKS proxy, iCal) are out of scope by design.
+
 ## [0.2.0] — 2026-05-29
 
 ### Added

@@ -10,6 +10,9 @@ const entrypoints = [
   'src/transports/resend.ts',
   'src/transports/sendgrid.ts',
   'src/transports/postmark.ts',
+  'src/transports/mailgun.ts',
+  'src/transports/ses.ts',
+  'src/transports/brevo.ts',
   'src/auth/oauth2.ts',
   'src/pool/pool.ts',
 ]

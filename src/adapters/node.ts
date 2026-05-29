@@ -76,6 +76,7 @@ export class NodeAdapter implements SocketAdapter {
         socket: plain,
         servername: merged.servername,
         rejectUnauthorized: merged.rejectUnauthorized ?? true,
+        minVersion: merged.minVersion,
       });
 
       tlsSocket.once("secureConnect", () => {
@@ -208,6 +209,7 @@ export class NodeAdapter implements SocketAdapter {
           port,
           servername: this.tlsOptions.servername ?? host,
           rejectUnauthorized: this.tlsOptions.rejectUnauthorized ?? true,
+          minVersion: this.tlsOptions.minVersion,
         },
         () => resolve(),
       );

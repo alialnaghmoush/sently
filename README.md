@@ -16,6 +16,8 @@
 - **Works everywhere** — Node.js, Bun, Deno, Cloudflare Workers, and any environment with Web APIs
 - **True tree-shaking** — import only what you need; unused adapters and transports stay out of your bundle
 - **Zero dependencies in core** — MIME, SMTP protocol, and encoding use pure Web APIs only
+- **Plugin system** — transform `MailOptions` before send with composable middleware
+- **HTTP transports** — Resend, SendGrid, Postmark, Mailgun, AWS SES, and Brevo
 - **DKIM signing** — RSA-SHA256 and Ed25519-SHA256 via Web Crypto
 - **OAuth2 / XOAUTH2** — Gmail and Microsoft 365 SMTP auth with automatic token refresh
 - **Connection pooling** — reuse SMTP sessions with optional rate limiting
@@ -250,6 +252,69 @@ import { PostmarkTransport } from "sently/transports/postmark";
 const transport = new PostmarkTransport({ serverToken: "..." });
 ```
 
+#### Mailgun
+
+```typescript
+import { MailgunTransport } from "sently/transports/mailgun";
+
+const transport = new MailgunTransport({
+  apiKey: "key-...",
+  domain: "mg.example.com",
+});
+```
+
+#### AWS SES
+
+```typescript
+import { SESTransport } from "sently/transports/ses";
+
+const transport = new SESTransport({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  region: "us-east-1",
+});
+```
+
+Messages with attachments are sent as raw MIME (`Content.Raw`); simple messages use `Content.Simple`.
+
+#### Brevo
+
+```typescript
+import { BrevoTransport } from "sently/transports/brevo";
+
+const transport = new BrevoTransport({ apiKey: "xkeysib-..." });
+```
+
+### Plugin system
+
+Plugins transform `MailOptions` before the transport builds and sends the message. They run sequentially — each receives the output of the previous plugin.
+
+```typescript
+import { createMailer, type MailOptions } from "sently";
+
+const addFooter = (options: MailOptions) => ({
+  ...options,
+  html: (options.html ?? "") + '<p style="color:#999">Unsubscribe</p>',
+});
+
+const mailer = await createMailer({
+  host: "smtp.resend.com",
+  port: 465,
+  secure: true,
+  auth: { user: "resend", pass: process.env.RESEND_API_KEY! },
+  plugins: [addFooter],
+});
+```
+
+Works with SMTP config or custom transports:
+
+```typescript
+const mailer = await createMailer({
+  transport: new ResendTransport({ apiKey: "re_..." }),
+  plugins: [addFooter],
+});
+```
+
 ---
 
 ## MailOptions Reference
@@ -349,6 +414,9 @@ Approximate gzip sizes per subpath export:
 | `sently/transports/resend` | ~2 KB |
 | `sently/transports/sendgrid` | ~2 KB |
 | `sently/transports/postmark` | ~2 KB |
+| `sently/transports/mailgun` | ~3 KB |
+| `sently/transports/ses` | ~5 KB |
+| `sently/transports/brevo` | ~2 KB |
 | `sently/adapters/node` | ~3 KB |
 | `sently/adapters/bun` | ~3 KB |
 | `sently/adapters/deno` | ~2 KB |

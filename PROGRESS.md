@@ -642,3 +642,177 @@ matrix (bun test / deno test / wrangler) in a future setup phase.
 
 ### Blocked by
 - none
+
+---
+
+## v0.3 — Unit 1 — Types v0.3 + TLS minVersion
+**Status:** completed
+**Date:** 2026-05-29
+
+### Files created
+- [none]
+
+### Files modified
+- src/core/types.ts — MailPlugin, transport configs, TLSOptions.minVersion, plugins on SMTPConfig
+- src/adapters/node.ts — minVersion in startTLS and connectTls
+- src/adapters/bun.ts — minVersion in startTLS and connectTls
+
+### Verification
+- [x] bun test — 97 tests passed
+- [x] bun run typecheck
+- [x] bun run lint
+
+### Deviations from plan
+- Also pass minVersion in connectTls (not just startTLS) for port 465 / implicit TLS
+
+### Blocked by
+- none
+
+---
+
+## v0.3 — Unit 2 — Plugin System
+**Status:** completed
+**Date:** 2026-05-29
+
+### Files created
+- src/core/plugin.ts
+- tests/core/plugin.test.ts
+
+### Files modified
+- src/detect.ts — MailerImpl plugins pipeline, tls passthrough to createDefaultAdapter
+
+### Verification
+- [x] bun test — 105 tests passed
+- [x] bun run typecheck
+- [x] bun run lint
+
+### Deviations from plan
+- Pass tls: smtpConfig.tls into createDefaultAdapter for minVersion on port 465
+
+### Blocked by
+- none
+
+---
+
+## v0.3 — Unit 3 — Mailgun Transport
+**Status:** completed
+**Date:** 2026-05-29
+
+### Files created
+- src/transports/mailgun.ts
+- tests/transports/mailgun.test.ts
+
+### Files modified
+- [none]
+
+### Verification
+- [x] bun test — 111 tests passed
+- [x] bun run typecheck
+- [x] bun run lint
+
+### Deviations from plan
+- [none]
+
+### Blocked by
+- none
+
+---
+
+## v0.3 — Unit 4 — AWS SigV4 Utility
+**Status:** completed
+**Date:** 2026-05-29
+
+### Files created
+- src/core/sigv4.ts
+- tests/core/sigv4.test.ts
+
+### Files modified
+- [none]
+
+### Verification
+- [x] bun test — 116 tests passed
+- [x] bun run typecheck
+- [x] bun run lint
+
+### Deviations from plan
+- _date uses full YYYYMMDDTHHMMSSZ; AWS POST test vector (not GET with stale signature)
+
+### Blocked by
+- none
+
+---
+
+## v0.3 — Unit 5 — AWS SES Transport
+**Status:** completed
+**Date:** 2026-05-29
+
+### Files created
+- src/transports/ses.ts
+- tests/transports/ses.test.ts
+
+### Files modified
+- [none]
+
+### Verification
+- [x] bun test — 122 tests passed
+- [x] bun run typecheck
+- [x] bun run lint
+
+### Deviations from plan
+- [none]
+
+### Blocked by
+- none
+
+---
+
+## v0.3 — Unit 6 — Brevo Transport
+**Status:** completed
+**Date:** 2026-05-29
+
+### Files created
+- src/transports/brevo.ts
+- tests/transports/brevo.test.ts
+
+### Files modified
+- [none]
+
+### Verification
+- [x] bun test — 129 tests passed
+- [x] bun run typecheck
+- [x] bun run lint
+
+### Deviations from plan
+- [none]
+
+### Blocked by
+- none
+
+---
+
+## v0.3 — Unit 7 — Version + Exports + Docs
+**Status:** completed
+**Date:** 2026-05-29
+
+### Files created
+- [none]
+
+### Files modified
+- build.ts — mailgun, ses, brevo entrypoints
+- package.json — 0.3.0, new subpath exports
+- jsr.json — 0.3.0, new subpath exports
+- src/index.ts — v0.3 exports
+- CHANGELOG.md — 0.3.0 entry
+- README.md — plugins, Mailgun, SES, Brevo docs
+
+### Verification
+- [x] bun test — 129 tests passed
+- [x] bun run typecheck
+- [x] bun run lint
+- [x] bun run build
+
+### Deviations from plan
+- [none]
+
+### Blocked by
+- none

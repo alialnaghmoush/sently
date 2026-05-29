@@ -81,6 +81,7 @@ export class BunAdapter implements SocketAdapter {
         socket: plain,
         servername: merged.servername,
         rejectUnauthorized: merged.rejectUnauthorized ?? true,
+        minVersion: merged.minVersion,
       });
 
       tlsSocket.once("secureConnect", () => {
@@ -213,6 +214,7 @@ export class BunAdapter implements SocketAdapter {
           port,
           servername: this.tlsOptions.servername ?? host,
           rejectUnauthorized: this.tlsOptions.rejectUnauthorized ?? true,
+          minVersion: this.tlsOptions.minVersion,
         },
         () => resolve(),
       );

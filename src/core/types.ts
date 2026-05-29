@@ -83,6 +83,8 @@ export interface SocketAdapter {
 export interface TLSOptions {
   rejectUnauthorized?: boolean;
   servername?: string;
+  /** Minimum TLS version. Useful for legacy SMTP servers still on TLS 1.1. */
+  minVersion?: "TLSv1" | "TLSv1.1" | "TLSv1.2" | "TLSv1.3";
 }
 
 // ─── Transport ────────────────────────────────────────────
@@ -185,6 +187,8 @@ export interface SMTPConfig extends PoolConfig {
   direct?: boolean;
   adapter?: SocketAdapter;
   dkim?: DKIMConfig;
+  /** Plugins run sequentially before message construction. */
+  plugins?: MailPlugin[];
 }
 
 /** SMTP authentication credentials and method hint. */
@@ -207,7 +211,62 @@ export interface Mailer {
 // ─── createMailer Options ─────────────────────────────────
 
 /** Options for {@link createMailer} — custom transport or SMTP config. */
-export type CreateMailerOptions = ({ transport: Transport } & Partial<SMTPConfig>) | SMTPConfig;
+export type CreateMailerOptions =
+  | ({ transport: Transport; plugins?: MailPlugin[] } & Partial<SMTPConfig>)
+  | SMTPConfig;
+
+// ─── Plugin ──────────────────────────────────────────────
+
+/**
+ * A mail plugin transforms MailOptions before the message is built.
+ * Plugins run sequentially. Each receives the output of the previous.
+ * Return a new MailOptions object — do not mutate the input.
+ *
+ * @example
+ * ```ts
+ * const addFooter = (options: MailOptions): MailOptions => ({
+ *   ...options,
+ *   html: options.html + '<p>Unsubscribe</p>',
+ * })
+ * ```
+ */
+export type MailPlugin =
+  | ((options: MailOptions) => MailOptions)
+  | ((options: MailOptions) => Promise<MailOptions>);
+
+// ─── Mailgun Config ───────────────────────────────────────
+
+/** Mailgun HTTP API configuration. */
+export interface MailgunConfig {
+  /** Mailgun API key (starts with "key-") */
+  apiKey: string;
+  /** Your Mailgun sending domain (e.g. "mg.example.com") */
+  domain: string;
+  /** API region. Default: 'us' (api.mailgun.net). Use 'eu' for api.eu.mailgun.net */
+  region?: "us" | "eu";
+}
+
+// ─── AWS SES Config ───────────────────────────────────────
+
+/** AWS SES v2 HTTP API configuration. */
+export interface SESConfig {
+  /** AWS Access Key ID */
+  accessKeyId: string;
+  /** AWS Secret Access Key */
+  secretAccessKey: string;
+  /** AWS Region. Default: 'us-east-1' */
+  region?: string;
+  /** Optional session token for temporary credentials */
+  sessionToken?: string;
+}
+
+// ─── Brevo Config ─────────────────────────────────────────
+
+/** Brevo (formerly Sendinblue) HTTP API configuration. */
+export interface BrevoConfig {
+  /** Brevo (formerly Sendinblue) API key */
+  apiKey: string;
+}
 
 // ─── Runtime ──────────────────────────────────────────────
 

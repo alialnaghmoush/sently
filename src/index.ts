@@ -26,14 +26,18 @@ export type {
   Address,
   AddressInput,
   Attachment,
+  BrevoConfig,
   CreateMailerOptions,
   DKIMConfig,
   Envelope,
   Mailer,
+  MailgunConfig,
   MailOptions,
+  MailPlugin,
   OAuth2Config,
   PoolConfig,
   Runtime,
+  SESConfig,
   SendResult,
   SMTPAuth,
   SMTPConfig,
@@ -43,3 +47,6 @@ export type {
 } from "./core/types.js";
 export { createMailer, detectRuntime } from "./detect.js";
 export { SMTPPool } from "./pool/pool.js";
+export { BrevoError, BrevoTransport } from "./transports/brevo.js";
+export { MailgunError, MailgunTransport } from "./transports/mailgun.js";
+export { SESError, SESTransport } from "./transports/ses.js";

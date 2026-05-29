@@ -1,12 +1,15 @@
 // src/detect.ts
+import { runPlugins } from "./core/plugin.js";
 import type {
   CreateMailerOptions,
   Mailer,
   MailOptions,
+  MailPlugin,
   Runtime,
   SendResult,
   SMTPConfig,
   SocketAdapter,
+  TLSOptions,
   Transport,
 } from "./core/types.js";
 import { SMTPPool } from "./pool/pool.js";
@@ -38,6 +41,7 @@ export function detectRuntime(): Runtime {
 export async function createDefaultAdapter(options?: {
   secure?: boolean;
   connectionTimeout?: number;
+  tls?: TLSOptions;
 }): Promise<SocketAdapter> {
   const runtime = detectRuntime();
 
@@ -68,7 +72,7 @@ export async function createDefaultAdapter(options?: {
  */
 export async function createMailer(options: CreateMailerOptions): Promise<Mailer> {
   if ("transport" in options) {
-    return new MailerImpl(options.transport);
+    return new MailerImpl(options.transport, options.plugins ?? []);
   }
 
   const smtpConfig = options as SMTPConfig;
@@ -83,8 +87,10 @@ export async function createMailer(options: CreateMailerOptions): Promise<Mailer
             ...(smtpConfig.connectionTimeout !== undefined
               ? { connectionTimeout: smtpConfig.connectionTimeout }
               : {}),
+            ...(smtpConfig.tls !== undefined ? { tls: smtpConfig.tls } : {}),
           })),
       }),
+      smtpConfig.plugins,
     );
   }
 
@@ -95,16 +101,21 @@ export async function createMailer(options: CreateMailerOptions): Promise<Mailer
       ...(smtpConfig.connectionTimeout !== undefined
         ? { connectionTimeout: smtpConfig.connectionTimeout }
         : {}),
+      ...(smtpConfig.tls !== undefined ? { tls: smtpConfig.tls } : {}),
     }));
 
-  return new MailerImpl(new SMTPTransport({ ...smtpConfig, adapter }));
+  return new MailerImpl(new SMTPTransport({ ...smtpConfig, adapter }), smtpConfig.plugins);
 }
 
 class MailerImpl implements Mailer {
-  constructor(private readonly transport: Transport) {}
+  constructor(
+    private readonly transport: Transport,
+    private readonly plugins: MailPlugin[] = [],
+  ) {}
 
-  send(options: MailOptions): Promise<SendResult> {
-    return this.transport.send(options);
+  async send(options: MailOptions): Promise<SendResult> {
+    const processed = await runPlugins(options, this.plugins);
+    return this.transport.send(processed);
   }
 
   verify(): Promise<boolean> {
