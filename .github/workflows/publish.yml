@@ -1,41 +1,59 @@
-name: Publish
+# CI and publish for sently: test, lint, then publish to JSR and npm.
+#
+# Setup:
+# - JSR: Link this repo to the package in JSR settings (https://jsr.io/@alialnaghmoush/sently).
+# - npm: Configure trusted publisher (OIDC) for this workflow in npm package settings.
+#
+# On push to main: runs test + lint, then publishes JSR and npm.
+
+name: CI and Publish
 
 on:
-  workflow_dispatch:
+  pull_request:
+    branches: [main]
   push:
-    branches:
-      - main
-    paths:
-      - package.json
-      - jsr.json
+    branches: [main]
 
 jobs:
-  publish-npm:
+  test-and-lint:
+    name: Test & Lint
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
+    environment: test
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run verify
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Typecheck
+        run: bun run typecheck
+      - name: Lint
+        run: bun run lint
+      - name: Test
+        run: bun test
+
+  publish:
+    name: Publish (npm + JSR)
+    runs-on: ubuntu-latest
+    needs: test-and-lint
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    environment: production
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
-      - run: npm publish --provenance --cache ./.npm-cache
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  publish-jsr:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run verify
-      - run: bunx jsr publish
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Publish to JSR
+        run: bun run scripts/publish.ts -- --jsr-only --force
+      - name: Publish to npm (trusted publisher / OIDC)
+        run: bun run scripts/publish.ts -- --npm-only --force
