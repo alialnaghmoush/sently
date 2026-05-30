@@ -1,6 +1,6 @@
 {
   "name": "sently",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers",
   "type": "module",
   "sideEffects": false,
@@ -48,13 +48,17 @@
     "runtime-agnostic"
   ],
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/alialnaghmoush/sently.git"
   },
-  "homepage": "https://github.com/alialnaghmoush/sendx#readme",
+  "homepage": "https://github.com/alialnaghmoush/sently#readme",
   "bugs": {
-    "url": "https://github.com/alialnaghmoush/sendx/issues"
+    "url": "https://github.com/alialnaghmoush/sently/issues"
   },
   "exports": {
     ".": {

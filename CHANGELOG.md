@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.4] — 2026-05-30
+
+### Fixed
+
+- Stale `sendx` references in package.json, build.ts, PROGRESS.md
+- JSR badge URL now matches jsr.json scope exactly
+- OAuth2 refresh deduplication: `refreshPromise` cleared in `.finally()`
+  to correctly handle rejected refresh attempts
+- SMTPPool.close() now sets draining flag, rejects new sends,
+  and uses Promise.allSettled to drain in-flight messages
+- Audited all buildMIME() call sites — await confirmed present
+
+### Added
+
+- `engines` field in package.json (Node >= 18, Bun >= 1.0)
+
 ## [0.3.3] — 2026-05-29
 
 ### Fixed

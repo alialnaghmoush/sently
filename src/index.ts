@@ -1,6 +1,6 @@
 /**
  * @module
- * Main sendx entrypoint — runtime detection, mailer factory, and shared types.
+ * Main sently entrypoint — runtime detection, mailer factory, and shared types.
  *
  * @example
  * ```ts

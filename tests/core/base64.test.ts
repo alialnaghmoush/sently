@@ -11,7 +11,7 @@ import {
 
 describe("encodeBase64 / decodeBase64", () => {
   test("ASCII roundtrip", () => {
-    const input = "Hello, sendx!";
+    const input = "Hello, sently!";
     const encoded = encodeBase64(input);
     const decoded = decodeUtf8(decodeBase64(encoded.replace(/\r\n/g, "")));
     expect(decoded).toBe(input);

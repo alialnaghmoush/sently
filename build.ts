@@ -35,4 +35,4 @@ await build({
   ],
 })
 
-console.log('✓ sendx built successfully')
+console.log('✓ sently built successfully')

@@ -10,7 +10,7 @@ import { sendTestEmail } from "./tools/send-test.js";
 import { validateConfig } from "./tools/validate-config.js";
 
 const server = new Server(
-  { name: "sendx", version: "0.1.0" },
+  { name: "sently", version: "0.1.0" },
   { capabilities: { tools: {} } },
 );
 
@@ -18,13 +18,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: "send_test_email",
-      description: "Send a test email using any sendx config and return the result",
+      description: "Send a test email using any sently config and return the result",
       inputSchema: {
         type: "object",
         properties: {
           config: { type: "object", description: "SMTP connection config" },
           to: { type: "string", description: "Recipient address" },
-          subject: { type: "string", description: 'Default: "sendx test email"' },
+          subject: { type: "string", description: 'Default: "sently test email"' },
         },
         required: ["config", "to"],
       },

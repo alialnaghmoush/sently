@@ -114,6 +114,9 @@ export class SMTPPool implements Transport {
 
   /** Sends a message through the pool. */
   async send(options: MailOptions): Promise<SendResult> {
+    if (this.draining) {
+      throw new Error("SMTPPool is closing — no new messages accepted");
+    }
     if (this.closed) {
       throw new Error("SMTPPool is closed");
     }
@@ -143,11 +146,11 @@ export class SMTPPool implements Transport {
 
   /** Drains the queue and closes all connections. */
   async close(): Promise<void> {
-    this.closed = true;
     this.draining = true;
     await this.drainQueue();
-    await Promise.all(this.connections.map((c) => c.close()));
+    await Promise.allSettled(this.connections.map((c) => c.close()));
     this.connections.length = 0;
+    this.closed = true;
   }
 
   /** Current number of open pooled connections. */
