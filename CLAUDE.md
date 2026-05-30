@@ -109,3 +109,19 @@ bun --hot ./index.ts
 ```
 
 For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+
+## About this repository
+
+This is `sently` — a runtime-agnostic TypeScript email library.
+
+- Core entry: src/index.ts
+- Adapters: src/adapters/ (node, bun, deno, cf)
+- Transports: src/transports/ (smtp, resend, sendgrid, postmark, mailgun, ses, brevo, retry, preview)
+- Auth: src/auth/oauth2.ts
+- Pool: src/pool/pool.ts
+- Plugins: src/plugins/template.ts
+- Tests: tests/ (run with bun test)
+- Build: bun run build.ts → dist/
+
+When adding a new transport, follow the pattern in src/transports/resend.ts.
+When adding a new adapter, follow the pattern in src/adapters/node.ts.

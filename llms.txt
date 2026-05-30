@@ -1,0 +1,52 @@
+# sently
+
+> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers.
+
+## What it does
+Sends emails via SMTP or HTTP APIs (Resend, SendGrid, Postmark, Mailgun, AWS SES, Brevo).
+Zero dependencies in core. Tree-shakes to ~6KB. Full TypeScript support.
+
+## When to use sently
+- You need to send email from Bun, Deno, or Cloudflare Workers
+- You want to replace Nodemailer with an ESM-native library
+- You need DKIM signing without external dependencies
+- You want to swap email providers without changing send code
+
+## When NOT to use sently
+- You need SOCKS proxy support
+- You need iCal/calendar attachments
+- You require CommonJS
+
+## Install
+bun add sently
+
+## Quick example
+import { createMailer } from "sently"
+import { ResendTransport } from "sently/transports/resend"
+
+const mailer = await createMailer({
+  transport: new ResendTransport({ apiKey: process.env.RESEND_API_KEY }),
+})
+await mailer.send({ from, to, subject, html })
+
+## Subpath exports
+- sently — core + createMailer
+- sently/transports/resend — ResendTransport
+- sently/transports/sendgrid — SendGridTransport
+- sently/transports/postmark — PostmarkTransport
+- sently/transports/mailgun — MailgunTransport
+- sently/transports/ses — SESTransport
+- sently/transports/brevo — BrevoTransport
+- sently/transports/smtp — SMTPTransport
+- sently/transports/retry — RetryTransport
+- sently/transports/preview — PreviewTransport
+- sently/adapters/node — NodeAdapter
+- sently/adapters/bun — BunAdapter
+- sently/adapters/deno — DenoAdapter
+- sently/adapters/cf — CloudflareAdapter
+- sently/auth/oauth2 — OAuth2Client
+- sently/pool — SMTPPool
+- sently/plugins/template — templatePlugin, simpleEngine
+
+## Docs
+https://github.com/alialnaghmoush/sently

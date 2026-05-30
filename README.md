@@ -1,6 +1,11 @@
 # sently
 
-**Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers.**
+> Nodemailer hasn't been updated in years, doesn't run on Bun or Deno, and ships at 220KB.
+> sently is the modern replacement — same familiar API, runs everywhere, tree-shakes to ~6KB.
+
+```bash
+bun add sently
+```
 
 [![npm version](https://img.shields.io/npm/v/sently.svg)](https://www.npmjs.com/package/sently)
 [![JSR](https://jsr.io/badges/@alialnaghmoush/sently)](https://jsr.io/@alialnaghmoush/sently)
@@ -11,17 +16,62 @@
 
 ---
 
-## Why sently
+## Why not Nodemailer?
 
-- **Works everywhere** — Node.js, Bun, Deno, Cloudflare Workers, and any environment with Web APIs
-- **True tree-shaking** — import only what you need; unused adapters and transports stay out of your bundle
-- **Zero dependencies in core** — MIME, SMTP protocol, and encoding use pure Web APIs only
-- **Plugin system** — transform `MailOptions` before send with composable middleware
-- **HTTP transports** — Resend, SendGrid, Postmark, Mailgun, AWS SES, and Brevo
-- **DKIM signing** — RSA-SHA256 and Ed25519-SHA256 via Web Crypto
-- **OAuth2 / XOAUTH2** — Gmail and Microsoft 365 SMTP auth with automatic token refresh
-- **Connection pooling** — reuse SMTP sessions with optional rate limiting
-- **TypeScript-first** — strict types, subpath exports, and full IDE support
+| Feature | Nodemailer | sently |
+|---------|-----------|--------|
+| Bundle size | ~220 KB | ~6 KB core |
+| Runtimes | Node.js only | Node, Bun, Deno, CF Workers |
+| Module format | CommonJS | ESM only |
+| Dependencies | 3 | 0 |
+| DKIM signing | ✓ via `nodemailer-dkim` | ✓ built-in (Web Crypto) |
+| OAuth2 / XOAUTH2 | ✓ via plugin | ✓ built-in |
+| Connection pooling | ✓ | ✓ |
+| HTTP transports | ✓ via plugins | ✓ built-in (6 providers) |
+| Retry transport | ✗ | ✓ |
+| Preview transport | ✗ | ✓ |
+| Template engine | ✗ | ✓ |
+| `sendBulk()` | ✗ | ✓ |
+| TypeScript | via `@types/nodemailer` | ✓ built-in |
+| Last release | 2021 | 2026 |
+
+---
+
+## The 30-second tour
+
+```typescript
+import { createMailer, type MailOptions } from "sently";
+import { ResendTransport } from "sently/transports/resend";
+import { PreviewTransport } from "sently/transports/preview";
+
+const addFooter = (options: MailOptions): MailOptions => ({
+  ...options,
+  html: (options.html ?? "") + '<p style="color:#999">Unsubscribe</p>',
+});
+
+// Swap providers without changing send code
+const mailer = await createMailer({
+  transport: new ResendTransport({ apiKey: process.env.RESEND_API_KEY! }),
+  plugins: [addFooter],
+});
+
+await mailer.send({
+  from: "you@example.com",
+  to: "recipient@example.com",
+  subject: "Hello from sently",
+  html: "<p>Hello!</p>",
+});
+
+// Bulk send with concurrency control
+await mailer.sendBulk(recipients, { concurrency: 5 });
+
+// Local dev — write to disk instead of sending
+const devMailer = await createMailer({
+  transport: process.env.CI
+    ? new ResendTransport({ apiKey: process.env.RESEND_API_KEY! })
+    : new PreviewTransport({ outDir: ".emails", open: true }),
+});
+```
 
 ---
 
@@ -228,62 +278,18 @@ const pool = new SMTPPool({
 
 ### HTTP APIs
 
-#### Resend
+| Transport | Import path | Required config |
+|-----------|-------------|-----------------|
+| Resend | `sently/transports/resend` | `apiKey` |
+| SendGrid | `sently/transports/sendgrid` | `apiKey` |
+| Postmark | `sently/transports/postmark` | `serverToken` |
+| Mailgun | `sently/transports/mailgun` | `apiKey`, `domain` |
+| AWS SES | `sently/transports/ses` | `accessKeyId`, `secretAccessKey`, `region` |
+| Brevo | `sently/transports/brevo` | `apiKey` |
 
-```typescript
-import { ResendTransport } from "sently/transports/resend";
-
-const transport = new ResendTransport({ apiKey: "re_..." });
-```
-
-#### SendGrid
-
-```typescript
-import { SendGridTransport } from "sently/transports/sendgrid";
-
-const transport = new SendGridTransport({ apiKey: "SG...." });
-```
-
-#### Postmark
-
-```typescript
-import { PostmarkTransport } from "sently/transports/postmark";
-
-const transport = new PostmarkTransport({ serverToken: "..." });
-```
-
-#### Mailgun
-
-```typescript
-import { MailgunTransport } from "sently/transports/mailgun";
-
-const transport = new MailgunTransport({
-  apiKey: "key-...",
-  domain: "mg.example.com",
-});
-```
-
-#### AWS SES
-
-```typescript
-import { SESTransport } from "sently/transports/ses";
-
-const transport = new SESTransport({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  region: "us-east-1",
-});
-```
+All transports implement the same interface — swap without changing your send code.
 
 Messages with attachments are sent as raw MIME (`Content.Raw`); simple messages use `Content.Simple`.
-
-#### Brevo
-
-```typescript
-import { BrevoTransport } from "sently/transports/brevo";
-
-const transport = new BrevoTransport({ apiKey: "xkeysib-..." });
-```
 
 ### PreviewTransport
 
@@ -346,6 +352,38 @@ const result = await mailer.sendBulk(
 console.log(result.sent, result.failed);
 ```
 
+---
+
+## Plugin system
+
+Plugins transform `MailOptions` before the transport builds and sends the message. They run sequentially — each receives the output of the previous plugin.
+
+```typescript
+import { createMailer, type MailOptions } from "sently";
+
+const addFooter = (options: MailOptions) => ({
+  ...options,
+  html: (options.html ?? "") + '<p style="color:#999">Unsubscribe</p>',
+});
+
+const mailer = await createMailer({
+  host: "smtp.resend.com",
+  port: 465,
+  secure: true,
+  auth: { user: "resend", pass: process.env.RESEND_API_KEY! },
+  plugins: [addFooter],
+});
+```
+
+Works with SMTP config or custom transports:
+
+```typescript
+const mailer = await createMailer({
+  transport: new ResendTransport({ apiKey: "re_..." }),
+  plugins: [addFooter],
+});
+```
+
 ### TemplatePlugin
 
 Render HTML from named templates with zero dependencies:
@@ -377,36 +415,6 @@ await mailer.send({
 ```
 
 Use a custom engine by passing any `(template, data) => string` function to `templatePlugin`.
-
-### Plugin system
-
-Plugins transform `MailOptions` before the transport builds and sends the message. They run sequentially — each receives the output of the previous plugin.
-
-```typescript
-import { createMailer, type MailOptions } from "sently";
-
-const addFooter = (options: MailOptions) => ({
-  ...options,
-  html: (options.html ?? "") + '<p style="color:#999">Unsubscribe</p>',
-});
-
-const mailer = await createMailer({
-  host: "smtp.resend.com",
-  port: 465,
-  secure: true,
-  auth: { user: "resend", pass: process.env.RESEND_API_KEY! },
-  plugins: [addFooter],
-});
-```
-
-Works with SMTP config or custom transports:
-
-```typescript
-const mailer = await createMailer({
-  transport: new ResendTransport({ apiKey: "re_..." }),
-  plugins: [addFooter],
-});
-```
 
 ---
 
@@ -469,6 +477,35 @@ On Cloudflare Workers and browsers, use `content: Uint8Array` — `attachment.pa
 
 ---
 
+## Error Handling
+
+```typescript
+import { SMTPError } from "sently";
+import { ResendError } from "sently/transports/resend";
+// Each HTTP transport exports its own error class:
+// SendGridError  → sently/transports/sendgrid
+// PostmarkError  → sently/transports/postmark
+// MailgunError   → sently/transports/mailgun
+// SESError       → sently/transports/ses
+// BrevoError     → sently/transports/brevo
+
+try {
+  await mailer.send({ ... });
+} catch (err) {
+  if (err instanceof SMTPError) {
+    console.error(err.code);     // SMTP response code, e.g. 550
+    console.error(err.command);  // failed command, e.g. "RCPT TO"
+  }
+  if (err instanceof ResendError) {
+    console.error(err.statusCode); // HTTP status code
+  }
+}
+```
+
+Import error classes from their transport subpath — not from `sently` core. Each exports a `statusCode` property on HTTP failures.
+
+---
+
 ## Tree-Shaking
 
 Each import path is a separate build entry point:
@@ -517,6 +554,24 @@ Approximate gzip sizes per subpath export:
 | `sently/adapters/bun` | ~3 KB |
 | `sently/adapters/deno` | ~2 KB |
 | `sently/adapters/cf` | ~2 KB |
+
+> **Example:** Resend only = core (~6 KB) + transport (~2 KB) = **~8 KB total**. Nodemailer ships 220 KB regardless of which transport you use.
+
+---
+
+## TypeScript
+
+```typescript
+import type {
+  MailOptions,
+  MailPlugin,
+  SendResult,
+  Attachment,
+  SMTPConfig,
+} from "sently";
+```
+
+All types ship with the package — no separate `@types/` install needed.
 
 ---
 
