@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import { build } from 'bun'
 
 const entrypoints = [
@@ -13,6 +14,9 @@ const entrypoints = [
   'src/transports/mailgun.ts',
   'src/transports/ses.ts',
   'src/transports/brevo.ts',
+  'src/transports/preview.ts',
+  'src/transports/retry.ts',
+  'src/plugins/template.ts',
   'src/auth/oauth2.ts',
   'src/pool/pool.ts',
 ]
@@ -20,6 +24,7 @@ const entrypoints = [
 await build({
   entrypoints,
   outdir: './dist',
+  root: './src',
   target: 'node',
   format: 'esm',
   splitting: true,
@@ -31,8 +36,12 @@ await build({
     'node:dns',
     'node:dns/promises',
     'node:fs/promises',
+    'node:path',
+    'node:child_process',
     'cloudflare:sockets',
   ],
 })
+
+execSync('bunx tsc --emitDeclarationOnly --outDir dist', { stdio: 'inherit' })
 
 console.log('✓ sently built successfully')

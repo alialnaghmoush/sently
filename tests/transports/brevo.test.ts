@@ -141,4 +141,32 @@ describe("BrevoTransport", () => {
     expect(result.messageId).toBe("brevo-201");
     expect(result.accepted).toEqual(["recipient@example.com"]);
   });
+
+  test("verify() returns ok true on 200 response", async () => {
+    installFetchMock(() =>
+      Response.json({ companyName: "Acme Inc" }, { status: 200 }),
+    );
+
+    const transport = new BrevoTransport({ apiKey: "xkeysib-test-key" });
+    const result = await transport.verify();
+
+    expect(result).toEqual({
+      ok: true,
+      provider: "brevo",
+      message: "Acme Inc",
+    });
+  });
+
+  test("verify() returns ok false on failure without throwing", async () => {
+    installFetchMock(() =>
+      Response.json({ message: "Invalid API key" }, { status: 401 }),
+    );
+
+    const transport = new BrevoTransport({ apiKey: "xkeysib-bad-key" });
+    const result = await transport.verify();
+
+    expect(result.ok).toBe(false);
+    expect(result.provider).toBe("brevo");
+    expect(result.message).toBe("Invalid API key");
+  });
 });

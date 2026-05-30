@@ -21,7 +21,7 @@
  */
 import { extractEmails, parseAddresses, toMIMEHeader } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
-import type { MailOptions, SendResult, Transport } from "../core/types.js";
+import type { MailOptions, SendResult, Transport, VerifyResult } from "../core/types.js";
 import { resolveAttachments } from "./resolve-attachments.js";
 
 /** Postmark API configuration. */
@@ -121,5 +121,39 @@ export class PostmarkTransport implements Transport {
         ],
       },
     };
+  }
+
+  /** Verifies the Postmark server token by fetching server info. */
+  async verify(): Promise<VerifyResult> {
+    try {
+      const response = await fetch("https://api.postmarkapp.com/server", {
+        headers: {
+          "X-Postmark-Server-Token": this.serverToken,
+          Accept: "application/json",
+        },
+      });
+
+      const payload = (await response.json()) as { Name?: string; Message?: string };
+
+      if (!response.ok) {
+        return {
+          ok: false,
+          provider: "postmark",
+          message: payload.Message ?? `HTTP ${response.status}`,
+        };
+      }
+
+      return {
+        ok: true,
+        provider: "postmark",
+        ...(payload.Name ? { message: payload.Name } : {}),
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        provider: "postmark",
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
   }
 }

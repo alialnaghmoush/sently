@@ -1,0 +1,47 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-bun:
+    name: Unit tests (Bun)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun test
+      - run: bun run typecheck
+      - run: bun run lint
+
+  test-node:
+    name: Smoke test (Node.js)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: node -e "import('./dist/index.js').then(m => { console.log('exports ok:', Object.keys(m).join(', ')); process.exit(0) })"
+
+  test-integration:
+    name: SMTP integration (Mailpit)
+    runs-on: ubuntu-latest
+    services:
+      mailpit:
+        image: axllent/mailpit
+        ports:
+          - 1025:1025
+          - 8025:8025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run tests/integration/smtp.integration.ts

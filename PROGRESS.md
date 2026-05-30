@@ -645,6 +645,37 @@ matrix (bun test / deno test / wrangler) in a future setup phase.
 
 ---
 
+## Rename — sendx → sently
+**Status:** completed
+**Date:** 2026-05-29
+**Commits:** 7b0d254, 6a0d937, b544327
+
+### Summary
+- Renamed published package from `sendx` to `sently` in package.json and jsr.json
+- Updated repository URLs to github.com/alialnaghmoush/sently
+- Updated JSR package scope to `@alialnaghmoush/sently`
+- Updated Message-ID domain and MIME boundaries in src/core/mime.ts
+- Updated all @example import paths in module docs
+- Updated README badges, install commands, and import examples
+
+### Blocked by
+- none
+
+---
+
+## v0.2.1 — Patch Release
+**Status:** completed
+**Date:** 2026-05-29
+**Commit:** 2b67f79
+
+### Summary
+Post-rename version bump and publish verification.
+
+### Blocked by
+- none
+
+---
+
 ## v0.3 — Unit 1 — Types v0.3 + TLS minVersion
 **Status:** completed
 **Date:** 2026-05-29
@@ -816,3 +847,192 @@ matrix (bun test / deno test / wrangler) in a future setup phase.
 
 ### Blocked by
 - none
+
+---
+
+## v0.3.1 — Security Patches
+**Status:** completed
+**Date:** 2026-05-29
+**Commit:** 5bcf6b2
+
+### Security fixes
+- CRLF header injection: `sanitizeHeaderValue()` strips CR/LF from Subject,
+  display names, and custom headers in src/core/mime.ts
+- SMTP command injection: MAIL FROM and RCPT TO throw SMTPError when address
+  contains CR or LF in src/core/smtp.ts
+- Email address validation: `isValidEmail()` rejects CR, LF, TAB in src/core/address.ts
+- OAuth2 refresh race condition: concurrent `getAccessToken()` calls share a
+  single in-flight Promise via `.finally()` in src/auth/oauth2.ts
+- Added `console.warn` when `rejectUnauthorized: false` in node + bun adapters
+- Added security note in README for `attachment.path`
+
+### Verification
+- [x] bun test — 129 tests passed
+- [x] bun run typecheck
+
+### Blocked by
+- none
+
+---
+
+## v0.3.2 — Lint Fix
+**Status:** completed
+**Date:** 2026-05-29
+**Commit:** e1836d6
+
+### Fixed
+- Biome formatting in MIME header builder (src/core/mime.ts) so `bun run lint` passes
+
+### Verification
+- [x] bun run lint — clean
+
+### Blocked by
+- none
+
+---
+
+## v0.3.3 — JSR Package Name Fix
+**Status:** completed
+**Date:** 2026-05-29
+**Commit:** 6796000
+
+### Fixed
+- Corrected JSR package name in README from `@sently/sently` to `@alialnaghmoush/sently`
+
+### Blocked by
+- none
+
+---
+
+## v0.3.4 — Bug Fixes + Hygiene
+**Status:** completed
+**Date:** 2026-05-30
+**Commit:** 906b4b0
+
+### Fixed
+- Stale `sendx` references in package.json (homepage, bugs.url) and build.ts
+- JSR badge URL corrected to match jsr.json scope
+- OAuth2 refresh: `refreshPromise` cleared in `.finally()` to handle rejected
+  refresh attempts correctly
+- SMTPPool.close() sets draining flag, rejects new sends, uses Promise.allSettled
+- Audited all buildMIME() call sites — await confirmed present on all callers
+
+### Added
+- `engines` field in package.json: Node >= 18.0.0, Bun >= 1.0.0
+
+### Verification
+- [x] bun test — 129 tests passed
+- [x] bun run typecheck
+- [x] bun run lint
+
+### Blocked by
+- none
+
+---
+
+## v0.4 — Unit 1 — Core Types v0.4
+**Status:** completed
+**Date:** 2026-05-30
+
+### Files modified
+- src/core/types.ts
+
+### Verification
+- [x] bun test — 129 tests passed
+
+---
+
+## v0.4 — Unit 2 — PreviewTransport
+**Status:** completed
+**Date:** 2026-05-30
+
+### Files created
+- src/transports/preview.ts, tests/transports/preview.test.ts
+
+---
+
+## v0.4 — Unit 3 — RetryTransport
+**Status:** completed
+**Date:** 2026-05-30
+
+### Files created
+- src/transports/retry.ts, tests/transports/retry.test.ts
+
+### Deviations from plan
+- `_sleep` constructor injection for backoff tests
+
+---
+
+## v0.4 — Unit 4 — sendBulk()
+**Status:** completed
+**Date:** 2026-05-30
+
+### Files created
+- tests/core/bulk.test.ts
+
+### Files modified
+- src/detect.ts
+
+---
+
+## v0.4 — Unit 5 — TemplatePlugin
+**Status:** completed
+**Date:** 2026-05-30
+
+### Files created
+- src/plugins/template.ts, tests/plugins/template.test.ts
+
+---
+
+## v0.4 — Unit 6 — verify() + SES DKIM
+**Status:** completed
+**Date:** 2026-05-30
+
+### Files modified
+- HTTP transports verify(), SMTP/pool VerifyResult, SES dkim, tools/mcp/tools/check-smtp.ts
+
+### Verification
+- [x] bun test — 168 tests passed
+- [x] bun run typecheck
+
+---
+
+## v0.4 — Unit 7 — Security fixes
+**Status:** completed
+**Date:** 2026-05-30
+
+### Files created
+- tests/transports/resolve-attachments.test.ts
+
+### Files modified
+- src/transports/resolve-attachments.ts
+
+### Deviations from plan
+- detectRuntime() confirmed correct
+
+---
+
+## v0.4 — Unit 8 — CI + Integration
+**Status:** completed
+**Date:** 2026-05-30
+
+### Files created
+- .github/workflows/test.yml, tests/integration/smtp.integration.ts
+
+### Files modified
+- tests/core/mime.test.ts
+
+---
+
+## v0.4 — Unit 9 — Version + Exports + Docs
+**Status:** completed
+**Date:** 2026-05-30
+
+### Files modified
+- build.ts, package.json, jsr.json, src/index.ts, CHANGELOG.md, README.md
+
+### Verification
+- [x] bun test — 176 tests passed
+- [x] bun run typecheck
+- [x] bun run lint
+- [x] bun run build

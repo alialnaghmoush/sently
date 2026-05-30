@@ -18,7 +18,13 @@
  */
 import { extractEmails, parseAddresses, toMIMEHeader } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
-import type { MailgunConfig, MailOptions, SendResult, Transport } from "../core/types.js";
+import type {
+  MailgunConfig,
+  MailOptions,
+  SendResult,
+  Transport,
+  VerifyResult,
+} from "../core/types.js";
 import { resolveAttachments } from "./resolve-attachments.js";
 
 /** Error thrown when the Mailgun API returns a non-success response. */
@@ -118,5 +124,34 @@ export class MailgunTransport implements Transport {
         to: toEmails,
       },
     };
+  }
+
+  /** Verifies the Mailgun API key by listing domains. */
+  async verify(): Promise<VerifyResult> {
+    try {
+      const auth = encodeBase64(`api:${this.apiKey}`).replace(/\r\n/g, "");
+      const response = await fetch(`${this.baseUrl}/v3/domains`, {
+        headers: {
+          Authorization: `Basic ${auth}`,
+        },
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { message?: string };
+        return {
+          ok: false,
+          provider: "mailgun",
+          message: payload.message ?? `HTTP ${response.status}`,
+        };
+      }
+
+      return { ok: true, provider: "mailgun", message: "API key is valid" };
+    } catch (err) {
+      return {
+        ok: false,
+        provider: "mailgun",
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
   }
 }

@@ -22,7 +22,7 @@ import { extractEmails, parseAddresses, toMIMEHeader } from "../core/address.js"
 import { encodeBase64 } from "../core/base64.js";
 import { buildMIME } from "../core/mime.js";
 import { signRequest } from "../core/sigv4.js";
-import type { MailOptions, SESConfig, SendResult, Transport } from "../core/types.js";
+import type { MailOptions, SESConfig, SendResult, Transport, VerifyResult } from "../core/types.js";
 import { resolveAttachments } from "./resolve-attachments.js";
 
 /** Error thrown when the AWS SES API returns a non-success response. */
@@ -47,6 +47,7 @@ export class SESTransport implements Transport {
   private readonly secretAccessKey: string;
   private readonly region: string;
   private readonly sessionToken: string | undefined;
+  private readonly dkim: SESConfig["dkim"];
 
   /** Creates an SES transport with AWS credentials. */
   constructor(config: SESConfig) {
@@ -54,6 +55,7 @@ export class SESTransport implements Transport {
     this.secretAccessKey = config.secretAccessKey;
     this.region = config.region ?? "us-east-1";
     this.sessionToken = config.sessionToken;
+    this.dkim = config.dkim;
   }
 
   /** Sends an email via the AWS SES v2 HTTP API. */
@@ -75,7 +77,7 @@ export class SESTransport implements Transport {
     let requestBody: Record<string, unknown>;
 
     if (attachments.length > 0) {
-      const mime = await buildMIME(resolvedOptions);
+      const mime = await buildMIME(resolvedOptions, this.dkim);
       requestBody = {
         FromEmailAddress: fromEmail,
         Destination: destination,
@@ -151,5 +153,48 @@ export class SESTransport implements Transport {
         to: toEmails,
       },
     };
+  }
+
+  /** Verifies AWS credentials by listing SES configuration sets. */
+  async verify(): Promise<VerifyResult> {
+    try {
+      const url = `https://email.${this.region}.amazonaws.com/v2/email/configuration-sets`;
+      const signed = await signRequest({
+        method: "GET",
+        url,
+        headers: {},
+        body: "",
+        credentials: {
+          accessKeyId: this.accessKeyId,
+          secretAccessKey: this.secretAccessKey,
+          region: this.region,
+          service: "ses",
+          ...(this.sessionToken ? { sessionToken: this.sessionToken } : {}),
+        },
+      });
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: signed.headers,
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as { message?: string };
+
+      if (!response.ok) {
+        return {
+          ok: false,
+          provider: "ses",
+          message: payload.message ?? `HTTP ${response.status}`,
+        };
+      }
+
+      return { ok: true, provider: "ses", message: "Credentials are valid" };
+    } catch (err) {
+      return {
+        ok: false,
+        provider: "ses",
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
   }
 }

@@ -135,4 +135,32 @@ describe("SESTransport", () => {
     });
     await expect(transport.send(baseMailOptions)).rejects.toBeInstanceOf(SESError);
   });
+
+  test("verify() returns ok true on 200 response", async () => {
+    installFetchMock(() =>
+      Response.json({ ConfigurationSets: [] }, { status: 200 }),
+    );
+
+    const transport = new SESTransport(sesConfig);
+    const result = await transport.verify();
+
+    expect(result).toEqual({
+      ok: true,
+      provider: "ses",
+      message: "Credentials are valid",
+    });
+  });
+
+  test("verify() returns ok false on failure without throwing", async () => {
+    installFetchMock(() =>
+      Response.json({ message: "Access denied" }, { status: 403 }),
+    );
+
+    const transport = new SESTransport(sesConfig);
+    const result = await transport.verify();
+
+    expect(result.ok).toBe(false);
+    expect(result.provider).toBe("ses");
+    expect(result.message).toBe("Access denied");
+  });
 });

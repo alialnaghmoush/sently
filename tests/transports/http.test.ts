@@ -137,6 +137,32 @@ describe("ResendTransport", () => {
     ]);
     expect(body.attachments[0].content).toBe("aGVsbG8=");
   });
+
+  test("verify() returns ok true on 200 response", async () => {
+    installFetchMock(() => Response.json({ data: [] }, { status: 200 }));
+
+    const transport = new ResendTransport({ apiKey: "re_test_key" });
+    const result = await transport.verify();
+
+    expect(result).toEqual({
+      ok: true,
+      provider: "resend",
+      message: "API key is valid",
+    });
+  });
+
+  test("verify() returns ok false on failure without throwing", async () => {
+    installFetchMock(() =>
+      Response.json({ message: "Unauthorized" }, { status: 401 }),
+    );
+
+    const transport = new ResendTransport({ apiKey: "re_bad_key" });
+    const result = await transport.verify();
+
+    expect(result.ok).toBe(false);
+    expect(result.provider).toBe("resend");
+    expect(result.message).toBe("Unauthorized");
+  });
 });
 
 describe("SendGridTransport", () => {
@@ -253,6 +279,32 @@ describe("SendGridTransport", () => {
     ]);
     expect(body.attachments[0].content).toBe("aGVsbG8=");
   });
+
+  test("verify() returns ok true on 200 response", async () => {
+    installFetchMock(() =>
+      Response.json({ username: "testuser" }, { status: 200 }),
+    );
+
+    const transport = new SendGridTransport({ apiKey: "SG.test_key" });
+    const result = await transport.verify();
+
+    expect(result).toEqual({
+      ok: true,
+      provider: "sendgrid",
+      message: "testuser",
+    });
+  });
+
+  test("verify() returns ok false on failure without throwing", async () => {
+    installFetchMock(() => new Response("Forbidden", { status: 403 }));
+
+    const transport = new SendGridTransport({ apiKey: "SG.bad_key" });
+    const result = await transport.verify();
+
+    expect(result.ok).toBe(false);
+    expect(result.provider).toBe("sendgrid");
+    expect(result.message).toBe("Forbidden");
+  });
 });
 
 describe("PostmarkTransport", () => {
@@ -361,5 +413,33 @@ describe("PostmarkTransport", () => {
       },
     ]);
     expect(body.Attachments[0].Content).toBe("aGVsbG8=");
+  });
+
+  test("verify() returns ok true on 200 response", async () => {
+    installFetchMock(() =>
+      Response.json({ Name: "My Server" }, { status: 200 }),
+    );
+
+    const transport = new PostmarkTransport({ serverToken: "pm-server-token" });
+    const result = await transport.verify();
+
+    expect(result).toEqual({
+      ok: true,
+      provider: "postmark",
+      message: "My Server",
+    });
+  });
+
+  test("verify() returns ok false on failure without throwing", async () => {
+    installFetchMock(() =>
+      Response.json({ Message: "Invalid server token" }, { status: 401 }),
+    );
+
+    const transport = new PostmarkTransport({ serverToken: "pm-bad-token" });
+    const result = await transport.verify();
+
+    expect(result.ok).toBe(false);
+    expect(result.provider).toBe("postmark");
+    expect(result.message).toBe("Invalid server token");
   });
 });

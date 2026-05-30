@@ -148,4 +148,34 @@ describe("MailgunTransport", () => {
     });
     await expect(transport.send(baseMailOptions)).rejects.toBeInstanceOf(MailgunError);
   });
+
+  test("verify() returns ok true on 200 response", async () => {
+    installFetchMock(() => Response.json({ items: [] }, { status: 200 }));
+
+    const transport = new MailgunTransport({
+      apiKey: "key-test123",
+      domain: "mg.example.com",
+    });
+    const result = await transport.verify();
+
+    expect(result).toEqual({
+      ok: true,
+      provider: "mailgun",
+      message: "API key is valid",
+    });
+  });
+
+  test("verify() returns ok false on failure without throwing", async () => {
+    installFetchMock(() => Response.json({ message: "Forbidden" }, { status: 403 }));
+
+    const transport = new MailgunTransport({
+      apiKey: "key-bad",
+      domain: "mg.example.com",
+    });
+    const result = await transport.verify();
+
+    expect(result.ok).toBe(false);
+    expect(result.provider).toBe("mailgun");
+    expect(result.message).toBe("Forbidden");
+  });
 });

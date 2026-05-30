@@ -1,6 +1,8 @@
 // src/detect.ts
 import { runPlugins } from "./core/plugin.js";
 import type {
+  BulkSendOptions,
+  BulkSendResult,
   CreateMailerOptions,
   Mailer,
   MailOptions,
@@ -11,6 +13,7 @@ import type {
   SocketAdapter,
   TLSOptions,
   Transport,
+  VerifyResult,
 } from "./core/types.js";
 import { SMTPPool } from "./pool/pool.js";
 import { SMTPTransport } from "./transports/smtp.js";
@@ -118,11 +121,83 @@ class MailerImpl implements Mailer {
     return this.transport.send(processed);
   }
 
-  verify(): Promise<boolean> {
+  async sendBulk(messages: MailOptions[], options?: BulkSendOptions): Promise<BulkSendResult> {
+    const concurrency = options?.concurrency ?? 1;
+    const results: BulkSendResult["results"] = new Array(messages.length);
+    const queue = [...messages.entries()];
+    let active = 0;
+
+    await new Promise<void>((resolve) => {
+      if (messages.length === 0) {
+        resolve();
+        return;
+      }
+
+      const maybeDone = (): void => {
+        if (queue.length === 0 && active === 0) {
+          resolve();
+        }
+      };
+
+      const processNext = (): void => {
+        if (queue.length === 0) {
+          maybeDone();
+          return;
+        }
+
+        const entry = queue.shift();
+        if (entry === undefined) {
+          maybeDone();
+          return;
+        }
+
+        const [index, message] = entry;
+        active++;
+
+        void this.send(message)
+          .then((result) => {
+            results[index] = { status: "sent", result };
+            options?.onSuccess?.(message, index, result);
+          })
+          .catch((error: unknown) => {
+            results[index] = { status: "failed", error };
+            options?.onError?.(message, index, error);
+          })
+          .finally(() => {
+            active--;
+            processNext();
+            maybeDone();
+          });
+      };
+
+      for (let i = 0; i < concurrency; i++) {
+        processNext();
+      }
+    });
+
+    let sent = 0;
+    let failed = 0;
+    for (const result of results) {
+      if (result.status === "sent") {
+        sent++;
+      } else {
+        failed++;
+      }
+    }
+
+    return {
+      total: messages.length,
+      sent,
+      failed,
+      results,
+    };
+  }
+
+  verify(): Promise<VerifyResult> {
     if (this.transport.verify) {
       return this.transport.verify();
     }
-    return Promise.resolve(true);
+    return Promise.resolve({ ok: true, provider: "mailer" });
   }
 
   close(): Promise<void> {

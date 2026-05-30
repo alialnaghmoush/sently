@@ -26,13 +26,23 @@ export async function checkSmtp(input: CheckSmtpInput) {
       adapter,
     });
 
-    await transport.verify();
+    const result = await transport.verify();
+
+    if (result.ok) {
+      return {
+        connected: true,
+        starttls: !input.secure,
+        authMethods: input.auth ? ["LOGIN", "PLAIN"] : [],
+        greeting: "220 OK",
+      };
+    }
 
     return {
-      connected: true,
-      starttls: !input.secure,
-      authMethods: input.auth ? ["LOGIN", "PLAIN"] : [],
-      greeting: "220 OK",
+      connected: false,
+      starttls: false,
+      authMethods: [] as string[],
+      greeting: "",
+      error: result.message ?? "Verification failed",
     };
   } catch (error) {
     return {

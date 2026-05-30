@@ -159,4 +159,71 @@ describe("buildMIME", () => {
     const raw = decodeUtf8(result.raw);
     expect(raw.startsWith("DKIM-Signature:")).toBe(true);
   });
+
+  test("emoji-only subject encoded as RFC 2047", async () => {
+    const result = await buildMIME({
+      from: "sender@example.com",
+      to: "recipient@example.com",
+      subject: "🎉🚀",
+      text: "Hello",
+    });
+
+    const raw = decodeUtf8(result.raw);
+    expect(raw).toMatch(/Subject: =\?UTF-8\?B\?.+\?=/);
+  });
+
+  test("50 recipients in to all present in envelope.to", async () => {
+    const recipients = Array.from({ length: 50 }, (_, i) => `user${i}@example.com`);
+    const result = await buildMIME({
+      from: "sender@example.com",
+      to: recipients,
+      subject: "Bulk",
+      text: "Hello all",
+    });
+
+    expect(result.envelope.to).toEqual(recipients);
+  });
+
+  test("HTML body with literal CRLF sequences does not break MIME boundary", async () => {
+    const result = await buildMIME({
+      from: "sender@example.com",
+      to: "recipient@example.com",
+      subject: "CRLF test",
+      html: "line1\r\nline2\r\nline3",
+      attachments: [
+        {
+          filename: "note.txt",
+          content: new TextEncoder().encode("x"),
+          contentType: "text/plain",
+        },
+      ],
+    });
+
+    const raw = decodeUtf8(result.raw);
+    expect(raw).toContain("multipart/mixed");
+    expect(raw).toContain("line1\r\nline2\r\nline3");
+    expect(raw).toMatch(/------sently_[a-f0-9]+--$/);
+  });
+
+  test("zero-byte attachment produces valid base64 with empty content", async () => {
+    const result = await buildMIME({
+      from: "sender@example.com",
+      to: "recipient@example.com",
+      subject: "Empty attachment",
+      text: "See attached",
+      attachments: [
+        {
+          filename: "empty.bin",
+          content: new Uint8Array(0),
+          contentType: "application/octet-stream",
+        },
+      ],
+    });
+
+    const raw = decodeUtf8(result.raw);
+    expect(raw).toContain("Content-Transfer-Encoding: base64");
+    expect(raw).toMatch(
+      /Content-Disposition: attachment; filename="empty.bin"\r\n\r\n\r\n------sently_/,
+    );
+  });
 });

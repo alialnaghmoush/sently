@@ -39,6 +39,7 @@ import type {
   SMTPConfig,
   SocketAdapter,
   Transport,
+  VerifyResult,
 } from "../core/types.js";
 import { resolveAttachments } from "./resolve-attachments.js";
 
@@ -80,15 +81,23 @@ export class SMTPTransport implements Transport {
   }
 
   /** Verifies SMTP connectivity and authentication without sending mail. */
-  async verify(): Promise<boolean> {
-    const adapter = await this.getAdapter();
-    await adapter.connect(this.config.host, this.config.port);
-
+  async verify(): Promise<VerifyResult> {
     try {
-      await openSMTPSession(adapter, this.config);
-      return true;
-    } finally {
-      await closeSMTPSession(adapter);
+      const adapter = await this.getAdapter();
+      await adapter.connect(this.config.host, this.config.port);
+
+      try {
+        await openSMTPSession(adapter, this.config);
+        return { ok: true, provider: "smtp" };
+      } finally {
+        await closeSMTPSession(adapter);
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        provider: "smtp",
+        message: err instanceof Error ? err.message : String(err),
+      };
     }
   }
 

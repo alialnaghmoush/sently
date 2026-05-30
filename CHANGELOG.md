@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.0] — 2026-05-30
+
+### Added
+
+- `PreviewTransport` — writes emails to disk as .eml or HTML for local development
+- `RetryTransport` — decorator transport with exponential/linear/fixed backoff
+- `mailer.sendBulk()` — batch send with concurrency control and per-message callbacks
+- `templatePlugin` + `simpleEngine` — zero-dependency {{variable}} template rendering
+- `verify()` on all HTTP transports (Resend, SendGrid, Postmark, Mailgun, SES, Brevo)
+  returns typed `VerifyResult` instead of `boolean`
+- `MailOptions.template` and `MailOptions.data` fields for template plugin integration
+- `SESTransport` now accepts `dkim` config for signing raw MIME messages
+- `attachment.path` basePath guard (opt-in) in resolveAttachments
+- GitHub Actions CI matrix: unit tests (Bun), smoke test (Node 22), SMTP integration (Mailpit)
+
+### Fixed
+
+- `detectRuntime()` priority hardened: Bun checked before Node.js process globals
+- Cloudflare Workers detection uses positive signature (caches + UA), not absence of other runtimes
+
 ## [0.3.4] — 2026-05-30
 
 ### Fixed

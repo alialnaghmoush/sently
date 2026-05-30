@@ -27,6 +27,8 @@ export type {
   AddressInput,
   Attachment,
   BrevoConfig,
+  BulkSendOptions,
+  BulkSendResult,
   CreateMailerOptions,
   DKIMConfig,
   Envelope,
@@ -36,6 +38,8 @@ export type {
   MailPlugin,
   OAuth2Config,
   PoolConfig,
+  PreviewConfig,
+  RetryConfig,
   Runtime,
   SESConfig,
   SendResult,
@@ -44,9 +48,18 @@ export type {
   SocketAdapter,
   TLSOptions,
   Transport,
+  VerifyResult,
 } from "./core/types.js";
 export { createMailer, detectRuntime } from "./detect.js";
+export type { TemplateEngine, TemplatePluginConfig } from "./plugins/template.js";
+export { simpleEngine, templatePlugin } from "./plugins/template.js";
 export { SMTPPool } from "./pool/pool.js";
 export { BrevoError, BrevoTransport } from "./transports/brevo.js";
 export { MailgunError, MailgunTransport } from "./transports/mailgun.js";
+export { PostmarkError, PostmarkTransport } from "./transports/postmark.js";
+export { PreviewTransport } from "./transports/preview.js";
+export { ResendError, ResendTransport } from "./transports/resend.js";
+export { RetryTransport } from "./transports/retry.js";
+export { SendGridError, SendGridTransport } from "./transports/sendgrid.js";
 export { SESError, SESTransport } from "./transports/ses.js";
+export { SMTPTransport } from "./transports/smtp.js";

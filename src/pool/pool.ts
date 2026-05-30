@@ -5,6 +5,7 @@ import type {
   SMTPConfig,
   SocketAdapter,
   Transport,
+  VerifyResult,
 } from "../core/types.js";
 import { resolveSMTPConfig } from "../transports/smtp.js";
 import { createPooledConnection, type PooledConnection } from "./connection.js";
@@ -134,13 +135,21 @@ export class SMTPPool implements Transport {
   }
 
   /** Verifies connectivity using a temporary connection. */
-  async verify(): Promise<boolean> {
-    const conn = await this.spawnConnection();
+  async verify(): Promise<VerifyResult> {
     try {
-      return true;
-    } finally {
-      await conn.close();
-      this.removeConnection(conn);
+      const conn = await this.spawnConnection();
+      try {
+        return { ok: true, provider: "smtp-pool" };
+      } finally {
+        await conn.close();
+        this.removeConnection(conn);
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        provider: "smtp-pool",
+        message: err instanceof Error ? err.message : String(err),
+      };
     }
   }
 

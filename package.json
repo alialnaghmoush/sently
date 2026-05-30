@@ -1,12 +1,17 @@
 {
   "name": "sently",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "description": "Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
@@ -108,6 +113,18 @@
     "./transports/brevo": {
       "import": "./dist/transports/brevo.js",
       "types": "./dist/transports/brevo.d.ts"
+    },
+    "./transports/preview": {
+      "import": "./dist/transports/preview.js",
+      "types": "./dist/transports/preview.d.ts"
+    },
+    "./transports/retry": {
+      "import": "./dist/transports/retry.js",
+      "types": "./dist/transports/retry.d.ts"
+    },
+    "./plugins/template": {
+      "import": "./dist/plugins/template.js",
+      "types": "./dist/plugins/template.d.ts"
     },
     "./auth/oauth2": {
       "import": "./dist/auth/oauth2.js",

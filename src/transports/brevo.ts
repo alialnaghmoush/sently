@@ -14,7 +14,13 @@
  */
 import { extractEmails, parseAddresses } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
-import type { BrevoConfig, MailOptions, SendResult, Transport } from "../core/types.js";
+import type {
+  BrevoConfig,
+  MailOptions,
+  SendResult,
+  Transport,
+  VerifyResult,
+} from "../core/types.js";
 import { resolveAttachments } from "./resolve-attachments.js";
 
 /** Error thrown when the Brevo API returns a non-success response. */
@@ -120,5 +126,38 @@ export class BrevoTransport implements Transport {
         to: toEmails,
       },
     };
+  }
+
+  /** Verifies the Brevo API key by fetching account info. */
+  async verify(): Promise<VerifyResult> {
+    try {
+      const response = await fetch("https://api.brevo.com/v3/account", {
+        headers: {
+          "api-key": this.apiKey,
+        },
+      });
+
+      const payload = (await response.json()) as { companyName?: string; message?: string };
+
+      if (!response.ok) {
+        return {
+          ok: false,
+          provider: "brevo",
+          message: payload.message ?? `HTTP ${response.status}`,
+        };
+      }
+
+      return {
+        ok: true,
+        provider: "brevo",
+        ...(payload.companyName ? { message: payload.companyName } : {}),
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        provider: "brevo",
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
   }
 }

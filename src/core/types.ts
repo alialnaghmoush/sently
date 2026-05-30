@@ -43,6 +43,10 @@ export interface MailOptions {
   date?: Date;
   priority?: "high" | "normal" | "low";
   encoding?: "utf-8" | "ascii";
+  /** Template name registered with templatePlugin */
+  template?: string;
+  /** Template variables passed to the rendering engine */
+  data?: Record<string, unknown>;
 }
 
 // ─── Send Result ──────────────────────────────────────────
@@ -87,12 +91,24 @@ export interface TLSOptions {
   minVersion?: "TLSv1" | "TLSv1.1" | "TLSv1.2" | "TLSv1.3";
 }
 
+// ─── Verify Result ────────────────────────────────────────
+
+/** Result returned by transport and mailer verify() calls. */
+export interface VerifyResult {
+  ok: boolean;
+  provider: string;
+  /** Human-readable status message from the provider */
+  message?: string;
+  /** Raw provider response (provider-specific) */
+  raw?: unknown;
+}
+
 // ─── Transport ────────────────────────────────────────────
 
 /** Pluggable mail delivery backend (SMTP, HTTP API, etc.). */
 export interface Transport {
   send(options: MailOptions): Promise<SendResult>;
-  verify?(): Promise<boolean>;
+  verify?(): Promise<VerifyResult>;
   close?(): Promise<void>;
 }
 
@@ -204,8 +220,75 @@ export interface SMTPAuth {
 /** High-level mailer API wrapping a transport. */
 export interface Mailer {
   send(options: MailOptions): Promise<SendResult>;
-  verify(): Promise<boolean>;
+  sendBulk(messages: MailOptions[], options?: BulkSendOptions): Promise<BulkSendResult>;
+  verify(): Promise<VerifyResult>;
   close(): Promise<void>;
+}
+
+// ─── Bulk Send ────────────────────────────────────────────
+
+/** Options for batch sending multiple messages. */
+export interface BulkSendOptions {
+  /** Callback fired after each successful send */
+  onSuccess?: (message: MailOptions, index: number, result: SendResult) => void;
+  /** Callback fired after each failed send (does not throw) */
+  onError?: (message: MailOptions, index: number, error: unknown) => void;
+  /** Max concurrent sends. Defaults to pool maxConnections or 1 */
+  concurrency?: number;
+}
+
+/** Result of a batch send operation. */
+export interface BulkSendResult {
+  /** Total messages attempted */
+  total: number;
+  /** Number of successful sends */
+  sent: number;
+  /** Number of failed sends */
+  failed: number;
+  /** Per-message results in input order */
+  results: Array<{ status: "sent"; result: SendResult } | { status: "failed"; error: unknown }>;
+}
+
+// ─── Retry Config ─────────────────────────────────────────
+
+/** Configuration for RetryTransport backoff and retry rules. */
+export interface RetryConfig {
+  /** Maximum number of total attempts (including first). Default: 3 */
+  maxAttempts?: number;
+  /** Backoff strategy. Default: 'exponential' */
+  backoff?: "exponential" | "linear" | "fixed";
+  /** Base delay in ms. Default: 1000 */
+  baseDelay?: number;
+  /**
+   * HTTP status codes to retry on (for HTTP transports).
+   * Default: [429, 500, 502, 503, 504]
+   */
+  retryOn?: number[];
+  /** Optional callback called before each retry */
+  onRetry?: (attempt: number, error: unknown) => void;
+}
+
+// ─── Preview Config ───────────────────────────────────────
+
+/** Configuration for PreviewTransport disk output. */
+export interface PreviewConfig {
+  /**
+   * Directory to write .eml files.
+   * Default: './.emails'
+   */
+  outDir?: string;
+  /**
+   * Open the email in the default browser after writing.
+   * Uses 'open' on macOS, 'xdg-open' on Linux, 'start' on Windows.
+   * Default: false
+   */
+  open?: boolean;
+  /**
+   * File format to write.
+   * 'eml' = raw MIME, 'html' = HTML body only (for quick preview)
+   * Default: 'eml'
+   */
+  format?: "eml" | "html";
 }
 
 // ─── createMailer Options ─────────────────────────────────
@@ -258,6 +341,8 @@ export interface SESConfig {
   region?: string;
   /** Optional session token for temporary credentials */
   sessionToken?: string;
+  /** DKIM signing for raw MIME messages (attachment sends) */
+  dkim?: DKIMConfig;
 }
 
 // ─── Brevo Config ─────────────────────────────────────────

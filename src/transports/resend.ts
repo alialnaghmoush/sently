@@ -21,7 +21,7 @@
  */
 import { extractEmails, parseAddresses, toMIMEHeader } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
-import type { MailOptions, SendResult, Transport } from "../core/types.js";
+import type { MailOptions, SendResult, Transport, VerifyResult } from "../core/types.js";
 import { resolveAttachments } from "./resolve-attachments.js";
 
 /** Resend API configuration. */
@@ -114,5 +114,33 @@ export class ResendTransport implements Transport {
         ],
       },
     };
+  }
+
+  /** Verifies the Resend API key by listing domains. */
+  async verify(): Promise<VerifyResult> {
+    try {
+      const response = await fetch(`${this.baseUrl}/domains`, {
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { message?: string };
+        return {
+          ok: false,
+          provider: "resend",
+          message: payload.message ?? `HTTP ${response.status}`,
+        };
+      }
+
+      return { ok: true, provider: "resend", message: "API key is valid" };
+    } catch (err) {
+      return {
+        ok: false,
+        provider: "resend",
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
   }
 }

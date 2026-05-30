@@ -285,6 +285,99 @@ import { BrevoTransport } from "sently/transports/brevo";
 const transport = new BrevoTransport({ apiKey: "xkeysib-..." });
 ```
 
+### PreviewTransport
+
+Write emails to disk during local development instead of sending them:
+
+```typescript
+import { PreviewTransport } from "sently/transports/preview";
+import { createMailer } from "sently";
+
+const mailer = await createMailer({
+  transport: new PreviewTransport({
+    outDir: "./.emails",
+    open: true,
+    format: "html",
+  }),
+});
+
+await mailer.send({
+  from: "dev@localhost",
+  to: "you@example.com",
+  subject: "Preview me",
+  html: "<h1>Hello</h1>",
+});
+```
+
+### RetryTransport
+
+Wrap any transport with automatic retries and configurable backoff:
+
+```typescript
+import { RetryTransport } from "sently/transports/retry";
+import { ResendTransport } from "sently/transports/resend";
+import { createMailer } from "sently";
+
+const transport = new RetryTransport(
+  new ResendTransport({ apiKey: process.env.RESEND_API_KEY! }),
+  { maxAttempts: 3, backoff: "exponential", retryOn: [429, 503] },
+);
+
+const mailer = await createMailer({ transport });
+```
+
+### sendBulk()
+
+Send multiple messages with concurrency control and per-message callbacks:
+
+```typescript
+const result = await mailer.sendBulk(
+  [
+    { from: "a@b.com", to: "1@example.com", subject: "One", text: "Hi" },
+    { from: "a@b.com", to: "2@example.com", subject: "Two", text: "Hi" },
+  ],
+  {
+    concurrency: 2,
+    onSuccess: (_msg, index) => console.log(`Sent #${index}`),
+    onError: (_msg, index, err) => console.error(`Failed #${index}`, err),
+  },
+);
+
+console.log(result.sent, result.failed);
+```
+
+### TemplatePlugin
+
+Render HTML from named templates with zero dependencies:
+
+```typescript
+import { templatePlugin, simpleEngine } from "sently/plugins/template";
+import { createMailer } from "sently";
+import { ResendTransport } from "sently/transports/resend";
+
+const mailer = await createMailer({
+  transport: new ResendTransport({ apiKey: "re_..." }),
+  plugins: [
+    templatePlugin({
+      engine: simpleEngine,
+      templates: {
+        welcome: "<h1>Hello, {{name}}!</h1>",
+      },
+    }),
+  ],
+});
+
+await mailer.send({
+  from: "onboarding@yourdomain.com",
+  to: "user@example.com",
+  subject: "Welcome",
+  template: "welcome",
+  data: { name: "Ali" },
+});
+```
+
+Use a custom engine by passing any `(template, data) => string` function to `templatePlugin`.
+
 ### Plugin system
 
 Plugins transform `MailOptions` before the transport builds and sends the message. They run sequentially — each receives the output of the previous plugin.
