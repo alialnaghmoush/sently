@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-05-31
+
+### Fixed
+
+- **Build** — `dist/webhooks.js` and `dist/react.js` are generated from source instead
+  of bundled with code-splitting, fixing `SyntaxError: Export 'k' is not defined` when
+  importing `sently` or `sently/webhooks` in Node.js
+
 ## [0.5.1] — 2026-05-31
 
 ### Breaking
