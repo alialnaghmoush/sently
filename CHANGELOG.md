@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [0.6.1] — 2026-05-31
+
+### Fixed
+
+- **Build** — emit `dist/core/errors.js` so the main barrel and Node/Deno smoke
+  tests resolve `SentlyError` imports after `bun run build`
+
+### Changed
+
+- Bundle size budgets adjusted for minor measurement drift on CI runners
+
 ## [0.6.0] — 2026-05-31
 
 ### Added

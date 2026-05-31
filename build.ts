@@ -5,6 +5,7 @@ const entrypoints = [
   'src/detect.ts',
   'src/mailer.ts',
   'src/dkim.ts',
+  'src/core/errors.ts',
   'src/core/smtp.ts',
   'src/adapters/node.ts',
   'src/adapters/bun.ts',

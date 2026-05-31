@@ -702,9 +702,9 @@ import { createMailer } from "sently";
 | HTTP — Resend | `sently/mailer` + `transports/resend` | **6.6 KB** |
 | HTTP — SendGrid | `sently/mailer` + `transports/sendgrid` | **6.4 KB** |
 | HTTP — transport only | `transports/resend` (call `.send()` directly) | **4.7 KB** |
-| SMTP relay | `sently` + `{ host, port, auth }` | **15.2 KB** |
-| SMTP + explicit adapter | `sently` + `adapters/node` | **15.2 KB** |
-| Main entry + HTTP ⚠️ | `sently` + `transports/resend` | **16.1 KB** |
+| SMTP relay | `sently` + `{ host, port, auth }` | **15.3 KB** |
+| SMTP + explicit adapter | `sently` + `adapters/node` | **15.3 KB** |
+| Main entry + HTTP ⚠️ | `sently` + `transports/resend` | **16.2 KB** |
 
 Adapters are **auto-selected at runtime** for SMTP unless you pass `adapter` explicitly. Only the adapter for your runtime is fetched (dynamic import).
 
@@ -713,7 +713,7 @@ Adapters are **auto-selected at runtime** for SMTP unless you pass `adapter` exp
 | Export | ~gzip | Notes |
 |--------|-------|-------|
 | `sently/mailer` | 3.1 KB | `createMailer({ transport })` — plugins, hooks, `sendBulk`, rate-limited batch |
-| `sently` | 15.2 KB | Full `createMailer` — SMTP config + lazy SMTP chunks |
+| `sently` | 15.3 KB | Full `createMailer` — SMTP config + lazy SMTP chunks |
 | `sently/errors` | 0.3 KB | `SentlyError`, `httpStatusToSentlyCode`, `smtpCodeToSentlyCode` |
 | `sently/dkim` | 1.7 KB | `signDKIM`, `importPrivateKey` — loaded when `dkim` option is set |
 | `sently/react` | 0.3 KB | `reactPlugin()` — excludes `@react-email/render` peer |
