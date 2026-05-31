@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+## [0.6.2] — 2026-05-31
+
+### Added
+
+- **`sently/smtp`** subpath — SMTP `createMailer` (`host` / `port` / `auth`, pooling,
+  adapters) isolated from the main entry for smaller HTTP app bundles
+
+### Changed
+
+- **Breaking:** main `createMailer` from `sently` is transport-only (same as
+  `sently/mailer`). SMTP relay apps use `import { createMailer } from "sently/smtp"`
+  or `import { createSMTPMailer } from "sently"`.
+- **`RetryTransport`** — auth-failure detection uses `SentlyError.sentlyCode` instead
+  of importing `SMTPError` (leaner `sently/mailer` graph).
+- **`mailer.ts`** — retry hook wiring duck-types `setMailerOnRetry` (no static
+  `RetryTransport` import).
+- **Build** — remove `dist/` before each `bun run build` to avoid stale chunks in
+  published tarballs (~137 KB npm tarball vs ~424 KB with stale chunks).
+- Bundle size budgets and README tables updated for measured gzip sizes (main entry
+  ~2.4 KB; HTTP stack ~6 KB).
+
 ## [0.6.1] — 2026-05-31
 
 ### Fixed

@@ -1,6 +1,6 @@
 {
   "name": "sently",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. ESM-native Nodemailer alternative with zero dependencies.",
   "type": "module",
   "sideEffects": false,
@@ -157,6 +157,10 @@
     "./mailer": {
       "import": "./dist/mailer.js",
       "types": "./dist/mailer.d.ts"
+    },
+    "./smtp": {
+      "import": "./dist/smtp-mailer.js",
+      "types": "./dist/smtp-mailer.d.ts"
     },
     "./dkim": {
       "import": "./dist/dkim.js",

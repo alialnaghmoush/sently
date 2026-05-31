@@ -435,10 +435,11 @@ export interface TransportMailerOptions {
   hooks?: MailerHooks;
 }
 
-/** Options for {@link createMailer} — custom transport or SMTP config. */
-export type CreateMailerOptions =
-  | ({ transport: Transport; plugins?: MailPlugin[]; hooks?: MailerHooks } & Partial<SMTPConfig>)
-  | (SMTPConfig & { hooks?: MailerHooks });
+/**
+ * Legacy union for transport or SMTP mailer options.
+ * Use {@link TransportMailerOptions} with `sently/mailer` or SMTP config with `sently/smtp`.
+ */
+export type CreateMailerOptions = TransportMailerOptions | (SMTPConfig & { hooks?: MailerHooks });
 
 // ─── Plugin ──────────────────────────────────────────────
 

@@ -1,14 +1,5 @@
 // src/detect.ts
-import type {
-  CreateMailerOptions,
-  Mailer,
-  MailerHooks,
-  Runtime,
-  SMTPConfig,
-  SocketAdapter,
-  TLSOptions,
-} from "./core/types.js";
-import { createMailer as createTransportMailer, MailerImpl } from "./mailer.js";
+import type { Runtime, SocketAdapter, TLSOptions } from "./core/types.js";
 
 /** Detect the current JavaScript runtime. */
 export function detectRuntime(): Runtime {
@@ -60,51 +51,6 @@ export async function createDefaultAdapter(options?: {
     default:
       throw new Error(`No socket adapter available for runtime: ${runtime}`);
   }
-}
-
-/**
- * Create a ready-to-use Mailer instance.
- *
- * For HTTP transports and smallest bundles, prefer `import { createMailer } from "sently/mailer"`.
- */
-export async function createMailer(options: CreateMailerOptions): Promise<Mailer> {
-  if ("transport" in options) {
-    return createTransportMailer({
-      transport: options.transport,
-      ...(options.plugins !== undefined ? { plugins: options.plugins } : {}),
-      ...(options.hooks !== undefined ? { hooks: options.hooks } : {}),
-    });
-  }
-
-  const smtpConfig = options as SMTPConfig & { hooks?: MailerHooks };
-  const adapterOptions = {
-    ...(smtpConfig.secure !== undefined ? { secure: smtpConfig.secure } : {}),
-    ...(smtpConfig.connectionTimeout !== undefined
-      ? { connectionTimeout: smtpConfig.connectionTimeout }
-      : {}),
-    ...(smtpConfig.tls !== undefined ? { tls: smtpConfig.tls } : {}),
-  };
-
-  if (smtpConfig.pool) {
-    const { SMTPPool } = await import("./pool/pool.js");
-    return new MailerImpl(
-      new SMTPPool(smtpConfig, {
-        createAdapter: async () =>
-          smtpConfig.adapter ?? (await createDefaultAdapter(adapterOptions)),
-      }),
-      smtpConfig.plugins,
-      smtpConfig.hooks,
-    );
-  }
-
-  const adapter = smtpConfig.adapter ?? (await createDefaultAdapter(adapterOptions));
-  const { SMTPTransport } = await import("./transports/smtp.js");
-
-  return new MailerImpl(
-    new SMTPTransport({ ...smtpConfig, adapter }),
-    smtpConfig.plugins,
-    smtpConfig.hooks,
-  );
 }
 
 declare const Bun: unknown;

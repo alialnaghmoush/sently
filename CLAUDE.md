@@ -12,116 +12,108 @@ Default to using Bun instead of Node.js.
 - Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
 - Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
 - Use `bunx <package> <command>` instead of `npx <package> <command>`
-- Bun automatically loads .env, so don't use dotenv.
+- Bun automatically loads `.env`, so don't use dotenv.
 
-## APIs
+## About this repository
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+**sently** (v0.6.x) — runtime-agnostic TypeScript email library for Node.js, Bun, Deno, and Cloudflare Workers. ESM-only, zero runtime dependencies. Nodemailer-style API with HTTP transports, SMTP, DKIM, OAuth2, pooling, plugins, idempotency, and webhook parsers.
 
-## Testing
+### Development commands
 
-Use `bun test` to run tests.
+```sh
+bun run verify          # lint + typecheck + build + test (prepack gate)
+bun test                # run all tests
+bun run lint            # biome check src
+bun run format          # biome format src --write
+bun run typecheck       # tsc --noEmit
+bun run build           # bun run build.ts → dist/
+bun run check:size      # enforce bundle size budgets (tools/bundle-size-budgets.json)
+bun run measure:size    # print current bundle sizes
+bun run mcp             # local MCP server (tools/mcp/)
+```
 
-```ts#index.test.ts
+### Source layout
+
+```
+src/
+├── index.ts              # Main barrel — createMailer (SMTP-capable), types, OAuth2
+├── mailer.ts               # Lightweight createMailer for custom transports (~1.4 KB)
+├── detect.ts               # Runtime auto-detection (node/bun/deno/cf)
+├── dkim.ts                 # Public DKIM signing entry (lazy-loaded)
+├── errors.ts               # sently/errors barrel — SentlyError hierarchy
+├── idempotency.ts          # IdempotencyTransport decorator
+├── webhooks.ts             # Webhook parsers + signature verification
+├── react.ts                # reactPlugin (optional peers: react, @react-email/render)
+├── core/                   # Shared internals (address, mime, smtp, dkim, errors, plugin, types, …)
+├── adapters/               # Socket adapters: node, bun, deno, cf
+├── transports/             # smtp, resend, sendgrid, postmark, mailgun, ses, brevo, retry, preview
+├── auth/oauth2.ts          # OAuth2Client (Google/Microsoft token endpoints)
+├── pool/                   # SMTP connection pool + rate limiting
+├── plugins/                # template.ts, react.ts
+└── webhooks/               # Per-provider webhook parsers (re-exported via webhooks.ts)
+
+tests/                      # Mirrors src/ — run with bun test
+scripts/                    # generate-index-js.ts, smoke tests, publish helpers
+tools/                      # measure-bundle-size.ts, MCP server, bundle-size-budgets.json
+build.ts                    # Bun bundler entrypoints → dist/ + tsc declarations
+```
+
+### Subpath exports
+
+| Import | Purpose |
+|--------|---------|
+| `sently` | Transport `createMailer`, `createSMTPMailer`, shared types, OAuth2 (~3 KB + optional SMTP) |
+| `sently/mailer` | `createMailer` for custom transports only — smallest HTTP stack |
+| `sently/smtp` | SMTP `createMailer` — host/port, pool, adapters (~15 KB) |
+| `sently/dkim` | DKIM signing |
+| `sently/errors` | `SentlyError`, stable error codes |
+| `sently/idempotency` | `IdempotencyTransport`, `MemoryIdempotencyStore` |
+| `sently/webhooks` | `parse*Webhook`, `verifyResendSignature`, `verifyMailgunSignature` |
+| `sently/react` | `reactPlugin` — **not** exported from main barrel |
+| `sently/transports/*` | One transport per subpath |
+| `sently/adapters/*` | One adapter per subpath |
+| `sently/auth/oauth2` | `OAuth2Client` |
+| `sently/pool` | `SMTPPool` |
+| `sently/plugins/template` | `templatePlugin`, `simpleEngine` |
+
+HTTP transports: import `createMailer` from `sently/mailer` (or `sently`) + transport subpath for smallest bundle.
+SMTP: import `createMailer` from `sently/smtp` with `host`/`port`/`auth`, or `createSMTPMailer` from `sently`.
+
+### Code conventions
+
+- **TypeScript strict** — no `any` unless justified; prefer `unknown` + narrowing.
+- **TSDoc** on all exported functions, classes, and types.
+- **ESM only** — use `.js` extensions in relative imports (`from "./core/types.js"`).
+- **Zero runtime deps** in core; optional peers: `react`, `@react-email/render`.
+- Transport errors extend `SentlyError` with stable codes (`RATE_LIMITED`, `BAD_REQUEST`, etc.).
+- Mailer supports optional `hooks` (`onSend`, `onSuccess`, `onError`, `onRetry`) — no body/PII in hook context.
+
+### Adding features
+
+**New transport** — follow `src/transports/resend.ts`:
+1. Implement `Transport` from `src/core/types.ts` (`send`, optional `sendBatch`, `verify`, `close`).
+2. Extend `SentlyError` for provider-specific errors.
+3. Add entrypoint to `build.ts`, export in `package.json` `exports`, add tests in `tests/transports/`.
+4. Update `tools/bundle-size-budgets.json` if bundle size changes.
+
+**New adapter** — follow `src/adapters/node.ts`:
+1. Implement `SocketAdapter` from `src/core/types.ts`.
+2. Add entrypoint to `build.ts`, export in `package.json`, add tests in `tests/adapters/`.
+
+**New plugin** — follow `src/plugins/template.ts` (`MailPlugin` signature in `src/core/plugin.ts`).
+
+**Build note** — `index.ts`, `errors.ts`, `webhooks.ts`, and `react.ts` are **not** bundled with code-splitting; `scripts/generate-index-js.ts` emits their runtime barrels to avoid broken re-exports. All other entrypoints are listed in `build.ts`.
+
+### Testing
+
+Use `bun test`. Tests live in `tests/` and mirror `src/` structure. Integration SMTP tests are in `tests/integration/`.
+
+```ts
 import { test, expect } from "bun:test";
 
-test("hello world", () => {
+test("example", () => {
   expect(1).toBe(1);
 });
 ```
 
-## Frontend
-
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
-
-Server:
-
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
-
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
-
-// import .css files directly and it works
-import './index.css';
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
-
-## About this repository
-
-This is `sently` — a runtime-agnostic TypeScript email library.
-
-- Core entry: src/index.ts
-- Adapters: src/adapters/ (node, bun, deno, cf)
-- Transports: src/transports/ (smtp, resend, sendgrid, postmark, mailgun, ses, brevo, retry, preview)
-- Auth: src/auth/oauth2.ts
-- Pool: src/pool/pool.ts
-- Plugins: src/plugins/template.ts
-- Tests: tests/ (run with bun test)
-- Build: bun run build.ts → dist/
-
-When adding a new transport, follow the pattern in src/transports/resend.ts.
-When adding a new adapter, follow the pattern in src/adapters/node.ts.
+For more information on Bun APIs, read `node_modules/bun-types/docs/**.mdx`.

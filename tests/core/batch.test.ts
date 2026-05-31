@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import type { MailOptions, SendResult, Transport } from "../../src/core/types.js";
-import { createMailer } from "../../src/detect.js";
+import { createMailer } from "../../src/mailer.js";
 import { RESEND_BATCH_MAX, ResendTransport } from "../../src/transports/resend.js";
 import { SendGridTransport } from "../../src/transports/sendgrid.js";
 

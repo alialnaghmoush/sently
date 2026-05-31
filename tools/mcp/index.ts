@@ -10,7 +10,7 @@ import { sendTestEmail } from "./tools/send-test.js";
 import { validateConfig } from "./tools/validate-config.js";
 
 const server = new Server(
-  { name: "sently", version: "0.1.0" },
+  { name: "sently", version: "0.6.2" },
   { capabilities: { tools: {} } },
 );
 

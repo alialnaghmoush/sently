@@ -11,8 +11,8 @@ describe("main sently barrel", () => {
     expect(src).not.toContain("reactPlugin");
   });
 
-  test("createMailer resolves without react peers installed", async () => {
-    const { createMailer } = await import("../../src/detect.js");
+  test("createMailer from main barrel resolves without react peers installed", async () => {
+    const { createMailer } = await import("../../src/index.js");
     const { ResendTransport } = await import("../../src/transports/resend.js");
 
     const mailer = await createMailer({
@@ -21,5 +21,10 @@ describe("main sently barrel", () => {
 
     expect(mailer).toBeDefined();
     expect(typeof mailer.send).toBe("function");
+  });
+
+  test("createSMTPMailer is exported from main barrel", async () => {
+    const { createSMTPMailer } = await import("../../src/index.js");
+    expect(typeof createSMTPMailer).toBe("function");
   });
 });

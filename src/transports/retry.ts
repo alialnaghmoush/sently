@@ -15,7 +15,7 @@
  * )
  * ```
  */
-import { SMTPError } from "../core/smtp.js";
+import { SentlyError } from "../core/errors.js";
 import type {
   MailOptions,
   RetryConfig,
@@ -37,7 +37,7 @@ function computeDelay(attempt: number, backoff: string, base: number): number {
 }
 
 function shouldRetry(err: unknown, retryOn: number[]): boolean {
-  if (err instanceof SMTPError && err.code === 535) {
+  if (err instanceof SentlyError && err.sentlyCode === "SMTP_AUTH_FAILED") {
     return false;
   }
 

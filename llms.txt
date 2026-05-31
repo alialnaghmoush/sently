@@ -1,10 +1,10 @@
 # sently
 
-> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. v0.5.2
+> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. v0.6.2
 
 ## What it does
 Sends emails via SMTP or HTTP APIs (Resend, SendGrid, Postmark, Mailgun, AWS SES, Brevo).
-Zero runtime dependencies in core. HTTP stacks ~5.4 KB gzip (`sently/mailer` + transport); SMTP via `sently` ~14.1 KB. Full TypeScript support.
+Zero runtime dependencies in core. HTTP stacks ~6 KB gzip (`sently/mailer` + transport); SMTP via `sently/smtp` ~15 KB. Full TypeScript support.
 
 Features: single send, `sendBulk` (native batch on Resend/SendGrid), idempotency decorator, webhook event parsers, optional React Email plugin, DKIM, OAuth2 SMTP, connection pool + rate limiting.
 
@@ -35,7 +35,7 @@ const mailer = await createMailer({
 await mailer.send({ from, to, subject, html })
 
 ## Quick example (SMTP)
-import { createMailer } from "sently"
+import { createMailer } from "sently/smtp"
 
 const mailer = await createMailer({
   host: "smtp.example.com",
@@ -72,16 +72,21 @@ const mailer = await createMailer({
   plugins: [reactPlugin()],
 })
 
+## Breaking (v0.6.2)
+- Main `createMailer` from `"sently"` is transport-only (~2.4 KB gzip). SMTP relay: `"sently/smtp"` or `createSMTPMailer` from `"sently"`.
+
 ## Breaking (v0.5.1)
 - `reactPlugin` and `ReactMailOptions` are NOT exported from `"sently"`. Use `"sently/react"`.
 
 ## Subpath exports
-- sently — createMailer (SMTP-capable main entry, ~14.1 KB). Does NOT export react plugin.
-- sently/mailer — createMailer for custom transports (~1.4 KB); sendBulk, plugins
+- sently — transport `createMailer`, `createSMTPMailer`, types, OAuth2 (~2.4 KB main createMailer). Does NOT export react plugin.
+- sently/mailer — createMailer for custom transports (~2.4 KB); sendBulk, plugins
+- sently/smtp — SMTP createMailer (host/port, pool, adapters, ~15 KB)
 - sently/dkim — DKIM signing (lazy-loaded when dkim option set)
 - sently/react — reactPlugin, ReactMailOptions (optional peers)
 - sently/idempotency — IdempotencyTransport, MemoryIdempotencyStore
 - sently/webhooks — parse*Webhook, verifyResendSignature, verifyMailgunSignature, EmailEvent
+- sently/errors — SentlyError, stable error codes
 - sently/transports/resend — ResendTransport, RESEND_BATCH_MAX
 - sently/transports/sendgrid — SendGridTransport
 - sently/transports/postmark — PostmarkTransport

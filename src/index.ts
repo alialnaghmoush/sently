@@ -4,7 +4,7 @@
  *
  * @example
  * ```ts
- * import { createMailer } from "sently";
+ * import { createMailer } from "sently/smtp";
  *
  * const mailer = await createMailer({
  *   host: "smtp.example.com",
@@ -73,8 +73,6 @@ export type {
   VerifyResult,
 } from "./core/types.js";
 export {
-  /** Create a ready-to-use Mailer instance. */
-  createMailer,
   /** Detect the current JavaScript runtime. */
   detectRuntime,
 } from "./detect.js";
@@ -97,6 +95,10 @@ export {
   /** In-memory idempotency store with optional TTL expiry. */
   MemoryIdempotencyStore,
 } from "./idempotency.js";
+export {
+  /** Create a mailer for custom transports (HTTP APIs, preview, retry). Prefer `sently/mailer` for smallest bundles. */
+  createMailer,
+} from "./mailer.js";
 export type {
   /** Renders a template string with the given data object. */
   TemplateEngine,
@@ -113,6 +115,10 @@ export {
   /** SMTP connection pool with optional rate limiting. */
   SMTPPool,
 } from "./pool/pool.js";
+export {
+  /** Create a mailer from SMTP host/port config (pooling, adapters). */
+  createSMTPMailer,
+} from "./smtp-mailer.js";
 export {
   /** Error thrown when the Brevo API returns a non-success response. */
   BrevoError,

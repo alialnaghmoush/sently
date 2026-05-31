@@ -40,7 +40,7 @@ describe("reactPlugin", () => {
   });
 
   test("core sently import works without React installed at runtime for non-react sends", async () => {
-    const { createMailer } = await import("../../src/detect.js");
+    const { createMailer } = await import("../../src/mailer.js");
     const transport = {
       send: async () => ({
         messageId: "id",

@@ -5,7 +5,7 @@
  *
  * Usage: bun run tests/integration/smtp.integration.ts
  */
-import { createMailer } from "../../dist/index.js";
+import { createSMTPMailer } from "../../dist/index.js";
 
 function assert(condition: boolean, message: string): void {
   if (!condition) {
@@ -29,7 +29,7 @@ interface MailpitListResponse {
 }
 
 // Test 1: Plain text email
-const mailer = await createMailer({ host: "localhost", port: 1025 });
+const mailer = await createSMTPMailer({ host: "localhost", port: 1025 });
 await mailer.send({
   from: "sender@test.com",
   to: "recipient@test.com",
@@ -68,7 +68,7 @@ assert(Boolean(htmlMsg), "HTML message received");
 assert(htmlMsg?.Attachments === 1, "Attachment present");
 
 // Test 3: Connection pool
-const poolMailer = await createMailer({
+const poolMailer = await createSMTPMailer({
   host: "localhost",
   port: 1025,
   pool: true,

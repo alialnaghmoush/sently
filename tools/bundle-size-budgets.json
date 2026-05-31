@@ -1,8 +1,9 @@
 {
   "stack: http-resend": 6850,
-  "sently + ResendTransport": 16650,
+  "sently + ResendTransport": 7000,
   "sently/mailer": 3300,
-  "sently (createMailer)": 15750,
+  "sently (createMailer)": 3400,
+  "sently/smtp": 15800,
   "sently/transports/smtp": 11000,
   "sently/transports/resend": 4850,
   "sently/transports/sendgrid": 4500,

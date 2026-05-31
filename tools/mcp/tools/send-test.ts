@@ -1,5 +1,5 @@
 import type { SMTPAuth, SMTPConfig } from "../../../src/core/types.js";
-import { createMailer } from "../../../src/index.js";
+import { createSMTPMailer } from "../../../src/index.js";
 
 export interface SendTestInput {
   config: SMTPConfig;
@@ -12,7 +12,7 @@ export interface SendTestInput {
  */
 export async function sendTestEmail(input: SendTestInput) {
   try {
-    const mailer = await createMailer(input.config);
+    const mailer = await createSMTPMailer(input.config);
     const from = input.config.auth?.user ?? "test@sently.dev";
     const result = await mailer.send({
       from,

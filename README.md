@@ -1,7 +1,7 @@
 # sently
 
 > Nodemailer hasn't been updated in years, doesn't run on Bun or Deno, and ships at 220KB.
-> sently is the modern replacement — same familiar API, runs everywhere, HTTP stacks from ~5.4 KB via `sently/mailer`.
+> sently is the modern replacement — same familiar API, runs everywhere, HTTP stacks from ~6 KB via `sently/mailer`.
 
 ```bash
 bun add sently
@@ -20,7 +20,7 @@ bun add sently
 
 | Feature | Nodemailer | sently |
 |---------|-----------|--------|
-| Bundle size | ~220 KB always | ~6.6 KB HTTP · ~15 KB SMTP |
+| Bundle size | ~220 KB always | ~6 KB HTTP · ~15 KB SMTP |
 | Runtimes | Node.js only | Node, Bun, Deno, CF Workers |
 | Module format | CommonJS | ESM only |
 | Dependencies | 3 | 0 |
@@ -97,8 +97,9 @@ bunx jsr add @alialnaghmoush/sently
 ```
 
 ```typescript
-import { createMailer } from "sently/mailer"; // HTTP transports
-import { createMailer as createSMTPMailer } from "sently"; // SMTP host/port config
+import { createMailer } from "sently/mailer"; // HTTP transports (~3 KB)
+import { createMailer } from "sently/smtp"; // SMTP host/port (~15 KB)
+// Or: import { createSMTPMailer } from "sently";
 ```
 
 ---
@@ -108,7 +109,7 @@ import { createMailer as createSMTPMailer } from "sently"; // SMTP host/port con
 ### SMTP with auto-detected adapter
 
 ```typescript
-import { createMailer } from "sently";
+import { createMailer } from "sently/smtp";
 
 const mailer = await createMailer({
   host: "smtp.example.com",
@@ -148,7 +149,7 @@ await mailer.send({
 ### Cloudflare Worker
 
 ```typescript
-import { createMailer } from "sently";
+import { createMailer } from "sently/smtp";
 import { CloudflareAdapter } from "sently/adapters/cf";
 
 export default {
@@ -421,7 +422,8 @@ Resend sends the `Idempotency-Key` HTTP header natively. Supply a shared store (
 Plugins transform `MailOptions` before the transport builds and sends the message. They run sequentially — each receives the output of the previous plugin.
 
 ```typescript
-import { createMailer, type MailOptions } from "sently";
+import type { MailOptions } from "sently";
+import { createMailer } from "sently/smtp";
 
 const addFooter = (options: MailOptions) => ({
   ...options,
@@ -553,9 +555,6 @@ Parsers: Resend, SendGrid, Postmark, Mailgun, SES, Brevo. Optional HMAC verifica
 
 ## Attachments
 
-> ⚠️ **Security note**: `attachment.path` reads files from disk.
-> Never pass user-controlled paths without validation.
-
 ### In-memory (all runtimes)
 
 ```typescript
@@ -575,6 +574,8 @@ await mailer.send({
 ```
 
 ### File path (Node.js / Bun / Deno only)
+
+`attachment.path` reads from disk — see [Security](#security) (Attachments) for validation and `basePath`.
 
 ```typescript
 attachments: [
@@ -667,93 +668,28 @@ MIME attachment filenames and custom attachment headers are likewise sanitized a
 
 ---
 
-## Bundle Size
+## Bundle size
 
-All sizes are **minified + gzip**, measured by bundling each import path in isolation (`bun run measure:size`). CI enforces budgets on key entries (`bun run check:size`). Node built-ins and `cloudflare:sockets` are external — same as in your app bundle.
+Sizes are **minified + gzip** per import path (`bun run measure:size`; CI: `bun run check:size`). Node built-ins and `cloudflare:sockets` are external.
 
-**Nodemailer ships ~220 KB** whether you use SMTP or an HTTP plugin. sently tree-shakes per subpath.
+Nodemailer ships **~220 KB** regardless of transport. sently tree-shakes by subpath — pick the entry that matches how you send:
 
-### Choosing an import path
-
-| You send via… | Import | Why |
-|---------------|--------|-----|
-| Resend, SendGrid, Postmark, etc. | `sently/mailer` + `sently/transports/<provider>` | **~6.6 KB** — no SMTP code in the bundle |
-| SMTP relay (`host` / `port`) | `sently` | **~15 KB** — includes MIME + SMTP stack |
-| Raw transport, no plugins | `sently/transports/<provider>` only | **~4.7 KB** — skip `createMailer` wrapper |
-| Unified errors | `sently/errors` or main barrel | **~0.3 KB** add-on |
-| DKIM signing | `sently/dkim` or `dkim` option on send | **~1.7 KB** add-on, lazy-loaded by MIME |
-| React Email | `sently/react` + peers | **~0.3 KB** plugin shell (+ `@react-email/render` peer) |
-| Webhook parsing | `sently/webhooks` | **~0.5 KB** |
-| Idempotency | `sently/idempotency` | **~1.2 KB** |
+| How you send | Import | ~gzip |
+|--------------|--------|-------|
+| HTTP API (Resend, SendGrid, …) | `sently/mailer` + `sently/transports/<provider>` | **~6 KB** |
+| SMTP relay (`host` / `port`) | `sently/smtp` (or `createSMTPMailer` from `sently`) | **~15 KB** |
+| Transport only (no mailer wrapper) | `sently/transports/<provider>` | **~4–5 KB** |
 
 ```ts
-// Recommended — HTTP API (~6.6 KB bundled)
+// HTTP
 import { createMailer } from "sently/mailer";
 import { ResendTransport } from "sently/transports/resend";
 
-// Avoid for HTTP-only apps — pulls SMTP into flat bundles (~16 KB)
-import { createMailer } from "sently";
+// SMTP
+import { createMailer } from "sently/smtp";
 ```
 
-### Common stacks
-
-| Use case | What you import | ~gzip |
-|----------|-----------------|-------|
-| HTTP — Resend | `sently/mailer` + `transports/resend` | **6.6 KB** |
-| HTTP — SendGrid | `sently/mailer` + `transports/sendgrid` | **6.4 KB** |
-| HTTP — transport only | `transports/resend` (call `.send()` directly) | **4.7 KB** |
-| SMTP relay | `sently` + `{ host, port, auth }` | **15.3 KB** |
-| SMTP + explicit adapter | `sently` + `adapters/node` | **15.3 KB** |
-| Main entry + HTTP ⚠️ | `sently` + `transports/resend` | **16.2 KB** |
-
-Adapters are **auto-selected at runtime** for SMTP unless you pass `adapter` explicitly. Only the adapter for your runtime is fetched (dynamic import).
-
-### Core entries
-
-| Export | ~gzip | Notes |
-|--------|-------|-------|
-| `sently/mailer` | 3.1 KB | `createMailer({ transport })` — plugins, hooks, `sendBulk`, rate-limited batch |
-| `sently` | 15.3 KB | Full `createMailer` — SMTP config + lazy SMTP chunks |
-| `sently/errors` | 0.3 KB | `SentlyError`, `httpStatusToSentlyCode`, `smtpCodeToSentlyCode` |
-| `sently/dkim` | 1.7 KB | `signDKIM`, `importPrivateKey` — loaded when `dkim` option is set |
-| `sently/react` | 0.3 KB | `reactPlugin()` — excludes `@react-email/render` peer |
-| `sently/idempotency` | 1.2 KB | `IdempotencyTransport`, `MemoryIdempotencyStore` |
-| `sently/webhooks` | 0.5 KB | Provider webhook parsers + optional signature verification |
-
-### Transports
-
-| Export | ~gzip | Protocol |
-|--------|-------|----------|
-| `sently/transports/resend` | 4.7 KB | HTTP (+ batch endpoint, rate limit) |
-| `sently/transports/sendgrid` | 4.2 KB | HTTP (+ batch personalizations) |
-| `sently/transports/postmark` | 4.1 KB | HTTP |
-| `sently/transports/mailgun` | 4.1 KB | HTTP |
-| `sently/transports/brevo` | 3.9 KB | HTTP |
-| `sently/transports/ses` | 7.5 KB | HTTP (SigV4) |
-| `sently/transports/smtp` | 10.3 KB | SMTP + MIME |
-| `sently/transports/preview` | 6.4 KB | Dev disk preview |
-
-HTTP transports share MIME/address parsing (~3.8 KB). SES is larger due to SigV4 signing.
-
-### Adapters (SMTP socket layer)
-
-| Export | ~gzip | Runtime |
-|--------|-------|---------|
-| `sently/adapters/node` | 1.2 KB | Node.js |
-| `sently/adapters/bun` | 1.2 KB | Bun |
-| `sently/adapters/deno` | 0.5 KB | Deno |
-| `sently/adapters/cf` | 0.6 KB | Cloudflare Workers |
-
-### What's inside an HTTP stack (~6.6 KB)
-
-```
-sently/mailer          3.1 KB   createMailer wrapper, plugins, hooks, sendBulk + rate limit
-transports/resend      4.7 KB   fetch client + MIME/address parsing + batch
-                       ─────
-total                  6.6 KB   vs Nodemailer ~220 KB
-```
-
-Regenerate tables after changes: `bun run measure:size` (full report) or `bun tools/measure-bundle-size.ts --markdown`.
+Main `createMailer` from `sently` is transport-only (~2.4 KB). Add-ons (`sently/dkim`, `sently/webhooks`, `sently/idempotency`, `sently/react`) are separate subpaths. SMTP adapters are auto-loaded at runtime unless you pass `adapter` explicitly.
 
 ---
 
@@ -765,7 +701,7 @@ Regenerate tables after changes: `bun run measure:size` (full report) or `bun to
 | `transporter.sendMail(options)` | `mailer.send(options)` |
 | `transporter.verify()` | `mailer.verify()` |
 | `options.attachments[].path` | Same (Node/Bun/Deno); use `content` on edge |
-| `import nodemailer from 'nodemailer'` | `import { createMailer } from 'sently/mailer'` (HTTP) or `'sently'` (SMTP) |
+| `import nodemailer from 'nodemailer'` | `import { createMailer } from 'sently/mailer'` (HTTP) or `'sently/smtp'` (SMTP) |
 | CommonJS | ESM only |
 | Node.js only | Node, Bun, Deno, CF Workers |
 

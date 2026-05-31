@@ -1,9 +1,13 @@
 import { execSync } from 'node:child_process'
+import { rmSync } from 'node:fs'
 import { build } from 'bun'
+
+rmSync('./dist', { recursive: true, force: true })
 
 const entrypoints = [
   'src/detect.ts',
   'src/mailer.ts',
+  'src/smtp-mailer.ts',
   'src/dkim.ts',
   'src/core/errors.ts',
   'src/core/smtp.ts',

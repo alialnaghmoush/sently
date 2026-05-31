@@ -38,9 +38,17 @@ import type {
   TransportMailerOptions,
   VerifyResult,
 } from "./core/types.js";
-import { RetryTransport } from "./transports/retry.js";
 
 export type { MailerHookContext, MailerHooks, TransportMailerOptions };
+
+/** Retry decorator wired by mailer hooks (duck-typed to avoid pulling retry into all bundles). */
+interface RetryHookTransport extends Transport {
+  setMailerOnRetry(callback: ((attempt: number, error: unknown) => void) | undefined): void;
+}
+
+function isRetryHookTransport(transport: Transport): transport is RetryHookTransport {
+  return typeof (transport as RetryHookTransport).setMailerOnRetry === "function";
+}
 
 /**
  * Create a mailer that wraps a custom {@link Transport} (HTTP API, preview, retry, etc.).
@@ -110,7 +118,7 @@ export class MailerImpl implements Mailer {
 
     await invokeHook(this.hooks?.onSend, ctx);
 
-    if (this.hooks?.onRetry !== undefined && this.transport instanceof RetryTransport) {
+    if (this.hooks?.onRetry !== undefined && isRetryHookTransport(this.transport)) {
       this.transport.setMailerOnRetry((attempt, error) => {
         void invokeHook(this.hooks?.onRetry, ctx, attempt, error);
       });
@@ -128,7 +136,7 @@ export class MailerImpl implements Mailer {
       await invokeHook(this.hooks?.onError, ctx, error);
       throw error;
     } finally {
-      if (this.transport instanceof RetryTransport) {
+      if (isRetryHookTransport(this.transport)) {
         this.transport.setMailerOnRetry(undefined);
       }
     }

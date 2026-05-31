@@ -83,7 +83,7 @@ const scenarios: Scenario[] = [
     category: "stack",
     label: "SMTP relay",
     description: "`sently` with `{ host, port, auth }`",
-    code: `import { createMailer } from "../src/detect.ts"; export const keep = () => createMailer({ host: "smtp.example.com", port: 587, auth: { user: "u", pass: "p" } });`,
+    code: `import { createMailer } from "../src/smtp-mailer.ts"; export const keep = () => createMailer({ host: "smtp.example.com", port: 587, auth: { user: "u", pass: "p" } });`,
     budget: false,
   },
   {
@@ -91,15 +91,15 @@ const scenarios: Scenario[] = [
     category: "stack",
     label: "SMTP + Node adapter",
     description: "`sently` + `sently/adapters/node`",
-    code: `import { createMailer } from "../src/detect.ts"; import { NodeAdapter } from "../src/adapters/node.ts"; export const keep = () => createMailer({ host: "smtp.example.com", port: 587, adapter: new NodeAdapter() });`,
+    code: `import { createMailer } from "../src/smtp-mailer.ts"; import { NodeAdapter } from "../src/adapters/node.ts"; export const keep = () => createMailer({ host: "smtp.example.com", port: 587, adapter: new NodeAdapter() });`,
     budget: false,
   },
   {
     id: "sently + ResendTransport",
     category: "stack",
-    label: "Main entry + HTTP (avoid)",
-    description: "`sently` + `sently/transports/resend` — pulls SMTP graph in flat bundles",
-    code: `import { createMailer } from "../src/detect.ts"; import { ResendTransport } from "../src/transports/resend.ts"; export const keep = { createMailer, ResendTransport };`,
+    label: "Main entry + HTTP",
+    description: "`sently` + HTTP transport via main `createMailer` (should match mailer + resend)",
+    code: `import { createMailer } from "../src/index.ts"; import { ResendTransport } from "../src/transports/resend.ts"; export const keep = async () => createMailer({ transport: new ResendTransport({ apiKey: "x" }) });`,
   },
   // ─── Core entries ───
   {
@@ -113,8 +113,15 @@ const scenarios: Scenario[] = [
     id: "sently (createMailer)",
     category: "core",
     label: "sently",
-    description: "Full `createMailer` — SMTP-capable main entry",
-    code: `import { createMailer } from "../src/detect.ts"; export const keep = createMailer;`,
+    description: "Main entry `createMailer` — transport-only (no SMTP graph)",
+    code: `import { createMailer } from "../src/index.ts"; export const keep = createMailer;`,
+  },
+  {
+    id: "sently/smtp",
+    category: "core",
+    label: "sently/smtp",
+    description: "SMTP `createMailer` — host/port, pool, adapters",
+    code: `import { createMailer } from "../src/smtp-mailer.ts"; export const keep = createMailer;`,
   },
   {
     id: "sently/dkim",

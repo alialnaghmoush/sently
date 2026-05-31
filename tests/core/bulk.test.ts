@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { MailOptions, SendResult, Transport } from "../../src/core/types.js";
-import { createMailer } from "../../src/detect.js";
+import { createMailer } from "../../src/mailer.js";
 
 const successResult = (subject: string): SendResult => ({
   messageId: `<${subject}@example.com>`,
