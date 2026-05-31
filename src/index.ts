@@ -28,6 +28,15 @@ export {
   /** OAuth2 client with in-memory token cache and automatic refresh. */
   OAuth2Client,
 } from "./auth/oauth2.js";
+export type { SentlyErrorCode, SentlyErrorOptions } from "./core/errors.js";
+export {
+  /** Map an HTTP status code to a stable sently error code. */
+  httpStatusToSentlyCode,
+  /** Base error class for all sently transport and protocol failures. */
+  SentlyError,
+  /** Map an SMTP response code to a stable sently error code. */
+  smtpCodeToSentlyCode,
+} from "./core/errors.js";
 export {
   /** SMTP protocol error with server response details. */
   SMTPError,
@@ -43,6 +52,8 @@ export type {
   DKIMConfig,
   Envelope,
   Mailer,
+  MailerHookContext,
+  MailerHooks,
   MailgunConfig,
   MailOptions,
   MailPlugin,

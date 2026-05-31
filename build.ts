@@ -29,6 +29,7 @@ const entrypoints = [
   'src/webhooks/sendgrid.ts',
   'src/webhooks/ses.ts',
   'src/webhooks/timing-safe-equal.ts',
+  'src/errors.ts',
   'src/auth/oauth2.ts',
   'src/pool/pool.ts',
 ]

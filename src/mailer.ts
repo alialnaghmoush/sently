@@ -22,12 +22,15 @@
  * });
  * ```
  */
+import { extractEmails } from "./core/address.js";
 import { runPlugins } from "./core/plugin.js";
 import { RateLimiter } from "./core/rate-limiter.js";
 import type {
   BulkSendOptions,
   BulkSendResult,
   Mailer,
+  MailerHookContext,
+  MailerHooks,
   MailOptions,
   MailPlugin,
   SendResult,
@@ -35,18 +38,62 @@ import type {
   TransportMailerOptions,
   VerifyResult,
 } from "./core/types.js";
+import { RetryTransport } from "./transports/retry.js";
 
-export type { TransportMailerOptions };
+export type { MailerHookContext, MailerHooks, TransportMailerOptions };
 
 /**
  * Create a mailer that wraps a custom {@link Transport} (HTTP API, preview, retry, etc.).
  */
 export async function createMailer(options: TransportMailerOptions): Promise<Mailer> {
-  return new MailerImpl(options.transport, options.plugins ?? []);
+  return new MailerImpl(options.transport, options.plugins ?? [], options.hooks);
 }
 
 function hasAttachments(message: MailOptions): boolean {
   return message.attachments !== undefined && message.attachments.length > 0;
+}
+
+/** Infer a provider label from a transport instance for hook context. */
+function inferProvider(transport: Transport): string {
+  const name = transport.constructor.name;
+  if (name === "Object") {
+    return "custom";
+  }
+  if (name.endsWith("Transport")) {
+    return name.slice(0, -"Transport".length).toLowerCase();
+  }
+  return name.toLowerCase() || "unknown";
+}
+
+/** Build hook context from mail options (no body fields). */
+function buildHookContext(options: MailOptions, transport: Transport): MailerHookContext {
+  return {
+    ...(options.messageId !== undefined ? { messageId: options.messageId } : {}),
+    to: extractEmails(options.to),
+    subject: options.subject,
+    provider: inferProvider(transport),
+  };
+}
+
+/**
+ * Invoke a mailer hook without letting hook failures break the send.
+ * In non-production environments, hook errors are logged with `console.warn`.
+ */
+async function invokeHook<T extends unknown[]>(
+  hook: ((...args: T) => void | Promise<void>) | undefined,
+  ...args: T
+): Promise<void> {
+  if (hook === undefined) {
+    return;
+  }
+  try {
+    await hook(...args);
+  } catch (hookError) {
+    const isProduction = typeof process !== "undefined" && process.env?.NODE_ENV === "production";
+    if (!isProduction) {
+      console.warn("[sently] Mailer hook threw; send continues:", hookError);
+    }
+  }
 }
 
 /** Internal mailer implementation shared with the full `sently` entry. */
@@ -54,11 +101,37 @@ export class MailerImpl implements Mailer {
   constructor(
     private readonly transport: Transport,
     private readonly plugins: MailPlugin[] = [],
+    private readonly hooks?: MailerHooks,
   ) {}
 
   async send(options: MailOptions): Promise<SendResult> {
     const processed = await runPlugins(options, this.plugins);
-    return this.transport.send(processed);
+    const ctx = buildHookContext(processed, this.transport);
+
+    await invokeHook(this.hooks?.onSend, ctx);
+
+    if (this.hooks?.onRetry !== undefined && this.transport instanceof RetryTransport) {
+      this.transport.setMailerOnRetry((attempt, error) => {
+        void invokeHook(this.hooks?.onRetry, ctx, attempt, error);
+      });
+    }
+
+    try {
+      const result = await this.transport.send(processed);
+      const successCtx: MailerHookContext = {
+        ...ctx,
+        messageId: result.messageId,
+      };
+      await invokeHook(this.hooks?.onSuccess, successCtx, result);
+      return result;
+    } catch (error) {
+      await invokeHook(this.hooks?.onError, ctx, error);
+      throw error;
+    } finally {
+      if (this.transport instanceof RetryTransport) {
+        this.transport.setMailerOnRetry(undefined);
+      }
+    }
   }
 
   private async processMessage(message: MailOptions): Promise<MailOptions> {
@@ -74,13 +147,33 @@ export class MailerImpl implements Mailer {
     const stopOnError = options?.stopOnError ?? false;
     let halted = false;
 
-    const recordSuccess = (message: MailOptions, index: number, result: SendResult): void => {
+    const recordSuccess = async (
+      message: MailOptions,
+      index: number,
+      result: SendResult,
+      processed?: MailOptions,
+    ): Promise<void> => {
       results[index] = { status: "sent", result };
+      if (processed !== undefined && this.hooks !== undefined) {
+        const ctx = buildHookContext(processed, this.transport);
+        await invokeHook(this.hooks.onSend, ctx);
+        await invokeHook(this.hooks.onSuccess, { ...ctx, messageId: result.messageId }, result);
+      }
       options?.onSuccess?.(message, index, result);
     };
 
-    const recordFailure = (message: MailOptions, index: number, error: unknown): void => {
+    const recordFailure = async (
+      message: MailOptions,
+      index: number,
+      error: unknown,
+      processed?: MailOptions,
+    ): Promise<void> => {
       results[index] = { status: "failed", error };
+      if (processed !== undefined && this.hooks !== undefined) {
+        const ctx = buildHookContext(processed, this.transport);
+        await invokeHook(this.hooks.onSend, ctx);
+        await invokeHook(this.hooks.onError, ctx, error);
+      }
       options?.onError?.(message, index, error);
       if (stopOnError) {
         halted = true;
@@ -126,25 +219,36 @@ export class MailerImpl implements Mailer {
 
             for (let i = 0; i < chunk.length; i++) {
               const entry = chunk[i] as { index: number; message: MailOptions };
+              const processedMessage = processed[i] as MailOptions;
               const result = batchResults[i];
               if (result === undefined) {
-                recordFailure(
+                await recordFailure(
                   entry.message,
                   entry.index,
                   new Error("Batch response missing result for message"),
+                  processedMessage,
                 );
               } else if (result.batchError !== undefined) {
-                recordFailure(entry.message, entry.index, result.batchError);
+                await recordFailure(
+                  entry.message,
+                  entry.index,
+                  result.batchError,
+                  processedMessage,
+                );
               } else {
-                recordSuccess(entry.message, entry.index, result);
+                await recordSuccess(entry.message, entry.index, result, processedMessage);
               }
             }
           } catch (error) {
-            for (const entry of chunk) {
+            const processed = await Promise.all(
+              chunk.map(({ message }) => this.processMessage(message)),
+            );
+            for (let i = 0; i < chunk.length; i++) {
               if (halted) {
                 break;
               }
-              recordFailure(entry.message, entry.index, error);
+              const entry = chunk[i] as { index: number; message: MailOptions };
+              await recordFailure(entry.message, entry.index, error, processed[i]);
             }
           }
         }
@@ -177,10 +281,15 @@ export class MailerImpl implements Mailer {
             active++;
             void this.send(entry.message)
               .then((result) => {
-                recordSuccess(entry.message, entry.index, result);
+                results[entry.index] = { status: "sent", result };
+                options?.onSuccess?.(entry.message, entry.index, result);
               })
               .catch((error: unknown) => {
-                recordFailure(entry.message, entry.index, error);
+                results[entry.index] = { status: "failed", error };
+                options?.onError?.(entry.message, entry.index, error);
+                if (stopOnError) {
+                  halted = true;
+                }
               })
               .finally(() => {
                 active--;
@@ -223,10 +332,15 @@ export class MailerImpl implements Mailer {
 
           void this.send(message)
             .then((result) => {
-              recordSuccess(message, index, result);
+              results[index] = { status: "sent", result };
+              options?.onSuccess?.(message, index, result);
             })
             .catch((error: unknown) => {
-              recordFailure(message, index, error);
+              results[index] = { status: "failed", error };
+              options?.onError?.(message, index, error);
+              if (stopOnError) {
+                halted = true;
+              }
             })
             .finally(() => {
               active--;

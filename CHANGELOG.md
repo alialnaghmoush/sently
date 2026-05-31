@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-05-31
+
+### Added
+
+- **`sently/errors`** — unified `SentlyError` base class with stable machine-readable
+  codes (`RATE_LIMITED`, `BAD_REQUEST`, `SMTP_AUTH_FAILED`, etc.); all existing
+  transport error classes now extend `SentlyError` while preserving their names,
+  constructor signatures, and public properties (**additive, backward-compatible**)
+- **Mailer lifecycle hooks** — optional `hooks` on `createMailer` (`onSend`,
+  `onSuccess`, `onError`, `onRetry`) for metrics and tracing on every send;
+  hook context includes `to`, `subject`, `provider`, and `messageId` only (no
+  body/PII); `RetryTransport` wires `onRetry` per attempt (**additive**)
+- **`AUDIT-v0.6.md`** — README capability audit with file/line proof (all claims
+  verified implemented, including CRAM-MD5)
+
+### Changed
+
+- Bundle size budgets updated for expanded mailer (hooks) and error hierarchy
+
 ## [0.5.2] — 2026-05-31
 
 ### Fixed

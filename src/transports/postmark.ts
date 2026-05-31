@@ -21,6 +21,7 @@
  */
 import { extractEmails, parseAddresses, toMIMEHeader } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
+import { httpStatusToSentlyCode, SentlyError } from "../core/errors.js";
 import type { MailOptions, SendResult, Transport, VerifyResult } from "../core/types.js";
 import { resolveAttachments } from "./resolve-attachments.js";
 
@@ -31,14 +32,18 @@ export interface PostmarkConfig {
 }
 
 /** Error thrown when the Postmark API returns a non-success response. */
-export class PostmarkError extends Error {
+export class PostmarkError extends SentlyError {
   /** Creates a Postmark API error with status code and response payload. */
   constructor(
     message: string,
     public readonly statusCode: number,
     public readonly apiError: unknown,
   ) {
-    super(message);
+    super(message, httpStatusToSentlyCode(statusCode), {
+      statusCode,
+      provider: "postmark",
+      cause: apiError,
+    });
     this.name = "PostmarkError";
   }
 }

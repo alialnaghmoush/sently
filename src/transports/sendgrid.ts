@@ -21,6 +21,7 @@
  */
 import { extractEmails, parseAddresses } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
+import { httpStatusToSentlyCode, SentlyError } from "../core/errors.js";
 import type { MailOptions, SendResult, Transport, VerifyResult } from "../core/types.js";
 import { resolveAttachments } from "./resolve-attachments.js";
 
@@ -31,14 +32,18 @@ export interface SendGridConfig {
 }
 
 /** Error thrown when the SendGrid API returns a non-success response. */
-export class SendGridError extends Error {
+export class SendGridError extends SentlyError {
   /** Creates a SendGrid API error with status code and response payload. */
   constructor(
     message: string,
     public readonly statusCode: number,
     public readonly apiError: unknown,
   ) {
-    super(message);
+    super(message, httpStatusToSentlyCode(statusCode), {
+      statusCode,
+      provider: "sendgrid",
+      cause: apiError,
+    });
     this.name = "SendGridError";
   }
 }

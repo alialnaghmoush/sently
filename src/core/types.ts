@@ -397,6 +397,32 @@ export interface PreviewConfig {
   format?: "eml" | "html";
 }
 
+// ─── Mailer Hooks ─────────────────────────────────────────
+
+/** Context passed to mailer lifecycle hooks (no message body — avoids PII in logs). */
+export interface MailerHookContext {
+  /** Message-ID when known (from options or send result). */
+  messageId?: string;
+  /** Envelope recipient email addresses. */
+  to: string[];
+  /** Message subject line. */
+  subject: string;
+  /** Transport or provider identifier (e.g. `"smtp"`, `"resend"`). */
+  provider: string;
+}
+
+/** Optional lifecycle hooks for metrics, tracing, and observability on every send. */
+export interface MailerHooks {
+  /** Fired before the transport sends the message. */
+  onSend?: (ctx: MailerHookContext) => void | Promise<void>;
+  /** Fired after a successful send. */
+  onSuccess?: (ctx: MailerHookContext, result: SendResult) => void | Promise<void>;
+  /** Fired when a send throws (error is re-thrown after the hook runs). */
+  onError?: (ctx: MailerHookContext, error: unknown) => void | Promise<void>;
+  /** Fired before each retry attempt (requires {@link RetryTransport}). */
+  onRetry?: (ctx: MailerHookContext, attempt: number, error: unknown) => void | Promise<void>;
+}
+
 // ─── createMailer Options ─────────────────────────────────
 
 /** Options for {@link createMailer} from `sently/mailer` — transport-only, smallest bundle. */
@@ -405,12 +431,14 @@ export interface TransportMailerOptions {
   transport: Transport;
   /** Optional plugins run before each send. */
   plugins?: MailPlugin[];
+  /** Optional lifecycle hooks for metrics and tracing on every send. */
+  hooks?: MailerHooks;
 }
 
 /** Options for {@link createMailer} — custom transport or SMTP config. */
 export type CreateMailerOptions =
-  | ({ transport: Transport; plugins?: MailPlugin[] } & Partial<SMTPConfig>)
-  | SMTPConfig;
+  | ({ transport: Transport; plugins?: MailPlugin[]; hooks?: MailerHooks } & Partial<SMTPConfig>)
+  | (SMTPConfig & { hooks?: MailerHooks });
 
 // ─── Plugin ──────────────────────────────────────────────
 

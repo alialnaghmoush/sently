@@ -1,5 +1,6 @@
 // src/core/smtp.ts
 import { encodeBase64, encodeUtf8 } from "./base64.js";
+import { SentlyError, smtpCodeToSentlyCode } from "./errors.js";
 
 export { computeCRAMMD5 } from "./cram-md5.js";
 
@@ -35,16 +36,17 @@ export interface SMTPResponse {
 }
 
 /** SMTP protocol error with server response details. */
-export class SMTPError extends Error {
+export class SMTPError extends SentlyError {
   /** Creates an SMTP protocol error. */
   constructor(
     message: string,
-    public readonly code: number,
+    smtpCode: number,
     public readonly command: string,
     public readonly response: string,
   ) {
-    super(message);
+    super(message, smtpCodeToSentlyCode(smtpCode, command), { provider: "smtp" });
     this.name = "SMTPError";
+    this.code = smtpCode;
   }
 }
 

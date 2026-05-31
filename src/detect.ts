@@ -2,6 +2,7 @@
 import type {
   CreateMailerOptions,
   Mailer,
+  MailerHooks,
   Runtime,
   SMTPConfig,
   SocketAdapter,
@@ -71,10 +72,11 @@ export async function createMailer(options: CreateMailerOptions): Promise<Mailer
     return createTransportMailer({
       transport: options.transport,
       ...(options.plugins !== undefined ? { plugins: options.plugins } : {}),
+      ...(options.hooks !== undefined ? { hooks: options.hooks } : {}),
     });
   }
 
-  const smtpConfig = options as SMTPConfig;
+  const smtpConfig = options as SMTPConfig & { hooks?: MailerHooks };
   const adapterOptions = {
     ...(smtpConfig.secure !== undefined ? { secure: smtpConfig.secure } : {}),
     ...(smtpConfig.connectionTimeout !== undefined
@@ -91,13 +93,18 @@ export async function createMailer(options: CreateMailerOptions): Promise<Mailer
           smtpConfig.adapter ?? (await createDefaultAdapter(adapterOptions)),
       }),
       smtpConfig.plugins,
+      smtpConfig.hooks,
     );
   }
 
   const adapter = smtpConfig.adapter ?? (await createDefaultAdapter(adapterOptions));
   const { SMTPTransport } = await import("./transports/smtp.js");
 
-  return new MailerImpl(new SMTPTransport({ ...smtpConfig, adapter }), smtpConfig.plugins);
+  return new MailerImpl(
+    new SMTPTransport({ ...smtpConfig, adapter }),
+    smtpConfig.plugins,
+    smtpConfig.hooks,
+  );
 }
 
 declare const Bun: unknown;

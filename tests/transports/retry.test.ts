@@ -162,4 +162,67 @@ describe("RetryTransport", () => {
     await transport.send(baseOptions);
     expect(attempts).toEqual([1, 2]);
   });
+
+  test("setMailerOnRetry routes retries when set (independent of RetryConfig.onRetry)", async () => {
+    const mailerAttempts: number[] = [];
+    const configAttempts: number[] = [];
+    let calls = 0;
+
+    const inner = createMockTransport(async () => {
+      calls++;
+      if (calls < 3) {
+        throw new Error("retry me");
+      }
+      return successResult;
+    });
+
+    const transport = new RetryTransport(
+      inner,
+      {
+        maxAttempts: 3,
+        onRetry: (attempt) => {
+          configAttempts.push(attempt);
+        },
+      },
+      () => Promise.resolve(),
+    );
+
+    transport.setMailerOnRetry((attempt) => {
+      mailerAttempts.push(attempt);
+    });
+
+    await transport.send(baseOptions);
+    expect(configAttempts).toEqual([1, 2]);
+    expect(mailerAttempts).toEqual([1, 2]);
+  });
+
+  test("setMailerOnRetry warns when overwriting an active callback", () => {
+    const warnSpy = mockConsoleWarn();
+    const transport = new RetryTransport(createMockTransport(async () => successResult));
+
+    const first = (): void => {};
+    const second = (): void => {};
+
+    transport.setMailerOnRetry(first);
+    transport.setMailerOnRetry(second);
+
+    expect(warnSpy.length).toBe(1);
+    warnSpy.restore();
+  });
 });
+
+function mockConsoleWarn(): { length: number; restore: () => void } {
+  const original = console.warn;
+  const calls: unknown[] = [];
+  console.warn = (...args: unknown[]) => {
+    calls.push(args);
+  };
+  return {
+    get length() {
+      return calls.length;
+    },
+    restore: () => {
+      console.warn = original;
+    },
+  };
+}

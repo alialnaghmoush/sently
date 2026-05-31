@@ -67,6 +67,8 @@ export class RetryTransport implements Transport {
   private readonly retryOn: number[];
   /** Optional callback invoked before each retry attempt. */
   private readonly onRetry: RetryConfig["onRetry"];
+  /** Additional onRetry callback wired by {@link MailerImpl} hooks per send. */
+  private mailerOnRetry: RetryConfig["onRetry"];
 
   /** Wraps an inner transport with retry logic and optional backoff configuration. */
   constructor(
@@ -82,6 +84,29 @@ export class RetryTransport implements Transport {
     this.baseDelay = config?.baseDelay ?? 1000;
     this.retryOn = config?.retryOn ?? DEFAULT_RETRY_ON;
     this.onRetry = config?.onRetry;
+    this.mailerOnRetry = undefined;
+  }
+
+  /**
+   * Register a per-send onRetry callback from mailer lifecycle hooks.
+   * Do not share one {@link RetryTransport} across multiple mailers — the last
+   * `setMailerOnRetry` wins; overwriting an active callback logs a dev warning.
+   * @internal Used by {@link MailerImpl}; cleared after each send.
+   */
+  setMailerOnRetry(callback: RetryConfig["onRetry"] | undefined): void {
+    if (
+      callback !== undefined &&
+      this.mailerOnRetry !== undefined &&
+      this.mailerOnRetry !== callback
+    ) {
+      const isProduction = typeof process !== "undefined" && process.env?.NODE_ENV === "production";
+      if (!isProduction) {
+        console.warn(
+          "[sently] RetryTransport.setMailerOnRetry: overwriting an active mailer onRetry callback. Do not share one RetryTransport instance across multiple mailers.",
+        );
+      }
+    }
+    this.mailerOnRetry = callback;
   }
 
   /** Sends with retries according to configured backoff and retry rules. */
@@ -101,6 +126,7 @@ export class RetryTransport implements Transport {
         }
         const delay = computeDelay(attempt, this.backoff, this.baseDelay);
         this.onRetry?.(attempt, err);
+        this.mailerOnRetry?.(attempt, err);
         await this._sleep(delay);
       }
     }

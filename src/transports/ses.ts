@@ -20,22 +20,27 @@
  */
 import { extractEmails, parseAddresses, toMIMEHeader } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
+import { httpStatusToSentlyCode, SentlyError } from "../core/errors.js";
 import { buildMIME } from "../core/mime.js";
 import { signRequest } from "../core/sigv4.js";
 import type { MailOptions, SESConfig, SendResult, Transport, VerifyResult } from "../core/types.js";
 import { resolveAttachments } from "./resolve-attachments.js";
 
 /** Error thrown when the AWS SES API returns a non-success response. */
-export class SESError extends Error {
+export class SESError extends SentlyError {
   /** Creates an AWS SES API error with status code, error code, and request ID. */
   constructor(
     message: string,
     public readonly statusCode: number,
-    public readonly code: string,
+    awsCode: string,
     public readonly requestId: string,
   ) {
-    super(message);
+    super(message, httpStatusToSentlyCode(statusCode), {
+      statusCode,
+      provider: "ses",
+    });
     this.name = "SESError";
+    this.code = awsCode;
   }
 }
 

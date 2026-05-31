@@ -14,6 +14,7 @@
  */
 import { extractEmails, parseAddresses } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
+import { httpStatusToSentlyCode, SentlyError } from "../core/errors.js";
 import type {
   BrevoConfig,
   MailOptions,
@@ -24,15 +25,19 @@ import type {
 import { resolveAttachments } from "./resolve-attachments.js";
 
 /** Error thrown when the Brevo API returns a non-success response. */
-export class BrevoError extends Error {
+export class BrevoError extends SentlyError {
   /** Creates a Brevo API error with status code and error code. */
   constructor(
     message: string,
     public readonly statusCode: number,
-    public readonly code: string,
+    apiCode: string,
   ) {
-    super(message);
+    super(message, httpStatusToSentlyCode(statusCode), {
+      statusCode,
+      provider: "brevo",
+    });
     this.name = "BrevoError";
+    this.code = apiCode;
   }
 }
 

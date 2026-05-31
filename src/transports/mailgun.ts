@@ -18,6 +18,7 @@
  */
 import { extractEmails, parseAddresses, toMIMEHeader } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
+import { httpStatusToSentlyCode, SentlyError } from "../core/errors.js";
 import type {
   MailgunConfig,
   MailOptions,
@@ -28,14 +29,18 @@ import type {
 import { resolveAttachments } from "./resolve-attachments.js";
 
 /** Error thrown when the Mailgun API returns a non-success response. */
-export class MailgunError extends Error {
+export class MailgunError extends SentlyError {
   /** Creates a Mailgun API error with status code and response payload. */
   constructor(
     message: string,
     public readonly statusCode: number,
     public readonly apiError: unknown,
   ) {
-    super(message);
+    super(message, httpStatusToSentlyCode(statusCode), {
+      statusCode,
+      provider: "mailgun",
+      cause: apiError,
+    });
     this.name = "MailgunError";
   }
 }

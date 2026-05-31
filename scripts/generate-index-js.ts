@@ -26,6 +26,7 @@ function generateBarrel(srcPath: string, distPath: string): void {
 
 for (const [srcPath, distPath] of [
   ["src/index.ts", "dist/index.js"],
+  ["src/errors.ts", "dist/errors.js"],
   ["src/webhooks.ts", "dist/webhooks.js"],
   ["src/react.ts", "dist/react.js"],
 ] as const) {

@@ -21,6 +21,7 @@
  */
 import { extractEmails, parseAddresses, toMIMEHeader } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
+import { httpStatusToSentlyCode, SentlyError } from "../core/errors.js";
 import { resolveIdempotencyKey } from "../core/idempotency-key.js";
 import { RateLimiter } from "../core/rate-limiter.js";
 import type { MailOptions, SendResult, Transport, VerifyResult } from "../core/types.js";
@@ -42,14 +43,18 @@ export interface ResendConfig {
 export const RESEND_BATCH_MAX = 100;
 
 /** Error thrown when the Resend API returns a non-success response. */
-export class ResendError extends Error {
+export class ResendError extends SentlyError {
   /** Creates a Resend API error with status code and response payload. */
   constructor(
     message: string,
     public readonly statusCode: number,
     public readonly apiError: unknown,
   ) {
-    super(message);
+    super(message, httpStatusToSentlyCode(statusCode), {
+      statusCode,
+      provider: "resend",
+      cause: apiError,
+    });
     this.name = "ResendError";
   }
 }
