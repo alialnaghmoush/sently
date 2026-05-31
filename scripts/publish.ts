@@ -104,11 +104,21 @@ function syncVersion(): string {
       description: pkg.description,
       exports: "./src/index.ts",
     };
-  } else {
-    jsr.version = version;
-    if (pkg.description !== undefined) jsr.description = pkg.description;
+    writeJsrJson(jsr);
+    return version;
   }
-  writeJsrJson(jsr);
+
+  const next: JsrJson = { ...jsr, version };
+  if (pkg.description !== undefined) {
+    next.description = pkg.description;
+  }
+
+  const serialized = `${JSON.stringify(next, null, 2)}\n`;
+  const current = readFileSync(JSR_JSON_PATH, "utf-8");
+  if (serialized !== current) {
+    writeFileSync(JSR_JSON_PATH, serialized, "utf-8");
+  }
+
   return version;
 }
 

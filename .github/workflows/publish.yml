@@ -4,7 +4,7 @@
 # - JSR: Link this repo to the package in JSR settings (https://jsr.io/@alialnaghmoush/sently).
 # - npm: Configure trusted publisher (OIDC) for this workflow in npm package settings.
 #
-# On push to main: runs test + lint, then publishes JSR and npm.
+# On push to main: runs test + lint, then publishes npm and JSR.
 
 name: CI and Publish
 
@@ -53,7 +53,9 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: Publish to JSR
-        run: bun run scripts/publish.ts -- --jsr-only --force
+      - name: Build
+        run: bun run build
       - name: Publish to npm (trusted publisher / OIDC)
         run: bun run scripts/publish.ts -- --npm-only --force
+      - name: Publish to JSR
+        run: bun run scripts/publish.ts -- --jsr-only --force

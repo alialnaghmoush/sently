@@ -1,6 +1,6 @@
 # sently
 
-> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. v0.7.1
+> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. v0.7.2
 
 ## What it does
 Sends emails via SMTP or HTTP APIs (Resend, SendGrid, Postmark, Mailgun, AWS SES, Brevo).

@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [0.7.2] — 2026-05-31
+
+### Fixed
+
+- Publish workflow runs `bun run build` before registry steps and publishes **npm before JSR** so a failed npm step does not leave JSR ahead of npm
+- `scripts/publish.ts` `syncVersion()` skips rewriting `jsr.json` when content is unchanged (avoids dirty working tree between CI publish steps)
+
 ## [0.7.1] — 2026-05-31
 
 ### Documentation
