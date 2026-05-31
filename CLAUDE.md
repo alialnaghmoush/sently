@@ -37,7 +37,7 @@ bun run mcp             # local MCP server (tools/mcp/)
 ```
 src/
 ├── index.ts              # Main barrel — types, createMailer, createSMTPMailer, OAuth2, SentlyError
-├── mailer.ts               # Lightweight createMailer for custom transports (~1.4 KB)
+├── mailer.ts               # Lightweight createMailer for custom transports (~2.6 KB gzip)
 ├── detect.ts               # Runtime auto-detection (node/bun/deno/cf)
 ├── dkim.ts                 # Public DKIM signing entry (lazy-loaded)
 ├── errors.ts               # sently/errors barrel — SentlyError hierarchy
@@ -63,8 +63,8 @@ build.ts                    # Bun bundler entrypoints → dist/ + tsc declaratio
 | Import | Purpose |
 |--------|---------|
 | `sently` | Shared types, `createMailer`, `createSMTPMailer`, `detectRuntime`, OAuth2, `SentlyError` |
-| `sently/mailer` | `createMailer` for custom transports only — smallest HTTP stack |
-| `sently/smtp` | `createSMTPMailer` — host/port, pool, adapters (~15 KB) |
+| `sently/mailer` | `createMailer` for custom transports only — ~2.6 KB gzip |
+| `sently/smtp` | `createSMTPMailer` — host/port, pool, adapters — ~15 KB gzip |
 | `sently/dkim` | DKIM signing |
 | `sently/errors` | `SentlyError`, stable error codes |
 | `sently/idempotency` | `IdempotencyTransport`, `MemoryIdempotencyStore` |

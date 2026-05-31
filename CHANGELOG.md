@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-05-31
+
+### Documentation
+
+- README Nodemailer comparison updated for **v8.0.10** (~58 KB gzip, zero deps, 2026 releases)
+- Bundle size figures refreshed from `bun run measure:size:md` (~6.1 KB HTTP, ~15 KB SMTP, ~2.6 KB `sently/mailer`)
+- `llms.txt` and `CLAUDE.md` aligned with measured gzip sizes
+
 ## [0.7.0] — 2026-05-31
 
 ### Breaking + Migration

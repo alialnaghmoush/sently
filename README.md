@@ -1,7 +1,7 @@
 # sently
 
-> Nodemailer hasn't been updated in years, doesn't run on Bun or Deno, and ships at 220KB.
-> sently is the modern replacement — same familiar API, runs everywhere, HTTP stacks from ~6 KB via `sently/mailer`.
+> Nodemailer is Node.js–only and ships the full mail stack on every import (~58 KB gzip for [v8.0.10](https://bundlephobia.com/package/nodemailer@8.0.10)).
+> sently runs on Bun, Deno, and Cloudflare Workers — same familiar API, HTTP stacks from ~6.1 KB via `sently/mailer`.
 
 ```bash
 bun add sently
@@ -14,7 +14,7 @@ bun add sently
 [![tests](https://img.shields.io/badge/tests-passing-brightgreen)](#)
 [![GitHub](https://img.shields.io/github/stars/alialnaghmoush/sently?style=social&label=GitHub)](https://github.com/alialnaghmoush/sently)
 
-> **Pre-1.0 — API may change.** sently is pre-1.0 and the public API is still being refined ahead of a stable v1.0.0. Breaking changes can land in any 0.x release; review the [CHANGELOG](CHANGELOG.md) before upgrading. Pin an exact version (e.g. `"sently": "0.7.0"`) for production until v1.0.0.
+> **Pre-1.0 — API may change.** sently is pre-1.0 and the public API is still being refined ahead of a stable v1.0.0. Breaking changes can land in any 0.x release; review the [CHANGELOG](CHANGELOG.md) before upgrading. Pin an exact version (e.g. `"sently": "0.7.1"`) for production until v1.0.0.
 
 ---
 
@@ -22,10 +22,10 @@ bun add sently
 
 | Feature | Nodemailer | sently |
 |---------|-----------|--------|
-| Bundle size | ~220 KB always | ~6 KB HTTP · ~15 KB SMTP |
+| Bundle size | ~58 KB gzip always ([v8.0.10](https://bundlephobia.com/package/nodemailer@8.0.10)) | ~6.1 KB HTTP · ~15 KB SMTP |
 | Runtimes | Node.js only | Node, Bun, Deno, CF Workers |
 | Module format | CommonJS | ESM only |
-| Dependencies | 3 | 0 |
+| Dependencies | 0 | 0 |
 | DKIM signing | ✓ via `nodemailer-dkim` | ✓ built-in (Web Crypto) |
 | OAuth2 / XOAUTH2 | ✓ via plugin | ✓ built-in |
 | Connection pooling | ✓ | ✓ |
@@ -38,7 +38,7 @@ bun add sently
 | Idempotency keys | ✗ | ✓ `sently/idempotency` |
 | Webhook parsing | ✗ | ✓ `sently/webhooks` |
 | TypeScript | via `@types/nodemailer` | ✓ built-in |
-| Last release | 2021 | 2026 |
+| Last release | 2026 (8.0.x) | 2026 |
 
 ---
 
@@ -99,8 +99,8 @@ bunx jsr add @alialnaghmoush/sently
 ```
 
 ```typescript
-import { createMailer } from "sently/mailer"; // HTTP transports (~3 KB)
-import { createSMTPMailer } from "sently/smtp"; // SMTP host/port (~15 KB)
+import { createMailer } from "sently/mailer"; // HTTP stack ~6.1 KB with a transport
+import { createSMTPMailer } from "sently/smtp"; // SMTP relay ~15 KB
 // Or: import { createSMTPMailer } from "sently";
 ```
 
@@ -701,13 +701,34 @@ MIME attachment filenames and custom attachment headers are likewise sanitized a
 
 Sizes are **minified + gzip** per import path (`bun run measure:size`; CI: `bun run check:size`). Node built-ins and `cloudflare:sockets` are external.
 
-Nodemailer ships **~220 KB** regardless of transport. sently tree-shakes by subpath — pick the entry that matches how you send:
+Nodemailer ships **~58 KB gzip** regardless of transport ([BundlePhobia, v8.0.10](https://bundlephobia.com/package/nodemailer@8.0.10)). sently tree-shakes by subpath — pick the entry that matches how you send:
 
 | How you send | Import | ~gzip |
 |--------------|--------|-------|
-| HTTP API (Resend, SendGrid, …) | `sently/mailer` + `sently/transports/<provider>` | **~6 KB** |
+| HTTP API (Resend, SendGrid, …) | `sently/mailer` + `sently/transports/<provider>` | **~6.1 KB** |
 | SMTP relay (`host` / `port`) | `sently/smtp` (or `createSMTPMailer` from `sently`) | **~15 KB** |
-| Transport only (no mailer wrapper) | `sently/transports/<provider>` | **~4–5 KB** |
+| Transport only (no mailer wrapper) | `sently/transports/<provider>` | **~4.7 KB** |
+
+Regenerate full tables with `bun run measure:size:md`. Measured **2026-05-31** (minified + gzip):
+
+#### Common stacks
+
+| What | Imports | ~gzip |
+|------|---------|-------|
+| HTTP — Resend | `sently/mailer` + `sently/transports/resend` | ~6.1 KB |
+| HTTP — SendGrid | `sently/mailer` + `sently/transports/sendgrid` | ~5.9 KB |
+| HTTP — transport only | `sently/transports/resend` (no `createMailer` wrapper) | ~4.7 KB |
+| SMTP relay | `sently/smtp` with `{ host, port, auth }` | ~14.8 KB |
+| SMTP + Node adapter | `sently/smtp` + `sently/adapters/node` | ~14.8 KB |
+| Main entry + HTTP | `sently` + HTTP transport via main `createMailer` | ~6.1 KB |
+
+#### Core entries
+
+| What | Imports | ~gzip |
+|------|---------|-------|
+| sently/mailer | Transport-only `createMailer` (plugins, sendBulk) | ~2.6 KB |
+| sently | Main entry — types, factories, OAuth2, `SentlyError` | ~2.6 KB |
+| sently/smtp | SMTP `createSMTPMailer` — host/port, pool, adapters | ~14.7 KB |
 
 ```ts
 // HTTP

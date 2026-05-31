@@ -1,10 +1,10 @@
 # sently
 
-> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. v0.7.0
+> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. v0.7.1
 
 ## What it does
 Sends emails via SMTP or HTTP APIs (Resend, SendGrid, Postmark, Mailgun, AWS SES, Brevo).
-Zero runtime dependencies in core. HTTP stacks ~6 KB gzip (`sently/mailer` + transport); SMTP via `sently/smtp` ~15 KB. Full TypeScript support.
+Zero runtime dependencies in core. HTTP stacks ~6.1 KB gzip (`sently/mailer` + transport); SMTP via `sently/smtp` ~15 KB. Full TypeScript support.
 
 Features: single send, `sendBulk` (native batch on Resend/SendGrid), idempotency decorator, webhook event parsers, optional React Email plugin, DKIM, OAuth2 SMTP, connection pool + rate limiting.
 
@@ -87,7 +87,7 @@ const mailer = await createMailer({
 
 ## Subpath exports
 - sently — types, transport createMailer, createSMTPMailer, detectRuntime, OAuth2, SentlyError
-- sently/mailer — createMailer for custom transports (~2.4 KB); sendBulk, plugins
+- sently/mailer — createMailer for custom transports (~2.6 KB); sendBulk, plugins
 - sently/smtp — createSMTPMailer (host/port, pool, adapters, ~15 KB)
 - sently/dkim — DKIM signing (lazy-loaded when dkim option set)
 - sently/react — reactPlugin, ReactMailOptions (optional peers)
