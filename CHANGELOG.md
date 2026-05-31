@@ -2,6 +2,52 @@
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-05-31
+
+### Breaking
+
+- **Main barrel** — `reactPlugin` and `ReactMailOptions` are no longer exported from
+  `"sently"`. Import them from `"sently/react"` instead.
+
+### Fixed
+
+- **Webhook signatures** — `verifyResendSignature` and `verifyMailgunSignature` now
+  compare decoded signature bytes with constant-time `timingSafeEqual` (Web Crypto only)
+- **SES webhooks** — SNS `Message` field accepted when already parsed as an object
+- **Batch sendBulk** — per-chunk failure isolation, per-message partial batch errors
+  (`SendResult.batchError`), and rate limiting between batch HTTP requests (default 2/s)
+
+### Changed
+
+- `RateLimiter` extracted to `src/core/rate-limiter.ts` (shared by pool and mailer)
+- `Transport.batchMax` on `ResendTransport`; `BulkSendOptions.rateDelta` / `rateLimit`
+- Bundle size budgets updated for expanded mailer and Resend transport
+
+## [0.5.0] — 2026-05-31
+
+### Added
+
+- **`sently/react`** — React Email integration via `reactPlugin()`; optional peers
+  `react` and `@react-email/render`; `options.react` on `MailOptions`
+- **`sently/idempotency`** — `IdempotencyTransport` decorator with
+  `MemoryIdempotencyStore`; dedupe on retry/replay; Resend native
+  `Idempotency-Key` header support
+- **Native batch in `sendBulk`** — optional `Transport.sendBatch()` on Resend
+  (POST `/emails/batch`, `RESEND_BATCH_MAX = 100`) and SendGrid (multi-
+  personalization); attachment messages fall back to single-send
+- **`stopOnError`** option on `BulkSendOptions`
+- **`sently/webhooks`** — normalized `EmailEvent` parsers for Resend, SendGrid,
+  Postmark, Mailgun, SES (SNS envelope + double-encoded Message), and Brevo;
+  optional Mailgun HMAC and Resend Svix signature verification helpers
+- **`deduped`** flag on `SendResult` for idempotency cache hits
+
+### Changed
+
+- `sendBulk` uses native batch endpoints when the transport implements
+  `sendBatch`; concurrent per-message fallback unchanged for other transports
+- SendGrid single-send puts `subject` in personalization (batch-compatible)
+- Bundle size budgets adjusted for expanded `sently/mailer` and main entry
+
 ## [0.4.7] — 2026-05-30
 
 ### Added

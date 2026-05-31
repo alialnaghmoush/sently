@@ -55,12 +55,9 @@ export class SendGridTransport implements Transport {
     this.apiKey = config.apiKey;
   }
 
-  /** Sends an email via the SendGrid v3 HTTP API. */
-  async send(options: MailOptions): Promise<SendResult> {
-    const attachments = await resolveAttachments(options.attachments);
-    const from = parseAddresses(options.from)[0];
-
-    const personalization = {
+  /** Build a SendGrid personalization for one message. */
+  private buildPersonalization(options: MailOptions): Record<string, unknown> {
+    return {
       to: parseAddresses(options.to).map((addr) => ({ email: addr.address, name: addr.name })),
       ...(options.cc
         ? {
@@ -78,14 +75,52 @@ export class SendGridTransport implements Transport {
             })),
           }
         : {}),
+      subject: options.subject,
+      ...(options.headers ? { headers: options.headers } : {}),
     };
+  }
+
+  /** Build SendGrid content parts from text/html options. */
+  private buildContent(options: MailOptions): Array<{ type: string; value: string }> {
+    return [
+      ...(options.text ? [{ type: "text/plain", value: options.text }] : []),
+      ...(options.html ? [{ type: "text/html", value: options.html }] : []),
+    ];
+  }
+
+  /** Map a SendGrid response to a normalized SendResult for one message. */
+  private toSendResult(
+    options: MailOptions,
+    messageId: string,
+    responseText = "Accepted",
+  ): SendResult {
+    const from = parseAddresses(options.from)[0];
+    return {
+      messageId,
+      accepted: extractEmails(options.to),
+      rejected: [],
+      response: responseText,
+      envelope: {
+        from: from?.address ?? "",
+        to: [
+          ...extractEmails(options.to),
+          ...(options.cc ? extractEmails(options.cc) : []),
+          ...(options.bcc ? extractEmails(options.bcc) : []),
+        ],
+      },
+    };
+  }
+
+  /** Sends an email via the SendGrid v3 HTTP API. */
+  async send(options: MailOptions): Promise<SendResult> {
+    const attachments = await resolveAttachments(options.attachments);
+    const from = parseAddresses(options.from)[0];
 
     const body = {
-      personalizations: [personalization],
+      personalizations: [this.buildPersonalization(options)],
       from: from
         ? { email: from.address, ...(from.name ? { name: from.name } : {}) }
         : { email: "" },
-      subject: options.subject,
       ...(options.replyTo
         ? {
             reply_to: parseAddresses(options.replyTo).map((addr) => ({
@@ -94,10 +129,7 @@ export class SendGridTransport implements Transport {
             }))[0],
           }
         : {}),
-      content: [
-        ...(options.text ? [{ type: "text/plain", value: options.text }] : []),
-        ...(options.html ? [{ type: "text/html", value: options.html }] : []),
-      ],
+      content: this.buildContent(options),
       ...(attachments.length > 0
         ? {
             attachments: attachments.map((att) => ({
@@ -130,20 +162,52 @@ export class SendGridTransport implements Transport {
 
     const messageId = response.headers.get("x-message-id") ?? options.messageId ?? "";
 
-    return {
-      messageId,
-      accepted: extractEmails(options.to),
-      rejected: [],
-      response: "Accepted",
-      envelope: {
-        from: from?.address ?? "",
-        to: [
-          ...extractEmails(options.to),
-          ...(options.cc ? extractEmails(options.cc) : []),
-          ...(options.bcc ? extractEmails(options.bcc) : []),
-        ],
-      },
+    return this.toSendResult(options, messageId);
+  }
+
+  /** Send multiple messages in one request using SendGrid personalizations. */
+  async sendBatch(messages: MailOptions[]): Promise<SendResult[]> {
+    if (messages.length === 0) {
+      return [];
+    }
+
+    const first = messages[0] as MailOptions;
+    const from = parseAddresses(first.from)[0];
+
+    const body = {
+      personalizations: messages.map((message) => this.buildPersonalization(message)),
+      from: from
+        ? { email: from.address, ...(from.name ? { name: from.name } : {}) }
+        : { email: "" },
+      ...(first.replyTo
+        ? {
+            reply_to: parseAddresses(first.replyTo).map((addr) => ({
+              email: addr.address,
+              name: addr.name,
+            }))[0],
+          }
+        : {}),
+      content: this.buildContent(first),
     };
+
+    const response = await fetch("https://api.sendgrid.com/v3/mail/send", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const apiError = await response.text();
+      throw new SendGridError("SendGrid API error", response.status, apiError);
+    }
+
+    const messageId = response.headers.get("x-message-id") ?? "";
+    return messages.map((message) =>
+      this.toSendResult(message, messageId || message.messageId || ""),
+    );
   }
 
   /** Verifies the SendGrid API key by fetching the user profile. */

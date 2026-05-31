@@ -20,6 +20,10 @@ const entrypoints = [
   'src/transports/preview.ts',
   'src/transports/retry.ts',
   'src/plugins/template.ts',
+  'src/plugins/react.ts',
+  'src/react.ts',
+  'src/idempotency.ts',
+  'src/webhooks.ts',
   'src/auth/oauth2.ts',
   'src/pool/pool.ts',
 ]
@@ -42,6 +46,8 @@ await build({
     'node:path',
     'node:child_process',
     'cloudflare:sockets',
+    '@react-email/render',
+    'react',
   ],
 })
 

@@ -1,16 +1,19 @@
 # sently
 
-> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers.
+> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. v0.5.1
 
 ## What it does
 Sends emails via SMTP or HTTP APIs (Resend, SendGrid, Postmark, Mailgun, AWS SES, Brevo).
-Zero dependencies in core. HTTP stacks from ~4.3 KB via `sently/mailer`; SMTP via `sently` ~13.6 KB. Full TypeScript support.
+Zero runtime dependencies in core. HTTP stacks ~5.4 KB gzip (`sently/mailer` + transport); SMTP via `sently` ~14.1 KB. Full TypeScript support.
+
+Features: single send, `sendBulk` (native batch on Resend/SendGrid), idempotency decorator, webhook event parsers, optional React Email plugin, DKIM, OAuth2 SMTP, connection pool + rate limiting.
 
 ## When to use sently
 - You need to send email from Bun, Deno, or Cloudflare Workers
 - You want to replace Nodemailer with an ESM-native library
 - You need DKIM signing without external dependencies
 - You want to swap email providers without changing send code
+- You need delivery webhooks normalized across providers
 
 ## When NOT to use sently
 - You need SOCKS proxy support
@@ -19,6 +22,8 @@ Zero dependencies in core. HTTP stacks from ~4.3 KB via `sently/mailer`; SMTP vi
 
 ## Install
 bun add sently
+
+Optional peers (only if using React Email): `react`, `@react-email/render`
 
 ## Quick example (HTTP — smallest bundle)
 import { createMailer } from "sently/mailer"
@@ -39,11 +44,45 @@ const mailer = await createMailer({
 })
 await mailer.send({ from, to, subject, text: "Hello" })
 
+## Quick example (batch)
+const result = await mailer.sendBulk(messages, {
+  rateDelta: 2,       // batch HTTP requests per second (Resend default)
+  rateLimit: 1000,
+  onError: (msg, i, err) => console.error(i, err),
+})
+
+## Quick example (idempotency — wrap outside RetryTransport)
+import { IdempotencyTransport } from "sently/idempotency"
+import { RetryTransport } from "sently/transports/retry"
+
+const transport = new IdempotencyTransport(
+  new RetryTransport(new ResendTransport({ apiKey })),
+)
+
+## Quick example (webhooks)
+import { parseResendWebhook, verifyResendSignature } from "sently/webhooks"
+
+const events = parseResendWebhook(await request.json())
+
+## Quick example (React Email — sently/react only, not main barrel)
+import { reactPlugin } from "sently/react"
+
+const mailer = await createMailer({
+  transport: new ResendTransport({ apiKey }),
+  plugins: [reactPlugin()],
+})
+
+## Breaking (v0.5.1)
+- `reactPlugin` and `ReactMailOptions` are NOT exported from `"sently"`. Use `"sently/react"`.
+
 ## Subpath exports
-- sently — core + createMailer (SMTP-capable)
-- sently/mailer — createMailer for custom transports only (~4.3 KB with HTTP transport)
-- sently/dkim — DKIM signing (lazy-loaded by MIME when dkim option is set)
-- sently/transports/resend — ResendTransport
+- sently — createMailer (SMTP-capable main entry, ~14.1 KB). Does NOT export react plugin.
+- sently/mailer — createMailer for custom transports (~1.4 KB); sendBulk, plugins
+- sently/dkim — DKIM signing (lazy-loaded when dkim option set)
+- sently/react — reactPlugin, ReactMailOptions (optional peers)
+- sently/idempotency — IdempotencyTransport, MemoryIdempotencyStore
+- sently/webhooks — parse*Webhook, verifyResendSignature, verifyMailgunSignature, EmailEvent
+- sently/transports/resend — ResendTransport, RESEND_BATCH_MAX
 - sently/transports/sendgrid — SendGridTransport
 - sently/transports/postmark — PostmarkTransport
 - sently/transports/mailgun — MailgunTransport
@@ -57,8 +96,12 @@ await mailer.send({ from, to, subject, text: "Hello" })
 - sently/adapters/deno — DenoAdapter
 - sently/adapters/cf — CloudflareAdapter
 - sently/auth/oauth2 — OAuth2Client
-- sently/pool — SMTPPool
+- sently/pool — SMTPPool (rate limiting via rateDelta/rateLimit)
 - sently/plugins/template — templatePlugin, simpleEngine
+
+## SendResult optional fields
+- deduped?: true — idempotency cache hit (absent on normal sends)
+- batchError?: unknown — per-message failure inside a successful batch response
 
 ## Docs
 https://github.com/alialnaghmoush/sently

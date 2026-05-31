@@ -71,6 +71,16 @@ export interface MailOptions {
   template?: string;
   /** Template variables passed to the rendering engine */
   data?: Record<string, unknown>;
+  /**
+   * React element rendered to html + text by the sently/react plugin.
+   * Requires `@react-email/render`.
+   */
+  react?: unknown;
+  /**
+   * Idempotency key for deduplicating sends on retry or replay.
+   * When absent but `messageId` is set, transports derive a stable key from it.
+   */
+  idempotencyKey?: string;
 }
 
 // ─── Send Result ──────────────────────────────────────────
@@ -87,6 +97,10 @@ export interface SendResult {
   response: string;
   /** SMTP envelope used for delivery. */
   envelope: Envelope;
+  /** When true, the send was skipped because an idempotency key was already recorded. */
+  deduped?: boolean;
+  /** Set when this item failed inside an otherwise successful batch HTTP response. */
+  batchError?: unknown;
 }
 
 // ─── Envelope ─────────────────────────────────────────────
@@ -151,6 +165,16 @@ export interface VerifyResult {
 export interface Transport {
   /** Send a message through this transport. */
   send(options: MailOptions): Promise<SendResult>;
+  /**
+   * Send multiple messages in one provider batch request when supported.
+   * Messages with attachments may be excluded by the mailer and sent individually.
+   */
+  sendBatch?(messages: MailOptions[]): Promise<SendResult[]>;
+  /**
+   * When set, {@link Mailer.sendBulk} splits batch sends into chunks of this size.
+   * Omit when the transport sends all messages in one HTTP request (e.g. SendGrid).
+   */
+  batchMax?: number;
   /** Test connectivity and credentials without sending mail. */
   verify?(): Promise<VerifyResult>;
   /** Release resources held by the transport. */
@@ -306,6 +330,17 @@ export interface BulkSendOptions {
   onError?: (message: MailOptions, index: number, error: unknown) => void;
   /** Max concurrent sends. Defaults to pool maxConnections or 1 */
   concurrency?: number;
+  /** When true, stop sending after the first failure. Default: false */
+  stopOnError?: boolean;
+  /**
+   * Max batch HTTP requests per rate window (e.g. Resend default 2 req/s).
+   * Set to `0` to disable batch rate limiting. Default: `2`.
+   */
+  rateDelta?: number;
+  /** Rate limit window in milliseconds. Default: `1000`. */
+  rateLimit?: number;
+  /** Injectable clock for batch rate limiting (testing). */
+  now?: () => number;
 }
 
 /** Result of a batch send operation. */

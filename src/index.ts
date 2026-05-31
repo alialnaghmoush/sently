@@ -75,6 +75,18 @@ export {
   signDKIM,
 } from "./dkim.js";
 export type {
+  /** Key-value store for idempotency deduplication. */
+  IdempotencyStore,
+  /** Options for {@link IdempotencyTransport}. */
+  IdempotencyTransportOptions,
+} from "./idempotency.js";
+export {
+  /** Transport decorator that deduplicates sends on retry or replay. */
+  IdempotencyTransport,
+  /** In-memory idempotency store with optional TTL expiry. */
+  MemoryIdempotencyStore,
+} from "./idempotency.js";
+export type {
   /** Renders a template string with the given data object. */
   TemplateEngine,
   /** Configuration for the template plugin. */
@@ -113,6 +125,8 @@ export {
   PreviewTransport,
 } from "./transports/preview.js";
 export {
+  /** Maximum messages per Resend batch request. */
+  RESEND_BATCH_MAX,
   /** Error thrown when the Resend API returns a non-success response. */
   ResendError,
   /** Resend HTTP API transport. */
@@ -138,3 +152,24 @@ export {
   /** SMTP transport orchestrating adapter, MIME builder, and protocol logic. */
   SMTPTransport,
 } from "./transports/smtp.js";
+export type { EmailEvent } from "./webhooks.js";
+export {
+  /** Parse a Brevo webhook payload into normalized email events. */
+  parseBrevoWebhook,
+  /** Parse a Mailgun webhook payload into normalized email events. */
+  parseMailgunWebhook,
+  /** Parse a Postmark webhook payload into normalized email events. */
+  parsePostmarkWebhook,
+  /** Parse a Resend webhook payload into normalized email events. */
+  parseResendWebhook,
+  /** Parse a SendGrid Event Webhook payload into normalized email events. */
+  parseSendGridWebhook,
+  /** Parse an AWS SES SNS webhook payload into normalized email events. */
+  parseSesWebhook,
+  /** Verify a Mailgun webhook using the nested signature object. */
+  verifyMailgunPayload,
+  /** Verify a Mailgun webhook HMAC signature. */
+  verifyMailgunSignature,
+  /** Verify a Resend webhook Svix-style signature. */
+  verifyResendSignature,
+} from "./webhooks.js";

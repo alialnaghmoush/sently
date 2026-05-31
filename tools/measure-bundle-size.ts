@@ -33,6 +33,9 @@ const external = [
   "node:path",
   "node:child_process",
   "cloudflare:sockets",
+  "@react-email/render",
+  "react",
+  "react-dom",
 ];
 
 type ScenarioCategory = "stack" | "core" | "transport" | "adapter" | "optional";
@@ -119,6 +122,30 @@ const scenarios: Scenario[] = [
     label: "sently/dkim",
     description: "DKIM signing (lazy-loaded by MIME when `dkim` option set)",
     code: `import { signDKIM } from "../src/dkim.ts"; export const keep = signDKIM;`,
+    budget: false,
+  },
+  {
+    id: "sently/react",
+    category: "optional",
+    label: "sently/react",
+    description: "React Email plugin (`reactPlugin`) — excludes `@react-email/render` peer",
+    code: `import { reactPlugin } from "../src/react.ts"; export const keep = reactPlugin;`,
+    budget: false,
+  },
+  {
+    id: "sently/idempotency",
+    category: "optional",
+    label: "sently/idempotency",
+    description: "IdempotencyTransport decorator + MemoryIdempotencyStore",
+    code: `import { IdempotencyTransport } from "../src/idempotency.ts"; export const keep = IdempotencyTransport;`,
+    budget: false,
+  },
+  {
+    id: "sently/webhooks",
+    category: "optional",
+    label: "sently/webhooks",
+    description: "Provider webhook parsers (Resend, SendGrid, SES, …)",
+    code: `import { parseResendWebhook } from "../src/webhooks.ts"; export const keep = parseResendWebhook;`,
     budget: false,
   },
   // ─── Transports ───

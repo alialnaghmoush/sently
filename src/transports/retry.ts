@@ -120,4 +120,12 @@ export class RetryTransport implements Transport {
   async close(): Promise<void> {
     await this.inner.close?.();
   }
+
+  /** Delegates batch sends to the inner transport when available. */
+  async sendBatch(messages: MailOptions[]): Promise<SendResult[]> {
+    if (this.inner.sendBatch) {
+      return this.inner.sendBatch(messages);
+    }
+    return Promise.all(messages.map((message) => this.send(message)));
+  }
 }

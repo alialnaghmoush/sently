@@ -190,11 +190,12 @@ describe("SendGridTransport", () => {
     const body = JSON.parse(String(init.body));
     expect(body.personalizations).toEqual([
       {
-        to: [{ email: "recipient@example.com", name: undefined }],
+        to: [{ email: "recipient@example.com" }],
+        subject: "Test subject",
       },
     ]);
     expect(body.from).toEqual({ email: "sender@example.com", name: "Sender" });
-    expect(body.subject).toBe("Test subject");
+    expect(body.subject).toBeUndefined();
     expect(body.content).toEqual([
       { type: "text/plain", value: "Plain body" },
       { type: "text/html", value: "<p>HTML body</p>" },

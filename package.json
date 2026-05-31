@@ -1,6 +1,6 @@
 {
   "name": "sently",
-  "version": "0.4.7",
+  "version": "0.5.1",
   "description": "Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. ESM-native Nodemailer alternative with zero dependencies.",
   "type": "module",
   "sideEffects": false,
@@ -41,7 +41,11 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.16",
     "@modelcontextprotocol/sdk": "1.29.0",
+    "@react-email/render": "1.1.2",
     "@types/node": "25.9.1",
+    "@types/react": "19.2.15",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
     "typescript": "6.0.3"
   },
   "keywords": [
@@ -157,6 +161,30 @@
     "./dkim": {
       "import": "./dist/dkim.js",
       "types": "./dist/dkim.d.ts"
+    },
+    "./react": {
+      "import": "./dist/react.js",
+      "types": "./dist/react.d.ts"
+    },
+    "./idempotency": {
+      "import": "./dist/idempotency.js",
+      "types": "./dist/idempotency.d.ts"
+    },
+    "./webhooks": {
+      "import": "./dist/webhooks.js",
+      "types": "./dist/webhooks.d.ts"
+    }
+  },
+  "peerDependencies": {
+    "@react-email/render": ">=0.0.9",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@react-email/render": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
     }
   }
 }
