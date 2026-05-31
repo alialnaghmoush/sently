@@ -5,6 +5,7 @@
 
 /** Stable machine-readable error codes shared across providers. */
 export type SentlyErrorCode =
+  | "INVALID_CONFIG"
   | "SMTP_AUTH_FAILED"
   | "RATE_LIMITED"
   | "TIMEOUT"

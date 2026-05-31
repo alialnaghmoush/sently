@@ -5,7 +5,7 @@
  * @example
  * ```ts
  * import { BrevoTransport } from "sently/transports/brevo";
- * import { createMailer } from "sently";
+ * import { createMailer } from "sently/mailer";
  *
  * const mailer = await createMailer({
  *   transport: new BrevoTransport({ apiKey: "xkeysib-..." }),

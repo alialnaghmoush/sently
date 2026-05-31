@@ -328,7 +328,7 @@ export interface BulkSendOptions {
   onSuccess?: (message: MailOptions, index: number, result: SendResult) => void;
   /** Callback fired after each failed send (does not throw) */
   onError?: (message: MailOptions, index: number, error: unknown) => void;
-  /** Max concurrent sends. Defaults to pool maxConnections or 1 */
+  /** Max concurrent sends. Defaults to 1. */
   concurrency?: number;
   /** When true, stop sending after the first failure. Default: false */
   stopOnError?: boolean;
@@ -435,11 +435,8 @@ export interface TransportMailerOptions {
   hooks?: MailerHooks;
 }
 
-/**
- * Legacy union for transport or SMTP mailer options.
- * Use {@link TransportMailerOptions} with `sently/mailer` or SMTP config with `sently/smtp`.
- */
-export type CreateMailerOptions = TransportMailerOptions | (SMTPConfig & { hooks?: MailerHooks });
+/** Options for {@link createSMTPMailer} from `sently/smtp` or the main barrel. */
+export type SMTPMailerOptions = SMTPConfig & { hooks?: MailerHooks };
 
 // ─── Plugin ──────────────────────────────────────────────
 

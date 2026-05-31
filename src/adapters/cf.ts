@@ -5,9 +5,9 @@
  * @example
  * ```ts
  * import { CloudflareAdapter } from "sently/adapters/cf";
- * import { createMailer } from "sently";
+ * import { createSMTPMailer } from "sently/smtp";
  *
- * const mailer = await createMailer({
+ * const mailer = await createSMTPMailer({
  *   host: "smtp.example.com",
  *   adapter: new CloudflareAdapter(),
  *   auth: { user: "relay@example.com", pass: "secret" },

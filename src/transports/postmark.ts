@@ -5,7 +5,7 @@
  * @example
  * ```ts
  * import { PostmarkTransport } from "sently/transports/postmark";
- * import { createMailer } from "sently";
+ * import { createMailer } from "sently/mailer";
  *
  * const mailer = await createMailer({
  *   transport: new PostmarkTransport({ serverToken: process.env.POSTMARK_TOKEN! }),

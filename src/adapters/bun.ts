@@ -5,9 +5,9 @@
  * @example
  * ```ts
  * import { BunAdapter } from "sently/adapters/bun";
- * import { createMailer } from "sently";
+ * import { createSMTPMailer } from "sently/smtp";
  *
- * const mailer = await createMailer({
+ * const mailer = await createSMTPMailer({
  *   host: "smtp.example.com",
  *   adapter: new BunAdapter(),
  *   auth: { user: "you@example.com", pass: "secret" },

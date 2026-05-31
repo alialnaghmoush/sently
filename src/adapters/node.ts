@@ -5,9 +5,9 @@
  * @example
  * ```ts
  * import { NodeAdapter } from "sently/adapters/node";
- * import { createMailer } from "sently";
+ * import { createSMTPMailer } from "sently/smtp";
  *
- * const mailer = await createMailer({
+ * const mailer = await createSMTPMailer({
  *   host: "smtp.example.com",
  *   adapter: new NodeAdapter(),
  *   auth: { user: "you@example.com", pass: "secret" },

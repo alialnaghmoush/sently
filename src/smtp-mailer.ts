@@ -7,25 +7,23 @@
  *
  * @example
  * ```ts
- * import { createMailer } from "sently/smtp";
+ * import { createSMTPMailer } from "sently/smtp";
  *
- * const mailer = await createMailer({
+ * const mailer = await createSMTPMailer({
  *   host: "smtp.example.com",
  *   port: 587,
  *   auth: { user: "you@example.com", pass: "secret" },
  * });
  * ```
  */
-import type { Mailer, MailerHooks, SMTPConfig } from "./core/types.js";
+import type { Mailer, SMTPMailerOptions } from "./core/types.js";
 import { createDefaultAdapter } from "./detect.js";
 import { MailerImpl } from "./mailer.js";
 
 /**
  * Create a mailer from SMTP relay options (host, port, auth, pool, adapter).
  */
-export async function createSMTPMailer(
-  options: SMTPConfig & { hooks?: MailerHooks },
-): Promise<Mailer> {
+export async function createSMTPMailer(options: SMTPMailerOptions): Promise<Mailer> {
   const adapterOptions = {
     ...(options.secure !== undefined ? { secure: options.secure } : {}),
     ...(options.connectionTimeout !== undefined
@@ -50,6 +48,3 @@ export async function createSMTPMailer(
 
   return new MailerImpl(new SMTPTransport({ ...options, adapter }), options.plugins, options.hooks);
 }
-
-/** Alias for {@link createSMTPMailer} — preferred import path is `sently/smtp`. */
-export const createMailer = createSMTPMailer;

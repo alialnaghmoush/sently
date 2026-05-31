@@ -1,8 +1,22 @@
 import { describe, expect, test } from "bun:test";
-import type { MailOptions, SendResult, Transport } from "../../src/core/types.js";
+import { SentlyError } from "../../src/core/errors.js";
+import type { MailOptions, SendResult, Transport, TransportMailerOptions } from "../../src/core/types.js";
 import { createMailer } from "../../src/mailer.js";
 
 describe("sently/mailer", () => {
+  test("throws INVALID_CONFIG when SMTP config is passed without transport", async () => {
+    await expect(
+      createMailer({
+        host: "smtp.example.com",
+        port: 587,
+        auth: { user: "you@example.com", pass: "secret" },
+      } as TransportMailerOptions),
+    ).rejects.toMatchObject({
+      sentlyCode: "INVALID_CONFIG",
+      message: expect.stringContaining("createSMTPMailer"),
+    });
+  });
+
   test("createMailer wraps a custom transport", async () => {
     const transport: Transport = {
       send: async (): Promise<SendResult> => ({

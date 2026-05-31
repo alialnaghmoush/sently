@@ -83,7 +83,7 @@ const scenarios: Scenario[] = [
     category: "stack",
     label: "SMTP relay",
     description: "`sently` with `{ host, port, auth }`",
-    code: `import { createMailer } from "../src/smtp-mailer.ts"; export const keep = () => createMailer({ host: "smtp.example.com", port: 587, auth: { user: "u", pass: "p" } });`,
+    code: `import { createSMTPMailer } from "../src/smtp-mailer.ts"; export const keep = () => createSMTPMailer({ host: "smtp.example.com", port: 587, auth: { user: "u", pass: "p" } });`,
     budget: false,
   },
   {
@@ -91,7 +91,7 @@ const scenarios: Scenario[] = [
     category: "stack",
     label: "SMTP + Node adapter",
     description: "`sently` + `sently/adapters/node`",
-    code: `import { createMailer } from "../src/smtp-mailer.ts"; import { NodeAdapter } from "../src/adapters/node.ts"; export const keep = () => createMailer({ host: "smtp.example.com", port: 587, adapter: new NodeAdapter() });`,
+    code: `import { createSMTPMailer } from "../src/smtp-mailer.ts"; import { NodeAdapter } from "../src/adapters/node.ts"; export const keep = () => createSMTPMailer({ host: "smtp.example.com", port: 587, adapter: new NodeAdapter() });`,
     budget: false,
   },
   {
@@ -120,8 +120,8 @@ const scenarios: Scenario[] = [
     id: "sently/smtp",
     category: "core",
     label: "sently/smtp",
-    description: "SMTP `createMailer` — host/port, pool, adapters",
-    code: `import { createMailer } from "../src/smtp-mailer.ts"; export const keep = createMailer;`,
+    description: "SMTP `createSMTPMailer` — host/port, pool, adapters",
+    code: `import { createSMTPMailer } from "../src/smtp-mailer.ts"; export const keep = createSMTPMailer;`,
   },
   {
     id: "sently/dkim",

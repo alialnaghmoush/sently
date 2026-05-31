@@ -5,7 +5,7 @@
  * @example
  * ```ts
  * import { SendGridTransport } from "sently/transports/sendgrid";
- * import { createMailer } from "sently";
+ * import { createMailer } from "sently/mailer";
  *
  * const mailer = await createMailer({
  *   transport: new SendGridTransport({ apiKey: process.env.SENDGRID_API_KEY! }),

@@ -16,7 +16,7 @@ Default to using Bun instead of Node.js.
 
 ## About this repository
 
-**sently** (v0.6.x) — runtime-agnostic TypeScript email library for Node.js, Bun, Deno, and Cloudflare Workers. ESM-only, zero runtime dependencies. Nodemailer-style API with HTTP transports, SMTP, DKIM, OAuth2, pooling, plugins, idempotency, and webhook parsers.
+**sently** (v0.7.x) — runtime-agnostic TypeScript email library for Node.js, Bun, Deno, and Cloudflare Workers. ESM-only, zero runtime dependencies. Nodemailer-style API with HTTP transports, SMTP, DKIM, OAuth2, pooling, plugins, idempotency, and webhook parsers.
 
 ### Development commands
 
@@ -36,7 +36,7 @@ bun run mcp             # local MCP server (tools/mcp/)
 
 ```
 src/
-├── index.ts              # Main barrel — createMailer (SMTP-capable), types, OAuth2
+├── index.ts              # Main barrel — types, createMailer, createSMTPMailer, OAuth2, SentlyError
 ├── mailer.ts               # Lightweight createMailer for custom transports (~1.4 KB)
 ├── detect.ts               # Runtime auto-detection (node/bun/deno/cf)
 ├── dkim.ts                 # Public DKIM signing entry (lazy-loaded)
@@ -62,9 +62,9 @@ build.ts                    # Bun bundler entrypoints → dist/ + tsc declaratio
 
 | Import | Purpose |
 |--------|---------|
-| `sently` | Transport `createMailer`, `createSMTPMailer`, shared types, OAuth2 (~3 KB + optional SMTP) |
+| `sently` | Shared types, `createMailer`, `createSMTPMailer`, `detectRuntime`, OAuth2, `SentlyError` |
 | `sently/mailer` | `createMailer` for custom transports only — smallest HTTP stack |
-| `sently/smtp` | SMTP `createMailer` — host/port, pool, adapters (~15 KB) |
+| `sently/smtp` | `createSMTPMailer` — host/port, pool, adapters (~15 KB) |
 | `sently/dkim` | DKIM signing |
 | `sently/errors` | `SentlyError`, stable error codes |
 | `sently/idempotency` | `IdempotencyTransport`, `MemoryIdempotencyStore` |
@@ -77,7 +77,7 @@ build.ts                    # Bun bundler entrypoints → dist/ + tsc declaratio
 | `sently/plugins/template` | `templatePlugin`, `simpleEngine` |
 
 HTTP transports: import `createMailer` from `sently/mailer` (or `sently`) + transport subpath for smallest bundle.
-SMTP: import `createMailer` from `sently/smtp` with `host`/`port`/`auth`, or `createSMTPMailer` from `sently`.
+SMTP: import `createSMTPMailer` from `sently/smtp` with `host`/`port`/`auth`, or from `sently`.
 
 ### Code conventions
 

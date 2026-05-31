@@ -5,9 +5,9 @@
  * @example
  * ```ts
  * import { DenoAdapter } from "sently/adapters/deno";
- * import { createMailer } from "sently";
+ * import { createSMTPMailer } from "sently/smtp";
  *
- * const mailer = await createMailer({
+ * const mailer = await createSMTPMailer({
  *   host: "smtp.example.com",
  *   adapter: new DenoAdapter(),
  *   auth: { user: "you@example.com", pass: "secret" },

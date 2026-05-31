@@ -2,6 +2,38 @@
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-05-31
+
+### Breaking + Migration
+
+Summary:
+
+- **Transport-only `createMailer`** — passing SMTP config (`host` / `port` / `auth`) to
+  `createMailer` from `sently` or `sently/mailer` throws `SentlyError` (`INVALID_CONFIG`)
+  at factory time with guidance to use `createSMTPMailer`.
+- **`sently/smtp`** — removed `createMailer` alias; export is **`createSMTPMailer` only**
+  (also available from main `"sently"`).
+- **`CreateMailerOptions`** removed — use **`TransportMailerOptions`** or
+  **`SMTPMailerOptions`** instead.
+- **Main barrel slimmed** — `"sently"` no longer re-exports transports, webhook parsers,
+  idempotency, DKIM helpers, template plugin, or `SMTPPool`. Import from subpaths
+  (e.g. `sently/transports/resend`, `sently/webhooks`).
+- **Prior breaks documented in one place:** v0.5.1 react barrel move; v0.6.2
+  transport-only main `createMailer`; v0.5.x bulk-send behavior (native batch, default
+  2 req/s throttle, `SendResult.batchError`).
+
+### Added
+
+- **`INVALID_CONFIG`** stable error code for misconfigured mailer factories
+- **`SMTPMailerOptions`** type for SMTP factory config
+- README decision-tree section and Microsoft 365 OAuth2 example
+
+### Changed
+
+- **`BulkSendOptions.concurrency` TSDoc** — documents default `1` (matches implementation)
+- Bundle size budgets updated for slimmer main entry
+- JSDoc and README examples use explicit subpath imports
+
 ## [0.6.2] — 2026-05-31
 
 ### Added

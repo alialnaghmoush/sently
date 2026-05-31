@@ -14,6 +14,8 @@ bun add sently
 [![tests](https://img.shields.io/badge/tests-passing-brightgreen)](#)
 [![GitHub](https://img.shields.io/github/stars/alialnaghmoush/sently?style=social&label=GitHub)](https://github.com/alialnaghmoush/sently)
 
+> **Pre-1.0 — API may change.** sently is pre-1.0 and the public API is still being refined ahead of a stable v1.0.0. Breaking changes can land in any 0.x release; review the [CHANGELOG](CHANGELOG.md) before upgrading. Pin an exact version (e.g. `"sently": "0.7.0"`) for production until v1.0.0.
+
 ---
 
 ## Why not Nodemailer?
@@ -98,7 +100,7 @@ bunx jsr add @alialnaghmoush/sently
 
 ```typescript
 import { createMailer } from "sently/mailer"; // HTTP transports (~3 KB)
-import { createMailer } from "sently/smtp"; // SMTP host/port (~15 KB)
+import { createSMTPMailer } from "sently/smtp"; // SMTP host/port (~15 KB)
 // Or: import { createSMTPMailer } from "sently";
 ```
 
@@ -109,9 +111,9 @@ import { createMailer } from "sently/smtp"; // SMTP host/port (~15 KB)
 ### SMTP with auto-detected adapter
 
 ```typescript
-import { createMailer } from "sently/smtp";
+import { createSMTPMailer } from "sently/smtp";
 
-const mailer = await createMailer({
+const mailer = await createSMTPMailer({
   host: "smtp.example.com",
   port: 587,
   auth: { user: "you@example.com", pass: "secret" },
@@ -149,12 +151,12 @@ await mailer.send({
 ### Cloudflare Worker
 
 ```typescript
-import { createMailer } from "sently/smtp";
+import { createSMTPMailer } from "sently/smtp";
 import { CloudflareAdapter } from "sently/adapters/cf";
 
 export default {
   async fetch() {
-    const mailer = await createMailer({
+    const mailer = await createSMTPMailer({
       host: "smtp.example.com",
       port: 587,
       auth: { user: "relay@example.com", pass: "secret" },
@@ -179,17 +181,18 @@ export default {
 
 | Runtime | Import | Notes |
 |---------|--------|-------|
-| Node.js (auto) | `createMailer(config)` | Auto-detected |
+| Node.js (auto) | `createSMTPMailer` from `sently/smtp` | Auto-detected adapter |
 | Node.js (explicit) | `sently/adapters/node` → `NodeAdapter` | Reference implementation |
-| Bun (auto) | `createMailer(config)` | Auto-detected |
+| Bun (auto) | `createSMTPMailer` from `sently/smtp` | Auto-detected adapter |
 | Bun (explicit) | `sently/adapters/bun` → `BunAdapter` | Node compat layer |
 | Deno | `sently/adapters/deno` → `DenoAdapter` | Native `Deno.startTls` |
 | Cloudflare Workers | `sently/adapters/cf` → `CloudflareAdapter` | `cloudflare:sockets` |
 
 ```typescript
+import { createSMTPMailer } from "sently/smtp";
 import { NodeAdapter } from "sently/adapters/node";
 
-const mailer = await createMailer({
+const mailer = await createSMTPMailer({
   host: "smtp.example.com",
   adapter: new NodeAdapter({ secure: false }),
   auth: { user: "you@example.com", pass: "secret" },
@@ -218,7 +221,7 @@ const mailer = await createMailer({ transport });
 await mailer.verify(); // test connection + auth
 ```
 
-Use `sently/mailer` instead of `sently` when passing `{ transport }` — keeps HTTP-only bundles ~10 KB smaller.
+For relay config (`host` / `port` / `auth`), prefer [`sently/smtp`](#smtp-with-auto-detected-adapter). Use `mailer` + `SMTPTransport` when you need an explicit adapter or transport-level options.
 
 **AUTH methods:** XOAUTH2, CRAM-MD5, LOGIN, and PLAIN (auto-negotiated from EHLO unless `auth.type` is set).
 
@@ -227,7 +230,9 @@ Use `sently/mailer` instead of `sently` when passing `{ transport }` — keeps H
 #### DKIM signing
 
 ```typescript
-const mailer = await createMailer({
+import { createSMTPMailer } from "sently/smtp";
+
+const mailer = await createSMTPMailer({
   host: "smtp.example.com",
   auth: { user: "you@example.com", pass: "secret" },
   dkim: {
@@ -243,9 +248,9 @@ Pass `dkim` on SMTP config or use `signDKIM` from `sently/dkim` directly. MIME l
 #### Gmail OAuth2 (XOAUTH2)
 
 ```typescript
-import { OAuth2Client } from "sently/auth/oauth2";
+import { createSMTPMailer } from "sently/smtp";
 
-const mailer = await createMailer({
+const mailer = await createSMTPMailer({
   host: "smtp.gmail.com",
   port: 465,
   secure: true,
@@ -262,12 +267,35 @@ const mailer = await createMailer({
 });
 ```
 
-Microsoft 365 uses the same `OAuth2Client` — pass `tokenUrl: MICROSOFT_TOKEN_URL` (from `sently/auth/oauth2`) on the `oauth2` config.
+#### Microsoft 365 OAuth2 (XOAUTH2)
+
+```typescript
+import { MICROSOFT_TOKEN_URL } from "sently";
+import { createSMTPMailer } from "sently/smtp";
+
+const mailer = await createSMTPMailer({
+  host: "smtp.office365.com",
+  port: 587,
+  auth: {
+    type: "OAUTH2",
+    user: "you@yourtenant.onmicrosoft.com",
+    oauth2: {
+      user: "you@yourtenant.onmicrosoft.com",
+      clientId: process.env.AZURE_CLIENT_ID!,
+      clientSecret: process.env.AZURE_CLIENT_SECRET!,
+      refreshToken: process.env.AZURE_REFRESH_TOKEN!,
+      tokenUrl: MICROSOFT_TOKEN_URL,
+    },
+  },
+});
+```
 
 #### Connection pooling
 
 ```typescript
-const mailer = await createMailer({
+import { createSMTPMailer } from "sently/smtp";
+
+const mailer = await createSMTPMailer({
   host: "smtp.example.com",
   pool: true,
   maxConnections: 5,
@@ -388,7 +416,7 @@ const mailer = await createMailer({
 
 Hooks are fully optional and zero-cost when unset. A throwing hook does **not** break the send — in non-production environments the error is logged with `console.warn` and the send continues. Pair `onRetry` with `RetryTransport` for per-attempt retry metrics.
 
-Works with both `sently/mailer` (`{ transport, hooks }`) and SMTP config (`{ host, auth, hooks }`).
+Works with both `sently/mailer` (`{ transport, hooks }`) and SMTP config via `createSMTPMailer` (`{ host, auth, hooks }`).
 
 ### IdempotencyTransport
 
@@ -423,14 +451,14 @@ Plugins transform `MailOptions` before the transport builds and sends the messag
 
 ```typescript
 import type { MailOptions } from "sently";
-import { createMailer } from "sently/smtp";
+import { createSMTPMailer } from "sently/smtp";
 
 const addFooter = (options: MailOptions) => ({
   ...options,
   html: (options.html ?? "") + '<p style="color:#999">Unsubscribe</p>',
 });
 
-const mailer = await createMailer({
+const mailer = await createSMTPMailer({
   host: "smtp.resend.com",
   port: 465,
   secure: true,
@@ -595,7 +623,8 @@ On Cloudflare Workers and browsers, use `content: Uint8Array` — `attachment.pa
 All transport errors extend `SentlyError` for unified handling while preserving existing class names and properties:
 
 ```typescript
-import { SentlyError, SMTPError } from "sently";
+import { SentlyError } from "sently/errors";
+import { SMTPError } from "sently/transports/smtp";
 import { ResendError } from "sently/transports/resend";
 // Each HTTP transport exports its own error class:
 // SendGridError  → sently/transports/sendgrid
@@ -686,10 +715,31 @@ import { createMailer } from "sently/mailer";
 import { ResendTransport } from "sently/transports/resend";
 
 // SMTP
-import { createMailer } from "sently/smtp";
+import { createSMTPMailer } from "sently/smtp";
 ```
 
-Main `createMailer` from `sently` is transport-only (~2.4 KB). Add-ons (`sently/dkim`, `sently/webhooks`, `sently/idempotency`, `sently/react`) are separate subpaths. SMTP adapters are auto-loaded at runtime unless you pass `adapter` explicitly.
+Main `"sently"` exports shared types, `createMailer` (transport), `createSMTPMailer`, `detectRuntime`, OAuth2, and `SentlyError`. Transports, webhooks, idempotency, DKIM, and plugins are separate subpaths only.
+
+---
+
+## Choosing an entrypoint
+
+```
+How do you send mail?
+│
+├─ HTTP API (Resend, SendGrid, …)
+│    import { createMailer } from "sently/mailer"
+│    import { ResendTransport } from "sently/transports/resend"
+│    createMailer({ transport: new ResendTransport({ apiKey }) })
+│
+├─ SMTP relay (host / port / auth)
+│    import { createSMTPMailer } from "sently/smtp"
+│    createSMTPMailer({ host, port, auth })
+│
+└─ Custom / decorated transport (Retry, Idempotency, Preview)
+     import { createMailer } from "sently/mailer"
+     createMailer({ transport: new RetryTransport(inner) })
+```
 
 ---
 
@@ -697,11 +747,11 @@ Main `createMailer` from `sently` is transport-only (~2.4 KB). Add-ons (`sently/
 
 | Nodemailer | sently |
 |------------|--------|
-| `nodemailer.createTransport({...})` | `await createMailer({...})` |
+| `nodemailer.createTransport({...})` | `await createSMTPMailer({...})` or `createMailer({ transport })` |
 | `transporter.sendMail(options)` | `mailer.send(options)` |
 | `transporter.verify()` | `mailer.verify()` |
 | `options.attachments[].path` | Same (Node/Bun/Deno); use `content` on edge |
-| `import nodemailer from 'nodemailer'` | `import { createMailer } from 'sently/mailer'` (HTTP) or `'sently/smtp'` (SMTP) |
+| `import nodemailer from 'nodemailer'` | `import { createMailer } from 'sently/mailer'` (HTTP) or `createSMTPMailer` from `'sently/smtp'` |
 | CommonJS | ESM only |
 | Node.js only | Node, Bun, Deno, CF Workers |
 
@@ -716,6 +766,8 @@ import type {
   SendResult,
   Attachment,
   SMTPConfig,
+  SMTPMailerOptions,
+  TransportMailerOptions,
 } from "sently";
 ```
 

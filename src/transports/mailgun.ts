@@ -6,7 +6,7 @@
  * @example
  * ```ts
  * import { MailgunTransport } from "sently/transports/mailgun";
- * import { createMailer } from "sently";
+ * import { createMailer } from "sently/mailer";
  *
  * const mailer = await createMailer({
  *   transport: new MailgunTransport({

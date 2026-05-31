@@ -23,6 +23,7 @@
  * ```
  */
 import { extractEmails } from "./core/address.js";
+import { SentlyError } from "./core/errors.js";
 import { runPlugins } from "./core/plugin.js";
 import { RateLimiter } from "./core/rate-limiter.js";
 import type {
@@ -50,10 +51,17 @@ function isRetryHookTransport(transport: Transport): transport is RetryHookTrans
   return typeof (transport as RetryHookTransport).setMailerOnRetry === "function";
 }
 
+const TRANSPORT_ONLY_SMTP_CONFIG_MESSAGE =
+  "SMTP config passed to transport-only createMailer. Use: import { createSMTPMailer } from 'sently' or import { createSMTPMailer } from 'sently/smtp'.";
+
 /**
  * Create a mailer that wraps a custom {@link Transport} (HTTP API, preview, retry, etc.).
  */
 export async function createMailer(options: TransportMailerOptions): Promise<Mailer> {
+  if (options.transport === undefined || ("host" in options && options.transport === undefined)) {
+    throw new SentlyError(TRANSPORT_ONLY_SMTP_CONFIG_MESSAGE, "INVALID_CONFIG");
+  }
+
   return new MailerImpl(options.transport, options.plugins ?? [], options.hooks);
 }
 

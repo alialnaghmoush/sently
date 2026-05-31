@@ -6,7 +6,7 @@
  * ```ts
  * import { SMTPTransport } from "sently/transports/smtp";
  * import { NodeAdapter } from "sently/adapters/node";
- * import { createMailer } from "sently";
+ * import { createMailer } from "sently/mailer";
  *
  * const mailer = await createMailer({
  *   transport: new SMTPTransport({
@@ -372,5 +372,6 @@ async function resolveMX(domain: string): Promise<string> {
   return records[0]?.exchange ?? domain;
 }
 
+export { SMTPError } from "../core/smtp.js";
 /** @internal Test helper for raw line writes. */
 export { encodeLine, readSMTPResponse };

@@ -1,6 +1,6 @@
 # sently
 
-> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. v0.6.2
+> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. v0.7.0
 
 ## What it does
 Sends emails via SMTP or HTTP APIs (Resend, SendGrid, Postmark, Mailgun, AWS SES, Brevo).
@@ -35,9 +35,9 @@ const mailer = await createMailer({
 await mailer.send({ from, to, subject, html })
 
 ## Quick example (SMTP)
-import { createMailer } from "sently/smtp"
+import { createSMTPMailer } from "sently/smtp"
 
-const mailer = await createMailer({
+const mailer = await createSMTPMailer({
   host: "smtp.example.com",
   port: 587,
   auth: { user: "you@example.com", pass: "secret" },
@@ -66,22 +66,29 @@ const events = parseResendWebhook(await request.json())
 
 ## Quick example (React Email — sently/react only, not main barrel)
 import { reactPlugin } from "sently/react"
+import { createMailer } from "sently/mailer"
 
 const mailer = await createMailer({
   transport: new ResendTransport({ apiKey }),
   plugins: [reactPlugin()],
 })
 
+## Breaking (v0.7.0)
+- Main `"sently"` barrel: types, createMailer, createSMTPMailer, detectRuntime, OAuth2, SentlyError only
+- `sently/smtp` exports createSMTPMailer (no createMailer alias)
+- CreateMailerOptions removed → TransportMailerOptions / SMTPMailerOptions
+- SMTP config on transport createMailer → INVALID_CONFIG at factory time
+
 ## Breaking (v0.6.2)
-- Main `createMailer` from `"sently"` is transport-only (~2.4 KB gzip). SMTP relay: `"sently/smtp"` or `createSMTPMailer` from `"sently"`.
+- Main `createMailer` from `"sently"` is transport-only. SMTP: `createSMTPMailer` from `"sently/smtp"` or `"sently"`.
 
 ## Breaking (v0.5.1)
 - `reactPlugin` and `ReactMailOptions` are NOT exported from `"sently"`. Use `"sently/react"`.
 
 ## Subpath exports
-- sently — transport `createMailer`, `createSMTPMailer`, types, OAuth2 (~2.4 KB main createMailer). Does NOT export react plugin.
+- sently — types, transport createMailer, createSMTPMailer, detectRuntime, OAuth2, SentlyError
 - sently/mailer — createMailer for custom transports (~2.4 KB); sendBulk, plugins
-- sently/smtp — SMTP createMailer (host/port, pool, adapters, ~15 KB)
+- sently/smtp — createSMTPMailer (host/port, pool, adapters, ~15 KB)
 - sently/dkim — DKIM signing (lazy-loaded when dkim option set)
 - sently/react — reactPlugin, ReactMailOptions (optional peers)
 - sently/idempotency — IdempotencyTransport, MemoryIdempotencyStore
@@ -93,7 +100,7 @@ const mailer = await createMailer({
 - sently/transports/mailgun — MailgunTransport
 - sently/transports/ses — SESTransport
 - sently/transports/brevo — BrevoTransport
-- sently/transports/smtp — SMTPTransport
+- sently/transports/smtp — SMTPTransport, SMTPError
 - sently/transports/retry — RetryTransport
 - sently/transports/preview — PreviewTransport
 - sently/adapters/node — NodeAdapter

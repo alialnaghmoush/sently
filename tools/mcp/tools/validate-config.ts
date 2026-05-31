@@ -1,4 +1,4 @@
-import type { CreateMailerOptions } from "../../../src/core/types.js";
+import type { SMTPMailerOptions, TransportMailerOptions } from "../../../src/core/types.js";
 
 export interface ValidateConfigResult {
   valid: boolean;
@@ -7,18 +7,25 @@ export interface ValidateConfigResult {
 }
 
 /**
- * Validate a createMailer config and return errors and warnings.
+ * Validate a transport-only mailer config (`sently/mailer` or main `createMailer`).
  */
-export function validateConfig(input: CreateMailerOptions): ValidateConfigResult {
+export function validateTransportConfig(input: TransportMailerOptions): ValidateConfigResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  if ("transport" in input) {
-    if (!input.transport) {
-      errors.push("transport is required when using custom transport");
-    }
-    return { valid: errors.length === 0, errors, warnings };
+  if (!input.transport) {
+    errors.push("transport is required when using custom transport");
   }
+
+  return { valid: errors.length === 0, errors, warnings };
+}
+
+/**
+ * Validate an SMTP mailer config (`sently/smtp` or `createSMTPMailer` from `sently`).
+ */
+export function validateSmtpConfig(input: SMTPMailerOptions): ValidateConfigResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
 
   if (!input.host) {
     errors.push("host is required");
@@ -36,8 +43,8 @@ export function validateConfig(input: CreateMailerOptions): ValidateConfigResult
     errors.push("auth.user is required when auth is set");
   }
 
-  if (input.auth && !input.auth.pass) {
-    errors.push("auth.pass is required when auth is set");
+  if (input.auth && !input.auth.pass && input.auth.type !== "OAUTH2") {
+    errors.push("auth.pass is required when auth is set (except OAUTH2)");
   }
 
   if (input.direct) {
@@ -45,6 +52,18 @@ export function validateConfig(input: CreateMailerOptions): ValidateConfigResult
   }
 
   return { valid: errors.length === 0, errors, warnings };
+}
+
+/**
+ * Validate a mailer config — transport-shaped or SMTP-shaped.
+ */
+export function validateConfig(
+  input: TransportMailerOptions | SMTPMailerOptions,
+): ValidateConfigResult {
+  if ("transport" in input) {
+    return validateTransportConfig(input);
+  }
+  return validateSmtpConfig(input);
 }
 
 export const validateConfigSchema = {
