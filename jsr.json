@@ -1,6 +1,6 @@
 {
   "name": "@alialnaghmoush/sently",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. ESM-native Nodemailer alternative with zero dependencies.",
   "license": "MIT",
   "publish": {
@@ -38,6 +38,15 @@
     "./transports/brevo": "./src/transports/brevo.ts",
     "./transports/preview": "./src/transports/preview.ts",
     "./transports/retry": "./src/transports/retry.ts",
+    "./transports/fallback": "./src/transports/fallback.ts",
+    "./transports/weighted-fallback": "./src/transports/weighted-fallback.ts",
+    "./transports/cloudflare-email": "./src/transports/cloudflare-email.ts",
+    "./transports/mailersend": "./src/transports/mailersend.ts",
+    "./transports/plunk": "./src/transports/plunk.ts",
+    "./transports/sparkpost": "./src/transports/sparkpost.ts",
+    "./transports/mailtrap": "./src/transports/mailtrap.ts",
+    "./transports/loops": "./src/transports/loops.ts",
+    "./observability": "./src/observability/console.ts",
     "./plugins/template": "./src/plugins/template.ts",
     "./auth/oauth2": "./src/auth/oauth2.ts",
     "./pool": "./src/pool/pool.ts",

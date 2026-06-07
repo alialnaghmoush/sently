@@ -1,43 +1,43 @@
 /**
  * @module
- * Brevo (formerly Sendinblue) HTTP transport for sently.
+ * MailerSend HTTP transport for sently.
  *
  * @example
  * ```ts
- * import { BrevoTransport } from "sently/transports/brevo";
+ * import { MailerSendTransport } from "sently/transports/mailersend";
  * import { createMailer } from "sently/mailer";
  *
  * const mailer = await createMailer({
- *   transport: new BrevoTransport({ apiKey: "xkeysib-..." }),
+ *   transport: new MailerSendTransport({ apiToken: process.env.MAILERSEND_API_TOKEN! }),
  * });
  * ```
  */
 import { extractEmails, parseAddresses } from "../core/address.js";
 import { encodeBase64 } from "../core/base64.js";
 import { httpStatusToSentlyCode, SentlyError } from "../core/errors.js";
-import type {
-  BrevoConfig,
-  MailOptions,
-  SendResult,
-  Transport,
-  VerifyResult,
-} from "../core/types.js";
+import type { MailOptions, SendResult, Transport, VerifyResult } from "../core/types.js";
 import { resolveAttachments } from "./resolve-attachments.js";
 
-/** Error thrown when the Brevo API returns a non-success response. */
-export class BrevoError extends SentlyError {
-  /** Creates a Brevo API error with status code and error code. */
+/** MailerSend HTTP API configuration. */
+export interface MailerSendConfig {
+  /** MailerSend API token for Bearer authentication. */
+  apiToken: string;
+}
+
+/** Error thrown when the MailerSend API returns a non-success response. */
+export class MailerSendError extends SentlyError {
+  /** Creates a MailerSend API error with status code. */
   constructor(
     message: string,
     public readonly statusCode: number,
-    apiCode: string,
+    public readonly apiError: unknown,
   ) {
     super(message, httpStatusToSentlyCode(statusCode), {
       statusCode,
-      provider: "brevo",
+      provider: "mailersend",
+      cause: apiError,
     });
-    this.name = "BrevoError";
-    this.code = apiCode;
+    this.name = "MailerSendError";
   }
 }
 
@@ -49,26 +49,25 @@ function toAddressObjects(input: MailOptions["to"]): Array<{ email: string; name
 }
 
 /**
- * Brevo HTTP API transport.
+ * MailerSend HTTP API transport.
  */
-export class BrevoTransport implements Transport {
-  readonly provider = "brevo";
+export class MailerSendTransport implements Transport {
+  readonly provider = "mailersend";
 
-  /** Brevo API key used for Authorization. */
-  private readonly apiKey: string;
+  private readonly apiToken: string;
 
-  /** Creates a Brevo transport with the given API key. */
-  constructor(config: BrevoConfig) {
-    this.apiKey = config.apiKey;
+  /** Creates a MailerSend transport with the given API token. */
+  constructor(config: MailerSendConfig) {
+    this.apiToken = config.apiToken;
   }
 
-  /** Sends an email via the Brevo HTTP API. */
+  /** Sends an email via the MailerSend HTTP API. */
   async send(options: MailOptions): Promise<SendResult> {
     const attachments = await resolveAttachments(options.attachments);
     const from = parseAddresses(options.from)[0];
 
     const body: Record<string, unknown> = {
-      sender: from
+      from: from
         ? { email: from.address, ...(from.name ? { name: from.name } : {}) }
         : { email: "" },
       to: toAddressObjects(options.to),
@@ -77,7 +76,7 @@ export class BrevoTransport implements Transport {
       ...(options.bcc ? { bcc: toAddressObjects(options.bcc) } : {}),
       ...(options.replyTo
         ? {
-            replyTo: (() => {
+            reply_to: (() => {
               const reply = parseAddresses(options.replyTo as MailOptions["to"])[0];
               return reply
                 ? { email: reply.address, ...(reply.name ? { name: reply.name } : {}) }
@@ -85,50 +84,51 @@ export class BrevoTransport implements Transport {
             })(),
           }
         : {}),
-      ...(options.html ? { htmlContent: options.html } : {}),
-      ...(options.text ? { textContent: options.text } : {}),
+      ...(options.text ? { text: options.text } : {}),
+      ...(options.html ? { html: options.html } : {}),
       ...(attachments.length > 0
         ? {
-            attachment: attachments.map((att) => ({
-              name: att.filename,
+            attachments: attachments.map((att) => ({
+              filename: att.filename,
               content:
                 att.content instanceof Uint8Array
                   ? encodeBase64(att.content).replace(/\r\n/g, "")
                   : att.content,
+              disposition: "attachment",
             })),
           }
         : {}),
     };
 
-    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    const response = await fetch("https://api.mailersend.com/v1/email", {
       method: "POST",
       headers: {
-        "api-key": this.apiKey,
+        Authorization: `Bearer ${this.apiToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
     });
 
-    const payload = (await response.json()) as {
-      messageId?: string;
-      message?: string;
-      code?: string;
-    };
-
     if (!response.ok) {
-      throw new BrevoError(
-        payload.message ?? "Brevo API error",
+      const payload = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        errors?: unknown;
+      };
+      throw new MailerSendError(
+        payload.message ?? "MailerSend API error",
         response.status,
-        payload.code ?? "",
+        payload,
       );
     }
 
+    const messageId = response.headers.get("x-message-id") ?? "";
     const toEmails = extractEmails(options.to);
+
     return {
-      messageId: payload.messageId ?? "",
+      messageId,
       accepted: toEmails,
       rejected: [],
-      response: payload.messageId ?? "sent",
+      response: messageId || "accepted",
       envelope: {
         from: from?.address ?? "",
         to: toEmails,
@@ -136,34 +136,29 @@ export class BrevoTransport implements Transport {
     };
   }
 
-  /** Verifies the Brevo API key by fetching account info. */
+  /** Verifies the MailerSend API token by listing domains. */
   async verify(): Promise<VerifyResult> {
     try {
-      const response = await fetch("https://api.brevo.com/v3/account", {
+      const response = await fetch("https://api.mailersend.com/v1/domains", {
         headers: {
-          "api-key": this.apiKey,
+          Authorization: `Bearer ${this.apiToken}`,
         },
       });
 
-      const payload = (await response.json()) as { companyName?: string; message?: string };
-
       if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { message?: string };
         return {
           ok: false,
-          provider: "brevo",
+          provider: "mailersend",
           message: payload.message ?? `HTTP ${response.status}`,
         };
       }
 
-      return {
-        ok: true,
-        provider: "brevo",
-        ...(payload.companyName ? { message: payload.companyName } : {}),
-      };
+      return { ok: true, provider: "mailersend", message: "API token is valid" };
     } catch (err) {
       return {
         ok: false,
-        provider: "brevo",
+        provider: "mailersend",
         message: err instanceof Error ? err.message : String(err),
       };
     }

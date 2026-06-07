@@ -212,6 +212,27 @@ const scenarios: Scenario[] = [
     description: "Dev preview to disk",
     code: `import { PreviewTransport } from "../src/transports/preview.ts"; export const keep = PreviewTransport;`,
   },
+  {
+    id: "sently/transports/fallback",
+    category: "transport",
+    label: "transports/fallback",
+    description: "Provider failover decorator",
+    code: `import { FallbackTransport } from "../src/transports/fallback.ts"; export const keep = FallbackTransport;`,
+  },
+  {
+    id: "sently/transports/weighted-fallback",
+    category: "transport",
+    label: "transports/weighted-fallback",
+    description: "Weighted provider routing with failover",
+    code: `import { WeightedFallbackTransport } from "../src/transports/weighted-fallback.ts"; export const keep = WeightedFallbackTransport;`,
+  },
+  {
+    id: "sently/transports/cloudflare-email",
+    category: "transport",
+    label: "transports/cloudflare-email",
+    description: "Cloudflare Workers send_email binding",
+    code: `import { CloudflareEmailTransport } from "../src/transports/cloudflare-email.ts"; export const keep = CloudflareEmailTransport;`,
+  },
   // ─── Adapters (SMTP socket layer; loaded at runtime by default) ───
   {
     id: "sently/adapters/node",

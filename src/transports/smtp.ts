@@ -47,6 +47,8 @@ import { resolveAttachments } from "./resolve-attachments.js";
  * SMTP transport orchestrating adapter, MIME builder, and protocol logic.
  */
 export class SMTPTransport implements Transport {
+  readonly provider = "smtp";
+
   /** Resolved SMTP configuration with defaults applied. */
   private readonly config: ResolvedSMTPConfig;
   /** Active socket adapter for the current session, if any. */

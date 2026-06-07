@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-06-07
+
+### Added
+
+- **`FallbackTransport`** (`sently/transports/fallback`) — provider failover through an ordered transport list; composes with `RetryTransport`; `FallbackError.attempts` records `{ provider, error }` per failed attempt
+- **Five HTTP providers:** MailerSend, Plunk, SparkPost, Mailtrap, Loops (`sently/transports/mailersend`, `plunk`, `sparkpost`, `mailtrap`, `loops`)
+- **`SendResult.provider`** and **`SendResult.providerIndex`** — set by `FallbackTransport` to identify which provider handled the send
+- **`durationMs`** optional third argument on `onSuccess` / `onError` mailer hooks (backward compatible)
+- **`consoleObserver`** (`sently/observability`) — ready-made console logging hooks; also exported from main `"sently"` barrel
+- **Mailer `onFallback` hook** — `onFallback(ctx, failedProvider, nextProvider, error)` on `MailerHooks`; wired automatically when using `FallbackTransport` or `WeightedFallbackTransport`
+- **Provider cooldowns** — `FallbackTransport(transports, { cooldownMs })` skips unhealthy providers until cooldown expires; shared across `WeightedFallbackTransport` sends
+- **`verifyAll()`** on `FallbackTransport` / `WeightedFallbackTransport` — per-provider `{ ok, providers: [{ provider, ok, message? }] }` result; `verify()` still returns the first healthy provider
+- **`WeightedFallbackTransport`** (`sently/transports/weighted-fallback`) — weighted-random primary provider with failover through remaining providers
+- **`Transport.provider`** — stable provider identifier on every transport class; `getProviderLabel()` prefers it over `constructor.name` inference
+- **`CloudflareEmailTransport`** (`sently/transports/cloudflare-email`) — Workers `send_email` binding transport (not fetch HTTP)
+
 ## [0.7.2] — 2026-05-31
 
 ### Fixed

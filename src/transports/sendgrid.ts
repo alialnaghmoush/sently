@@ -52,6 +52,8 @@ export class SendGridError extends SentlyError {
  * SendGrid v3 HTTP API transport.
  */
 export class SendGridTransport implements Transport {
+  readonly provider = "sendgrid";
+
   /** SendGrid API key for Bearer authentication. */
   private readonly apiKey: string;
 

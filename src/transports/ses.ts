@@ -48,6 +48,8 @@ export class SESError extends SentlyError {
  * AWS SES v2 HTTP API transport.
  */
 export class SESTransport implements Transport {
+  readonly provider = "ses";
+
   /** AWS access key ID for SigV4 signing. */
   private readonly accessKeyId: string;
   /** AWS secret access key for SigV4 signing. */

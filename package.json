@@ -1,6 +1,6 @@
 {
   "name": "sently",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. ESM-native Nodemailer alternative with zero dependencies.",
   "type": "module",
   "sideEffects": false,
@@ -141,6 +141,42 @@
     "./transports/retry": {
       "import": "./dist/transports/retry.js",
       "types": "./dist/transports/retry.d.ts"
+    },
+    "./transports/fallback": {
+      "import": "./dist/transports/fallback.js",
+      "types": "./dist/transports/fallback.d.ts"
+    },
+    "./transports/weighted-fallback": {
+      "import": "./dist/transports/weighted-fallback.js",
+      "types": "./dist/transports/weighted-fallback.d.ts"
+    },
+    "./transports/cloudflare-email": {
+      "import": "./dist/transports/cloudflare-email.js",
+      "types": "./dist/transports/cloudflare-email.d.ts"
+    },
+    "./transports/mailersend": {
+      "import": "./dist/transports/mailersend.js",
+      "types": "./dist/transports/mailersend.d.ts"
+    },
+    "./transports/plunk": {
+      "import": "./dist/transports/plunk.js",
+      "types": "./dist/transports/plunk.d.ts"
+    },
+    "./transports/sparkpost": {
+      "import": "./dist/transports/sparkpost.js",
+      "types": "./dist/transports/sparkpost.d.ts"
+    },
+    "./transports/mailtrap": {
+      "import": "./dist/transports/mailtrap.js",
+      "types": "./dist/transports/mailtrap.d.ts"
+    },
+    "./transports/loops": {
+      "import": "./dist/transports/loops.js",
+      "types": "./dist/transports/loops.d.ts"
+    },
+    "./observability": {
+      "import": "./dist/observability/console.js",
+      "types": "./dist/observability/console.d.ts"
     },
     "./plugins/template": {
       "import": "./dist/plugins/template.js",

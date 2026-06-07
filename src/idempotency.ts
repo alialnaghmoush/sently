@@ -93,6 +93,8 @@ function syntheticDedupedResult(options: MailOptions): SendResult {
  * transport, so retries inside RetryTransport reuse the same key automatically.
  */
 export class IdempotencyTransport implements Transport {
+  readonly provider = "idempotency";
+
   private readonly store: IdempotencyStore;
   private readonly ttlMs: number;
 

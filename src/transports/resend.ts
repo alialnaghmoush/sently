@@ -63,6 +63,8 @@ export class ResendError extends SentlyError {
  * Resend HTTP API transport.
  */
 export class ResendTransport implements Transport {
+  readonly provider = "resend";
+
   /** Resend API key for Bearer authentication. */
   private readonly apiKey: string;
   /** Resend API base URL. */

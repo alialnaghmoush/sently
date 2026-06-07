@@ -89,4 +89,14 @@ describe("main sently barrel", () => {
     expect(mod.SentlyError).toBeDefined();
     expect(mod.OAuth2Client).toBeDefined();
   });
+
+  test("main barrel exports v0.8 failover and Cloudflare Email symbols", async () => {
+    const mod = await import("../../src/index.js");
+    expect(mod.FallbackTransport).toBeDefined();
+    expect(mod.FallbackError).toBeDefined();
+    expect(mod.WeightedFallbackTransport).toBeDefined();
+    expect(mod.CloudflareEmailTransport).toBeDefined();
+    expect(mod.CloudflareEmailError).toBeDefined();
+    expect(mod.consoleObserver).toBeDefined();
+  });
 });

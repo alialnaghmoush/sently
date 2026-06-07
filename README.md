@@ -14,7 +14,49 @@ bun add sently
 [![tests](https://img.shields.io/badge/tests-passing-brightgreen)](#)
 [![GitHub](https://img.shields.io/github/stars/alialnaghmoush/sently?style=social&label=GitHub)](https://github.com/alialnaghmoush/sently)
 
-> **Pre-1.0 — API may change.** sently is pre-1.0 and the public API is still being refined ahead of a stable v1.0.0. Breaking changes can land in any 0.x release; review the [CHANGELOG](CHANGELOG.md) before upgrading. Pin an exact version (e.g. `"sently": "0.7.2"`) for production until v1.0.0.
+> **Pre-1.0 — API may change.** sently is pre-1.0 and the public API is still being refined ahead of a stable v1.0.0. Breaking changes can land in any 0.x release; review the [CHANGELOG](CHANGELOG.md) before upgrading. Pin an exact version (e.g. `"sently": "0.8.0"`) for production until v1.0.0.
+
+## Index
+
+**Getting started**
+
+- [Why not Nodemailer?](#why-not-nodemailer)
+- [The 30-second tour](#the-30-second-tour)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  - [SMTP with auto-detected adapter](#smtp-with-auto-detected-adapter)
+  - [Resend HTTP transport](#resend-http-transport-vercel-edge-compatible)
+  - [Cloudflare Worker](#cloudflare-worker)
+- [Choosing an entrypoint](#choosing-an-entrypoint)
+- [Migrating from Nodemailer](#migrating-from-nodemailer)
+
+**Sending mail**
+
+- [Adapters](#adapters)
+- [Transports](#transports)
+  - [SMTP](#smtp)
+  - [HTTP APIs](#http-apis)
+  - [FallbackTransport](#fallbacktransport)
+  - [PreviewTransport](#previewtransport)
+  - [RetryTransport](#retrytransport)
+  - [sendBulk()](#sendbulk)
+  - [Mailer lifecycle hooks](#mailer-lifecycle-hooks)
+  - [IdempotencyTransport](#idempotencytransport)
+- [Plugin system](#plugin-system)
+  - [TemplatePlugin](#templateplugin)
+  - [React Email plugin](#react-email-plugin)
+  - [Webhook parsing](#webhook-parsing)
+
+**Reference**
+
+- [MailOptions Reference](#mailoptions-reference)
+- [Attachments](#attachments)
+- [Error Handling](#error-handling)
+- [Security](#security)
+- [Bundle size](#bundle-size)
+- [TypeScript](#typescript)
+- [Links](#links)
+- [License](#license)
 
 ---
 
@@ -29,7 +71,8 @@ bun add sently
 | DKIM signing | ✓ via `nodemailer-dkim` | ✓ built-in (Web Crypto) |
 | OAuth2 / XOAUTH2 | ✓ via plugin | ✓ built-in |
 | Connection pooling | ✓ | ✓ |
-| HTTP transports | ✓ via plugins | ✓ built-in (6 providers) |
+| HTTP transports | ✓ via plugins | ✓ built-in (11 HTTP APIs + CF Email binding) |
+| Provider failover | ✗ | ✓ `FallbackTransport` + weighted routing |
 | Retry transport | ✗ | ✓ |
 | Preview transport | ✗ | ✓ |
 | Template engine | ✗ | ✓ |
@@ -150,6 +193,8 @@ await mailer.send({
 
 ### Cloudflare Worker
 
+**SMTP relay** (outbound TCP via `cloudflare:sockets`):
+
 ```typescript
 import { createSMTPMailer } from "sently/smtp";
 import { CloudflareAdapter } from "sently/adapters/cf";
@@ -168,6 +213,30 @@ export default {
       to: "user@example.com",
       subject: "From a Worker",
       text: "Hello from Cloudflare Workers",
+    });
+
+    return new Response("Sent");
+  },
+};
+```
+
+**Workers Email binding** (`[[send_email]]` in `wrangler.toml` — no fetch HTTP API):
+
+```typescript
+import { createMailer } from "sently/mailer";
+import { CloudflareEmailTransport } from "sently/transports/cloudflare-email";
+
+export default {
+  async fetch(_request, env) {
+    const mailer = await createMailer({
+      transport: new CloudflareEmailTransport({ sendEmail: env.SEND_EMAIL }),
+    });
+
+    await mailer.send({
+      from: "noreply@yourdomain.com",
+      to: "user@example.com",
+      subject: "From a Worker",
+      text: "Sent via send_email binding",
     });
 
     return new Response("Sent");
@@ -329,10 +398,107 @@ const pool = new SMTPPool({
 | Mailgun | `sently/transports/mailgun` | `apiKey`, `domain` |
 | AWS SES | `sently/transports/ses` | `accessKeyId`, `secretAccessKey`, `region` |
 | Brevo | `sently/transports/brevo` | `apiKey` |
+| MailerSend | `sently/transports/mailersend` | `apiToken` |
+| Plunk | `sently/transports/plunk` | `apiKey` |
+| SparkPost | `sently/transports/sparkpost` | `apiKey`, `euRegion?` |
+| Mailtrap | `sently/transports/mailtrap` | `apiToken`, `sandbox?`, `inboxId?` |
+| Loops | `sently/transports/loops` | `apiKey`, `defaultTransactionalId?` |
+| Cloudflare Email | `sently/transports/cloudflare-email` | `sendEmail` binding (`env.SEND_EMAIL`) |
 
 All transports implement the same interface — swap without changing your send code.
 
-Messages with attachments are sent as raw MIME (`Content.Raw`); simple messages use `Content.Simple`.
+**Routing decorators** (compose with any transport above):
+
+| Transport | Import path | Purpose |
+|-----------|-------------|---------|
+| Fallback | `sently/transports/fallback` | Ordered provider failover |
+| Weighted fallback | `sently/transports/weighted-fallback` | Weighted-random primary + failover |
+| Retry | `sently/transports/retry` | Per-provider retries before failing over |
+| Idempotency | `sently/idempotency` | Dedupe sends on retry/replay |
+
+**Loops** is template-first: `subject`/`html`/`text` are ignored. Set `options.headers['x-loops-transactional-id']` (or `defaultTransactionalId` on the transport) and pass template variables via `options.data`.
+
+**Plunk** sends one HTTP request per `to` address and aggregates results when multiple recipients are provided.
+
+### FallbackTransport
+
+Route through an ordered list of providers — if your primary has an outage, the next takes over. Compose with `RetryTransport` to retry within a provider before failing over:
+
+```typescript
+import { FallbackTransport } from "sently/transports/fallback";
+import { RetryTransport } from "sently/transports/retry";
+import { ResendTransport } from "sently/transports/resend";
+import { SESTransport } from "sently/transports/ses";
+import { createMailer } from "sently/mailer";
+
+const transport = new FallbackTransport([
+  new RetryTransport(new ResendTransport({ apiKey: process.env.RESEND_API_KEY! })),
+  new RetryTransport(
+    new SESTransport({
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    }),
+  ),
+]);
+
+const mailer = await createMailer({ transport });
+
+const result = await mailer.send({ from: "...", to: "...", subject: "...", html: "..." });
+// result.provider === "ses", result.providerIndex === 1  → primary failed, secondary won
+```
+
+Permanent client errors (HTTP 400/401/403, SMTP 535) are **not** retried on the next provider — they would fail identically everywhere. When all providers fail, `FallbackError.attempts` lists each `{ provider, error }` in order for debugging.
+
+**Cooldown** — skip providers that recently failed until a cooldown expires:
+
+```typescript
+const transport = new FallbackTransport(transports, { cooldownMs: 300_000 });
+```
+
+**Full-chain verify** — `verify()` returns the first healthy provider; use `verifyAll()` for per-provider visibility:
+
+```typescript
+const { ok, providers } = await transport.verifyAll();
+// providers: [{ provider: "resend", ok: true }, { provider: "ses", ok: false, message: "..." }]
+```
+
+**Mailer `onFallback` hook** — observability when failover happens (requires `FallbackTransport` in the stack):
+
+```typescript
+const mailer = await createMailer({
+  transport,
+  hooks: {
+    onFallback: (_ctx, failedProvider, nextProvider, error) => {
+      console.log(`failover ${failedProvider} → ${nextProvider}`, error);
+    },
+  },
+});
+```
+
+**Weighted routing** — shift traffic gradually between providers:
+
+```typescript
+import { WeightedFallbackTransport } from "sently/transports/weighted-fallback";
+
+const transport = new WeightedFallbackTransport([
+  { transport: new ResendTransport({ apiKey }), weight: 80 },
+  { transport: new SESTransport({ accessKeyId, secretAccessKey }), weight: 20 },
+]);
+```
+
+Every transport exposes a stable **`Transport.provider`** string (e.g. `"resend"`, `"ses"`) for hooks, logs, and `SendResult.provider`.
+
+**Cloudflare Workers Email** — use the `send_email` binding (not fetch HTTP). Configure `[[send_email]]` in `wrangler.toml`, then pass `env.SEND_EMAIL`:
+
+```typescript
+import { CloudflareEmailTransport } from "sently/transports/cloudflare-email";
+
+const mailer = await createMailer({
+  transport: new CloudflareEmailTransport({ sendEmail: env.SEND_EMAIL }),
+});
+```
+
+Attachments are base64-encoded in the binding payload; use `content: Uint8Array` on Workers (no `attachment.path`).
 
 ### PreviewTransport
 
@@ -400,21 +566,32 @@ Resend batches up to `RESEND_BATCH_MAX` (100) messages per request — export fr
 
 ### Mailer lifecycle hooks
 
-Optional observability hooks on `createMailer` fire for every `send()` and `sendBulk()` message (batch paths invoke hooks once per message, without double-firing). Hook context carries `{ messageId?, to, subject, provider }` — no body fields, to avoid leaking PII into logs.
+Optional observability hooks on `createMailer` fire for every `send()` and `sendBulk()` message (batch paths invoke hooks once per message, without double-firing). Hook context carries `{ messageId?, to, subject, provider }` — no body fields, to avoid leaking PII into logs. `onSuccess` and `onError` accept an optional third argument `durationMs` (elapsed milliseconds).
 
 ```typescript
+import { consoleObserver } from "sently/observability";
+
 const mailer = await createMailer({
   transport: new ResendTransport({ apiKey: process.env.RESEND_API_KEY! }),
   hooks: {
     onSend: (ctx) => metrics.increment("email.send", { provider: ctx.provider }),
-    onSuccess: (ctx, result) => metrics.increment("email.success"),
-    onError: (ctx, err) => metrics.increment("email.error"),
+    onSuccess: (ctx, result, durationMs) =>
+      metrics.histogram("email.duration", durationMs ?? 0),
+    onError: (ctx, err, durationMs) => metrics.increment("email.error"),
     onRetry: (ctx, attempt, err) => metrics.increment("email.retry", { attempt }),
+    onFallback: (ctx, failed, next, err) =>
+      metrics.increment("email.fallback", { from: failed, to: next }),
   },
+});
+
+// Quick start — log lifecycle events to the console
+const devMailer = await createMailer({
+  transport: new ResendTransport({ apiKey: process.env.RESEND_API_KEY! }),
+  hooks: consoleObserver("[myapp]"),
 });
 ```
 
-Hooks are fully optional and zero-cost when unset. A throwing hook does **not** break the send — in non-production environments the error is logged with `console.warn` and the send continues. Pair `onRetry` with `RetryTransport` for per-attempt retry metrics.
+Hooks are fully optional and zero-cost when unset. A throwing hook does **not** break the send — in non-production environments the error is logged with `console.warn` and the send continues. Pair `onRetry` with `RetryTransport` for per-attempt retry metrics; pair `onFallback` with `FallbackTransport` or `WeightedFallbackTransport` for failover observability.
 
 Works with both `sently/mailer` (`{ transport, hooks }`) and SMTP config via `createSMTPMailer` (`{ host, auth, hooks }`).
 
@@ -632,6 +809,8 @@ import { ResendError } from "sently/transports/resend";
 // MailgunError   → sently/transports/mailgun
 // SESError       → sently/transports/ses
 // BrevoError     → sently/transports/brevo
+// CloudflareEmailError → sently/transports/cloudflare-email
+// FallbackError  → sently/transports/fallback (all providers failed; see .attempts)
 
 try {
   await mailer.send({ ... });
@@ -739,7 +918,7 @@ import { ResendTransport } from "sently/transports/resend";
 import { createSMTPMailer } from "sently/smtp";
 ```
 
-Main `"sently"` exports shared types, `createMailer` (transport), `createSMTPMailer`, `detectRuntime`, OAuth2, and `SentlyError`. Transports, webhooks, idempotency, DKIM, and plugins are separate subpaths only.
+Main `"sently"` exports shared types, `createMailer`, `createSMTPMailer`, `detectRuntime`, OAuth2, `SentlyError`, `consoleObserver`, and the v0.8 HTTP providers (`LoopsTransport`, `MailerSendTransport`, …), plus `FallbackTransport`, `WeightedFallbackTransport`, and `CloudflareEmailTransport`. Webhooks, idempotency, DKIM, SMTP-only transports, and plugins remain separate subpaths for smallest bundles.
 
 ---
 
@@ -756,6 +935,11 @@ How do you send mail?
 ├─ SMTP relay (host / port / auth)
 │    import { createSMTPMailer } from "sently/smtp"
 │    createSMTPMailer({ host, port, auth })
+│
+├─ Provider failover / weighted routing
+│    import { FallbackTransport } from "sently/transports/fallback"
+│    import { WeightedFallbackTransport } from "sently/transports/weighted-fallback"
+│    createMailer({ transport: new FallbackTransport([primary, backup]) })
 │
 └─ Custom / decorated transport (Retry, Idempotency, Preview)
      import { createMailer } from "sently/mailer"

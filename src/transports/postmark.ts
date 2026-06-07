@@ -52,6 +52,8 @@ export class PostmarkError extends SentlyError {
  * Postmark HTTP API transport.
  */
 export class PostmarkTransport implements Transport {
+  readonly provider = "postmark";
+
   /** Postmark server API token for the X-Postmark-Server-Token header. */
   private readonly serverToken: string;
 

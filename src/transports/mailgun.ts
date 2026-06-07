@@ -49,6 +49,8 @@ export class MailgunError extends SentlyError {
  * Mailgun HTTP API transport (multipart/form-data).
  */
 export class MailgunTransport implements Transport {
+  readonly provider = "mailgun";
+
   /** Mailgun API key for basic authentication. */
   private readonly apiKey: string;
   /** Mailgun sending domain. */

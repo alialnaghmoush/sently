@@ -57,6 +57,8 @@ function shouldRetry(err: unknown, retryOn: number[]): boolean {
  * Decorator transport that retries failed sends with configurable backoff.
  */
 export class RetryTransport implements Transport {
+  readonly provider = "retry";
+
   /** Maximum send attempts including the initial try. */
   private readonly maxAttempts: number;
   /** Backoff strategy between retries. */

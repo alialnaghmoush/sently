@@ -25,6 +25,7 @@
 import { extractEmails } from "./core/address.js";
 import { SentlyError } from "./core/errors.js";
 import { runPlugins } from "./core/plugin.js";
+import { getProviderLabel } from "./core/provider-label.js";
 import { RateLimiter } from "./core/rate-limiter.js";
 import type {
   BulkSendOptions,
@@ -51,6 +52,17 @@ function isRetryHookTransport(transport: Transport): transport is RetryHookTrans
   return typeof (transport as RetryHookTransport).setMailerOnRetry === "function";
 }
 
+/** Fallback decorator wired by mailer hooks (duck-typed). */
+interface FallbackHookTransport extends Transport {
+  setMailerOnFallback(
+    callback: ((failedProvider: string, nextProvider: string, error: unknown) => void) | undefined,
+  ): void;
+}
+
+function isFallbackHookTransport(transport: Transport): transport is FallbackHookTransport {
+  return typeof (transport as FallbackHookTransport).setMailerOnFallback === "function";
+}
+
 const TRANSPORT_ONLY_SMTP_CONFIG_MESSAGE =
   "SMTP config passed to transport-only createMailer. Use: import { createSMTPMailer } from 'sently' or import { createSMTPMailer } from 'sently/smtp'.";
 
@@ -71,14 +83,7 @@ function hasAttachments(message: MailOptions): boolean {
 
 /** Infer a provider label from a transport instance for hook context. */
 function inferProvider(transport: Transport): string {
-  const name = transport.constructor.name;
-  if (name === "Object") {
-    return "custom";
-  }
-  if (name.endsWith("Transport")) {
-    return name.slice(0, -"Transport".length).toLowerCase();
-  }
-  return name.toLowerCase() || "unknown";
+  return getProviderLabel(transport);
 }
 
 /** Build hook context from mail options (no body fields). */
@@ -132,20 +137,31 @@ export class MailerImpl implements Mailer {
       });
     }
 
+    if (this.hooks?.onFallback !== undefined && isFallbackHookTransport(this.transport)) {
+      this.transport.setMailerOnFallback((failedProvider, nextProvider, error) => {
+        void invokeHook(this.hooks?.onFallback, ctx, failedProvider, nextProvider, error);
+      });
+    }
+
+    const start = performance.now();
+
     try {
       const result = await this.transport.send(processed);
       const successCtx: MailerHookContext = {
         ...ctx,
         messageId: result.messageId,
       };
-      await invokeHook(this.hooks?.onSuccess, successCtx, result);
+      await invokeHook(this.hooks?.onSuccess, successCtx, result, performance.now() - start);
       return result;
     } catch (error) {
-      await invokeHook(this.hooks?.onError, ctx, error);
+      await invokeHook(this.hooks?.onError, ctx, error, performance.now() - start);
       throw error;
     } finally {
       if (isRetryHookTransport(this.transport)) {
         this.transport.setMailerOnRetry(undefined);
+      }
+      if (isFallbackHookTransport(this.transport)) {
+        this.transport.setMailerOnFallback(undefined);
       }
     }
   }
@@ -168,12 +184,18 @@ export class MailerImpl implements Mailer {
       index: number,
       result: SendResult,
       processed?: MailOptions,
+      durationMs?: number,
     ): Promise<void> => {
       results[index] = { status: "sent", result };
       if (processed !== undefined && this.hooks !== undefined) {
         const ctx = buildHookContext(processed, this.transport);
         await invokeHook(this.hooks.onSend, ctx);
-        await invokeHook(this.hooks.onSuccess, { ...ctx, messageId: result.messageId }, result);
+        await invokeHook(
+          this.hooks.onSuccess,
+          { ...ctx, messageId: result.messageId },
+          result,
+          durationMs,
+        );
       }
       options?.onSuccess?.(message, index, result);
     };
@@ -183,12 +205,13 @@ export class MailerImpl implements Mailer {
       index: number,
       error: unknown,
       processed?: MailOptions,
+      durationMs?: number,
     ): Promise<void> => {
       results[index] = { status: "failed", error };
       if (processed !== undefined && this.hooks !== undefined) {
         const ctx = buildHookContext(processed, this.transport);
         await invokeHook(this.hooks.onSend, ctx);
-        await invokeHook(this.hooks.onError, ctx, error);
+        await invokeHook(this.hooks.onError, ctx, error, durationMs);
       }
       options?.onError?.(message, index, error);
       if (stopOnError) {
@@ -231,7 +254,9 @@ export class MailerImpl implements Mailer {
             const processed = await Promise.all(
               chunk.map(({ message }) => this.processMessage(message)),
             );
+            const batchStart = performance.now();
             const batchResults = await this.transport.sendBatch(processed);
+            const batchDurationMs = performance.now() - batchStart;
 
             for (let i = 0; i < chunk.length; i++) {
               const entry = chunk[i] as { index: number; message: MailOptions };
@@ -243,6 +268,7 @@ export class MailerImpl implements Mailer {
                   entry.index,
                   new Error("Batch response missing result for message"),
                   processedMessage,
+                  batchDurationMs,
                 );
               } else if (result.batchError !== undefined) {
                 await recordFailure(
@@ -250,9 +276,16 @@ export class MailerImpl implements Mailer {
                   entry.index,
                   result.batchError,
                   processedMessage,
+                  batchDurationMs,
                 );
               } else {
-                await recordSuccess(entry.message, entry.index, result, processedMessage);
+                await recordSuccess(
+                  entry.message,
+                  entry.index,
+                  result,
+                  processedMessage,
+                  batchDurationMs,
+                );
               }
             }
           } catch (error) {

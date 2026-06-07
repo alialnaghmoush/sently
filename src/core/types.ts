@@ -101,6 +101,13 @@ export interface SendResult {
   deduped?: boolean;
   /** Set when this item failed inside an otherwise successful batch HTTP response. */
   batchError?: unknown;
+  /** Identifier of the transport that handled the send; set by FallbackTransport. */
+  provider?: string;
+  /**
+   * Zero-based index of the transport that handled the send in a fallback chain.
+   * Set by FallbackTransport (e.g. `1` means provider #0 failed and #1 succeeded).
+   */
+  providerIndex?: number;
 }
 
 // ─── Envelope ─────────────────────────────────────────────
@@ -163,6 +170,11 @@ export interface VerifyResult {
 
 /** Pluggable mail delivery backend (SMTP, HTTP API, etc.). */
 export interface Transport {
+  /**
+   * Stable provider identifier for observability (e.g. `"resend"`, `"ses"`).
+   * Prefer this over constructor-name inference in hooks and fallback diagnostics.
+   */
+  readonly provider?: string;
   /** Send a message through this transport. */
   send(options: MailOptions): Promise<SendResult>;
   /**
@@ -415,12 +427,32 @@ export interface MailerHookContext {
 export interface MailerHooks {
   /** Fired before the transport sends the message. */
   onSend?: (ctx: MailerHookContext) => void | Promise<void>;
-  /** Fired after a successful send. */
-  onSuccess?: (ctx: MailerHookContext, result: SendResult) => void | Promise<void>;
-  /** Fired when a send throws (error is re-thrown after the hook runs). */
-  onError?: (ctx: MailerHookContext, error: unknown) => void | Promise<void>;
+  /**
+   * Fired after a successful send.
+   * @param durationMs — elapsed milliseconds from send start to success (optional third argument).
+   */
+  onSuccess?: (
+    ctx: MailerHookContext,
+    result: SendResult,
+    durationMs?: number,
+  ) => void | Promise<void>;
+  /**
+   * Fired when a send throws (error is re-thrown after the hook runs).
+   * @param durationMs — elapsed milliseconds from send start to failure (optional third argument).
+   */
+  onError?: (ctx: MailerHookContext, error: unknown, durationMs?: number) => void | Promise<void>;
   /** Fired before each retry attempt (requires {@link RetryTransport}). */
   onRetry?: (ctx: MailerHookContext, attempt: number, error: unknown) => void | Promise<void>;
+  /**
+   * Fired when {@link FallbackTransport} fails over to the next provider.
+   * Requires a {@link FallbackTransport} (or {@link WeightedFallbackTransport}) in the mailer stack.
+   */
+  onFallback?: (
+    ctx: MailerHookContext,
+    failedProvider: string,
+    nextProvider: string,
+    error: unknown,
+  ) => void | Promise<void>;
 }
 
 // ─── createMailer Options ─────────────────────────────────
