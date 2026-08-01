@@ -19,7 +19,6 @@ Providers are transports under those senders. Vendor extras (OTP, account utilit
 
 - Handbook: `site/content/docs/` (Fumadocs)
 - Machine index: `/llms.txt` on the docs site
-- Dev notes: `CLAUDE.md`
 
 ## Commands
 

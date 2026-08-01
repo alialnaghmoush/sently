@@ -1,6 +1,6 @@
 {
   "name": "sently",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Runtime-agnostic messaging library for Node.js, Bun, Deno, and Cloudflare Workers. Channel-first email, SMS, WhatsApp, and push with pluggable provider transports.",
   "type": "module",
   "sideEffects": false,
