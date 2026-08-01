@@ -1,15 +1,89 @@
 ---
 title: sently handbook
-description: Channel-first messaging for email, SMS, WhatsApp, and push (Web Push / FCM).
+description: Channel-delivery for email, SMS, WhatsApp, and push — one sender shape as channels grow.
 icon: BookOpen
 source: "README.md"
 ---
 
-Use a channel sender in application code and put provider-specific configuration in a transport.
+sently is the channel-delivery layer for the order confirmation email, the OTP SMS, and the device push that follow.
+Apps call a channel sender; providers live in transports you can swap without rewriting send sites.
+
+<Callout title="The one rule">
+  Use `createMailer`, `createSmsSender`, `createWhatsAppSender`, or `createPushSender` in app code — never a vendor SDK as your application API.
+</Callout>
+
+## Quick start
+
+<Steps>
+  <Step title="Install">
+
+```bash
+bun add sently
+```
+
+  </Step>
+  <Step title="Send with a channel sender">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { ResendTransport } from "sently/transports/resend";
+
+const mailer = await createMailer({
+  transport: new ResendTransport({
+    apiKey: process.env.RESEND_API_KEY!,
+  }),
+});
+
+const result = await mailer.send({
+  from: "hello@example.com",
+  to: "person@example.com",
+  subject: "Welcome",
+  text: "Thanks for joining.",
+});
+console.log(result.messageId);
+```
+
+  </Step>
+</Steps>
+
+## Channels
+
+| Channel | Sender | Start here |
+| --- | --- | --- |
+| Email | `createMailer` / `createSMTPMailer` | [Email](/docs/channels/email) |
+| SMS | `createSmsSender` | [SMS](/docs/channels/sms) |
+| WhatsApp | `createWhatsAppSender` | [WhatsApp](/docs/channels/whatsapp) |
+| Push | `createPushSender` | [Push](/docs/channels/push) |
+
+Email factories are asynchronous. SMS, WhatsApp, and push factories return the sender synchronously; every `send` is async.
+
+## Where next
+
+| Path | When |
+| --- | --- |
+| [Get started](/docs/get-started) | Install, entrypoints, runtimes, migrate from Nodemailer |
+| [Channels](/docs/channels) | Full sender docs + lifecycle hooks |
+| [Transports](/docs/transports) | Provider list by channel |
+| [Failover](/docs/guides/failover) | Retry inside a provider, then fail over |
+| [Support matrix](/docs/get-started/support-matrix) | Supported vs Available for production |
+| [Compare](/docs/guides/compare) | vs vendor SDKs, Nodemailer, Novu / Knock / Courier |
+| [Stability](/docs/get-started/stability) | What is frozen at 1.x |
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Is sently a notification platform like Novu or Knock?">
+    No. It is the delivery layer. Preference centers, digests, workflows, and in-app inboxes sit on top — custom code or those tools. See [Compare](/docs/guides/compare).
+  </Accordion>
+  <Accordion title="Where should I send first?">
+    Start with [Email](/docs/channels/email) or [Installation](/docs/get-started/installation), then open the channel page for SMS, WhatsApp, or push when you add that channel.
+  </Accordion>
+</Accordions>
+
+## Next
 
 <Cards>
   <Card title="Get started" href="/docs/get-started" />
-  <Card title="Quick start" href="/docs/quick-start" />
   <Card title="Channels" href="/docs/channels" />
-  <Card title="Transports" href="/docs/transports" />
+  <Card title="Support matrix" href="/docs/get-started/support-matrix" />
 </Cards>

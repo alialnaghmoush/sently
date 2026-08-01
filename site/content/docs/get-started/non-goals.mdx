@@ -1,0 +1,57 @@
+---
+title: Non-goals
+description: What sently intentionally does not ship — and what belongs on top.
+icon: Ban
+source: "README.md"
+---
+
+sently is a **channel-delivery library**. Keeping the surface focused is part of the 1.x promise.
+
+<Callout title="The one rule">
+  Do not expect dashboards, preference centers, digests, or workflow builders inside sently. Put that product logic — or Novu / Knock / Courier — on top of the delivery layer.
+</Callout>
+
+## Out of scope
+
+| Non-goal | Notes |
+| --- | --- |
+| Orchestration platforms | Preference centers, digests, journey builders, in-app inboxes |
+| Hosted SaaS / per-send billing | MIT library in your process |
+| APNs as a native push transport | Use FCM and/or Web Push for 1.x |
+| Voice channels | Not a sently channel |
+| Inbound email productization | Outbound + webhook parsers only |
+| Nodemailer SOCKS / iCal parity | Intentionally omitted |
+| Equal support for every export | See [Support matrix](./support-matrix) |
+| Cross-channel preview / idempotency | Email-only today |
+
+## Complementary stack
+
+| Need | Place it… |
+| --- | --- |
+| Send email / SMS / WhatsApp / push | sently channel senders |
+| Swap providers without rewriting call sites | sently transports |
+| Preferences, digests, workflows, in-app | Your app or Novu / Knock / Courier **on top of** sently |
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Will sently add a preference center?">
+    No. That is platform territory and conflicts with the library-not-platform position.
+  </Accordion>
+  <Accordion title="Where should I read the positioning story?">
+    See [Compare](/docs/guides/compare).
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Compare](/docs/guides/compare)
+- [Support matrix](./support-matrix)
+- [Stability policy](./stability)
+
+## Next
+
+<Cards>
+  <Card title="Compare" href="/docs/guides/compare" />
+  <Card title="Introduction" href="/docs/get-started/introduction" />
+</Cards>

@@ -27,7 +27,7 @@ Map the change to pages that exist under `site/content/docs/`:
 
 | Change surface                         | Primary page                 | Also check                                      |
 | -------------------------------------- | ---------------------------- | ----------------------------------------------- |
-| Channel sender (`src/sms.ts`, …)       | `channels/<channel>.mdx`     | `channels/index.mdx`, `quick-start/<channel>`, `reference/*-options` |
+| Channel sender (`src/sms.ts`, …)       | `channels/<channel>.mdx`     | `channels/index.mdx`, `reference/*-options` |
 | Channel types (`src/core/*-types.ts`)  | matching `reference/*`       | channel page                                    |
 | Transport (`src/transports/<name>.ts`) | `transports/<name>.mdx`      | `transports/index.mdx`, channel page            |
 | Decorator (retry/fallback/preview/idempotency) | `decorators/<name>.mdx` | `decorators/index.mdx`, `channels/hooks.mdx` |

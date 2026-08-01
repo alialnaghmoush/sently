@@ -1,17 +1,47 @@
 ---
 title: Security
-description: Protect credentials, delivery endpoints, and webhook integrity.
+description: Protect credentials, delivery endpoints, webhook integrity, and publish trust.
 icon: ShieldCheck
 source: "src/transports/webpush.ts"
 ---
 
-<Callout title="The one rule">Keep provider keys and VAPID private keys in a secrets manager or environment variables.</Callout>
+Provider API keys, VAPID private keys, and push endpoints are long-lived credentials.
+Keep them out of source control and out of unstructured logs.
 
-- Enable TLS for SMTP authentication; `requireTLS` defaults to true when auth is set.
-- Verify provider webhook signatures before parsing trusted events.
-- Do not log email bodies, SMS bodies, or full push subscription endpoints.
-- Treat a push endpoint as a delivery token.
+<Callout title="The one rule">
+  Keep provider keys and VAPID private keys in a secrets manager or environment variables.
+</Callout>
 
-<Accordions><Accordion title="Why is a push endpoint redacted in hooks?">Its path can contain a long-lived delivery token.</Accordion></Accordions>
+## Checklist
 
-<Cards><Card title="Webhooks" href="/docs/guides/webhooks" /></Cards>
+| Practice | Detail |
+| --- | --- |
+| SMTP TLS | `requireTLS` defaults to true when auth is set |
+| Webhooks | Verify signatures before trusting parsed events |
+| Logging | Do not log email/SMS bodies or full push endpoints |
+| Push | Treat subscription endpoints and FCM tokens as delivery tokens |
+| Reporting | Use private advisories — see root `SECURITY.md` |
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Why is a push endpoint redacted in hooks?">
+    Its path can contain a long-lived delivery token. Hook context keeps a short fingerprint.
+  </Accordion>
+  <Accordion title="Where do I report a vulnerability?">
+    Open a private GitHub Security Advisory for this repository. Do not file a public issue. Details and response targets are in [`SECURITY.md`](https://github.com/alialnaghmoush/sently/blob/main/SECURITY.md).
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Stability policy](/docs/get-started/stability)
+- [Webhooks](/docs/guides/webhooks)
+- [Web Push](/docs/transports/webpush)
+
+## Next
+
+<Cards>
+  <Card title="Webhooks" href="/docs/guides/webhooks" />
+  <Card title="Stability policy" href="/docs/get-started/stability" />
+</Cards>

@@ -1,5 +1,5 @@
 /**
- * Transport brand marks for the landing marquee.
+ * Transport brand marks (landing marquee, docs sidebar).
  * Paths from simple-icons (CC0) where available; compact monograms otherwise.
  * All marks use currentColor so they stay in the muted strip language.
  */
@@ -116,6 +116,7 @@ const ICONS: Record<string, (props: IconProps) => ReactNode> = {
   Loops: (p) => <PathIcon path={siLoops.path} {...p} />,
   Plunk: (p) => <Monogram letters="PL" {...p} />,
   Mailtrap: (p) => <PathIcon path={siMailtrap.path} {...p} />,
+  Mailpit: (p) => <Monogram letters="MP" {...p} />,
   SNDR: (p) => <Monogram letters="SN" {...p} />,
   Twilio: (p) => <PathIcon path={TWILIO_PATH} {...p} />,
   Taqnyat: (p) => <Monogram letters="TQ" {...p} />,

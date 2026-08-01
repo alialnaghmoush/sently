@@ -1,0 +1,62 @@
+---
+title: Support matrix
+description: Supported vs Available transports and runtimes for production use.
+icon: LayoutGrid
+source: "package.json"
+---
+
+Not every exported transport is part of the **1.x production promise**.
+**Supported** paths are documented, tested, and operable (verify, retry/fallback, and webhooks where listed).
+**Available** paths ship and have unit coverage but are not the support bar.
+
+<Callout title="The one rule">
+  Build production apps on Supported transports. Treat Available exports as optional extras you can adopt knowing the promise is thinner.
+</Callout>
+
+## Supported (v1 promise)
+
+| Channel | Supported transports | Operability |
+| --- | --- | --- |
+| Email | SMTP, Resend, SES, SendGrid, Postmark | Attachments / HTML / text, `verify`, retry / fallback, webhooks for the HTTP majors |
+| SMS | Twilio SMS, Unifonic | Webhooks for Twilio and Unifonic |
+| WhatsApp | WhatsApp Cloud | Signature verify + delivery parse |
+| Push | Web Push, FCM | Option union: `subscription` (Web Push) or `token` (FCM) |
+| Runtimes | Node ≥18, Bun, Deno, Cloudflare Workers | Adapters and smoke scripts |
+
+FCM uses the current Firebase HTTP API (service-account JWT, no Google SDK). That is baseline push support, not a special feature tier.
+
+## Available (exported, not the v1 bar)
+
+| Channel | Available examples |
+| --- | --- |
+| Email | Mailgun, Brevo, MailerSend, Plunk, SparkPost, Mailtrap, Mailpit (dev), Loops, SNDR, Taqnyat Mail, Cloudflare Email, … |
+| SMS | Taqnyat SMS, Msegat |
+| WhatsApp | Taqnyat WhatsApp |
+| Decorators | `WeightedFallbackTransport` (advanced); preview / idempotency remain email-only |
+| Local email | [Mailpit](/docs/transports/mailpit) (SMTP catcher), [Preview](/docs/decorators/preview) (disk) |
+
+Available transports stay in the package. They are promoted to Supported when docs, operability, and smoke coverage meet the bar above.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Can I use an Available transport in production?">
+    Yes, at your own risk. Prefer Supported paths when you need the documented operability promise.
+  </Accordion>
+  <Accordion title="Why is Mailgun Available but Postmark Supported?">
+    The Supported set is a deliberate short list for the 1.x promise — not a popularity ranking of every working export.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Stability policy](./stability)
+- [Non-goals](./non-goals)
+- [Transports](/docs/transports)
+
+## Next
+
+<Cards>
+  <Card title="Stability policy" href="/docs/get-started/stability" />
+  <Card title="Transports" href="/docs/transports" />
+</Cards>

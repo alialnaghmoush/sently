@@ -48,6 +48,15 @@
   --oke-el-ai: oklch(0.76 0.1 15);
 }
 
+/* Pointer-spotlight ink for hover-reactive cards (why grid, channel cards). */
+:root {
+  --sently-spot-ink: rgb(0 0 0 / 0.05);
+}
+
+.dark {
+  --sently-spot-ink: rgb(255 255 255 / 0.06);
+}
+
 @media (min-width: 64rem) {
   :root {
     --landing-topbar-height: 44px;
@@ -176,6 +185,126 @@
   animation-play-state: paused;
 }
 
+/*
+ * Hero signal map — packet dots ride each sender → channel route. Same
+ * dash-trace trick as oke-seam-trace: pathLength="1" makes the dasharray
+ * unitless, so one −1 offset loop is seamless. Duration/delay per packet
+ * live inline on the SVG so the routes never sync up.
+ */
+@keyframes sently-packet-flow {
+  to {
+    stroke-dashoffset: -1;
+  }
+}
+
+.sently-packet-flow {
+  animation-name: sently-packet-flow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Signal-map channel pin — a soft breathe where a packet lands. */
+@keyframes sently-node-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.sently-node-pulse {
+  animation-name: sently-node-pulse;
+  animation-duration: 2.4s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/*
+ * Pipeline beam — one bright segment crosses the phase row, then loops.
+ * Animating `left` (not transform) keeps the math independent of the track
+ * width; the painted area is a 1px hairline, so the layout cost is noise.
+ */
+@keyframes sently-beam-x {
+  from {
+    left: -4rem;
+  }
+  to {
+    left: calc(100% + 4rem);
+  }
+}
+
+.sently-beam-x {
+  animation: sently-beam-x 4.2s linear infinite;
+}
+
+/* Status dots (hero chip, channel "ready" pills) — slow heartbeat. */
+@keyframes sently-dot-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.sently-dot-pulse {
+  animation: sently-dot-pulse 2.2s ease-in-out infinite;
+}
+
+/*
+ * Hero code-tour progress — hairline under the tab strip fills once per dwell.
+ * Remounted (React key) on each tab change; `.is-paused` freezes mid-cycle when
+ * the panel is hovered or focused.
+ */
+@keyframes sently-tour-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.sently-tour-progress {
+  animation-name: sently-tour-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+.sently-tour-progress.is-paused {
+  animation-play-state: paused;
+}
+
+/*
+ * Pointer spotlight — cards set --spot-x/--spot-y from mousemove and this
+ * paints a soft radial lift that fades in on hover. Mono in both themes.
+ */
+.sently-spotlight {
+  position: relative;
+}
+
+.sently-spotlight::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  background: radial-gradient(
+    150px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    var(--sently-spot-ink),
+    transparent 70%
+  );
+}
+
+.sently-spotlight:hover::after {
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .oke-seam-trace {
     animation: none;
@@ -197,6 +326,27 @@
 
   .sently-marquee {
     animation: none;
+  }
+
+  /* Packets vanish under reduced motion (static routes remain); pulses just
+   * freeze — elements carry their own resting opacity. */
+  .sently-packet-flow {
+    animation: none;
+    opacity: 0 !important;
+  }
+
+  .sently-node-pulse {
+    animation: none;
+  }
+
+  .sently-beam-x,
+  .sently-dot-pulse,
+  .sently-tour-progress {
+    animation: none;
+  }
+
+  .sently-spotlight::after {
+    transition: none;
   }
 
   .sently-marquee > ul {

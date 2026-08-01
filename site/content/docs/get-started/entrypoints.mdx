@@ -88,7 +88,7 @@ No. `createMailer` requires a transport. Import `createSMTPMailer` from `sently/
 
 <Accordion title="Where do provider transports come from?">
 
-Import the concrete transport from its exported `sently/transports/*` subpath, such as `sently/transports/sndr` or `sently/transports/resend`.
+Import the concrete transport from its exported `sently/transports/*` subpath, such as `sently/transports/sndr`, `sently/transports/resend`, or `sently/transports/mailpit`.
 
 </Accordion>
 
@@ -103,13 +103,15 @@ HTTP providers were removed from the main barrel so bare Node/Deno imports do no
 ## Learn more
 
 - [Export reference](/docs/reference/exports) — full entrypoint map
+- [Support matrix](/docs/get-started/support-matrix) — Supported vs Available
+- [Stability policy](/docs/get-started/stability) — frozen entrypoints at 1.x
 - [All transports](/docs/transports) — providers by channel
-- [Bundle size](/docs/guides/bundle-size) — keep stacks small
+- [Bundle size](/docs/guides/bundle-size) — keep stacks small on Workers
 
 ## Next
 
 <Cards>
   <Card title="Exports reference" description="Public package entrypoints." href="/docs/reference/exports" />
+  <Card title="Support matrix" description="Production support promise." href="/docs/get-started/support-matrix" />
   <Card title="Email channel" description="createMailer and MailOptions." href="/docs/channels/email" />
-  <Card title="SNDR" description="HTTP email via SNDR." href="/docs/transports/sndr" />
 </Cards>

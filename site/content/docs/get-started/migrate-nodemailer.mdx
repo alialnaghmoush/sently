@@ -2,22 +2,149 @@
 title: Migrate from Nodemailer
 description: Move SMTP configuration and message fields to sently incrementally.
 icon: ArrowRightLeft
-source: "README.md"
+source: "src/smtp-mailer.ts"
 ---
 
-Keep your message object, replace transporter construction, and await the sently factory.
+Keep your welcome email, receipt, or password-reset fields (`from`, `to`, `subject`, `text` / `html`).
+Replace `createTransport` with `createSMTPMailer`, rename `sendMail` to `send`, and `await` the factory before the first send.
+
+<Callout title="The one rule">
+  Use `createSMTPMailer` for relay host/port/auth. Use `createMailer` only when you already have an explicit transport.
+</Callout>
+
+## Quick start
+
+<Steps>
+  <Step title="Create the mailer">
 
 ```ts
 import { createSMTPMailer } from "sently/smtp";
 
 const mailer = await createSMTPMailer({
   host: "smtp.example.com",
+  port: 587,
   auth: { user: "user@example.com", pass: process.env.SMTP_PASSWORD! },
 });
 ```
 
-<Callout title="The one rule">Use `createSMTPMailer` for relay configuration; use `createMailer` only with an explicit transport.</Callout>
+  </Step>
+  <Step title="Send with the same fields">
 
-<Accordions><Accordion title="Why does transport-only createMailer reject host?">It only accepts a `transport`. Move relay configuration to `createSMTPMailer`.</Accordion></Accordions>
+```diff
+- const info = await transporter.sendMail({
++ const result = await mailer.send({
+    from: "Acme <hello@example.com>",
+    to: "person@example.com",
+    subject: "Welcome",
+    text: "Thanks for joining.",
+  });
+```
 
-<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>
+  </Step>
+  <Step title="Read the result">
+
+```ts
+console.log(result.messageId, result.accepted, result.rejected);
+```
+
+  </Step>
+</Steps>
+
+## API map
+
+| Nodemailer | sently |
+| --- | --- |
+| `createTransport({ host, port, auth })` | `await createSMTPMailer({ host, port, auth })` |
+| `transporter.sendMail(msg)` | `mailer.send(msg)` |
+| `transporter.verify()` | `mailer.verify()` |
+| `transporter.close()` | `mailer.close()` |
+| `info.messageId` / `accepted` / `rejected` / `response` / `envelope` | Same fields on `SendResult` |
+| HTTP providers via plugins / custom | `createMailer` + `sently/transports/<provider>` |
+
+## Message fields
+
+| Nodemailer | sently |
+| --- | --- |
+| `from` / `to` / `cc` / `bcc` / `replyTo` | Same names on `MailOptions` |
+| `subject`, `text`, `html`, `headers`, `messageId`, `date` | Same names |
+| `priority` | `"high" \| "normal" \| "low"` |
+| `attachments[].filename` / `content` / `path` / `contentType` | Same names |
+| `attachments[].cid` | `attachments[].contentId` |
+| `attachments[].contentDisposition: "inline"` | `attachments[].inline: true` |
+| `icalEvent`, SOCKS proxy options | Not supported — see [Non-goals](/docs/get-started/non-goals) |
+
+## SMTP options
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `host` | `string` | required | Relay hostname |
+| `port` | `number` | `587` (`465` if `secure`) | SMTP port |
+| `secure` | `boolean` | `false` | Implicit TLS on connect |
+| `auth` | `SMTPAuth` | — | `{ user, pass?, type?, oauth2? }` |
+| `pool` | `boolean` | `false` | Connection pooling |
+| `requireTLS` | `boolean` | `true` when `auth` is set | Refuse AUTH on a cleartext connection |
+| `tls` | `TLSOptions` | — | `rejectUnauthorized`, `servername`, `minVersion` |
+| `connectionTimeout` | `number` | — | Socket connect timeout (ms) |
+| `greetingTimeout` | `number` | — | Wait for SMTP greeting (ms) |
+| `socketTimeout` | `number` | — | Idle socket timeout (ms) |
+
+## Switch to an HTTP provider later
+
+Keep `mailer.send` and change only construction:
+
+```diff
+- import { createSMTPMailer } from "sently/smtp";
+- const mailer = await createSMTPMailer({ host, port, auth });
++ import { createMailer } from "sently/mailer";
++ import { ResendTransport } from "sently/transports/resend";
++ const mailer = await createMailer({
++   transport: new ResendTransport({ apiKey: process.env.RESEND_API_KEY! }),
++ });
+```
+
+**Consequence:** message fields stay the same; only the factory and transport change.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title='Error: "SMTP config passed to transport-only createMailer"'>
+    `createMailer` accepts only `{ transport, plugins?, hooks? }`. Move host/port/auth to `createSMTPMailer` from `sently/smtp`.
+  </Accordion>
+  <Accordion title="Do I need to rewrite every message object?">
+    Usually no. Keep `from`, `to`, `subject`, and body fields; change construction and `sendMail` → `send`. Rename attachment `cid` to `contentId` when you use inline images.
+  </Accordion>
+  <Accordion title="Why is createSMTPMailer async?">
+    The factory prepares the runtime SMTP connection path (and optionally the pool) before returning. Always `await` it before `send`.
+  </Accordion>
+  <Accordion title="Is sently a drop-in for every Nodemailer plugin?">
+    No. SOCKS and iCal are intentional non-goals. See [Non-goals](/docs/get-started/non-goals) and [Compare](/docs/guides/compare).
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Email channel](/docs/channels/email) — mailer + transport model after you migrate
+- [Mail options](/docs/reference/mail-options) — full `MailOptions` field list
+- [Attachments](/docs/guides/attachments) — `content`, `path`, and `contentId`
+- [Entrypoints](/docs/get-started/entrypoints) — `sently/smtp` vs `sently/mailer`
+- [Support matrix](/docs/get-started/support-matrix) — which runtimes and exports are supported
+
+## Next
+
+<Cards>
+  <Card
+    title="Email channel"
+    description="Send with createMailer or createSMTPMailer."
+    href="/docs/channels/email"
+  />
+  <Card
+    title="SMTP transport"
+    description="Relay options when you wire SMTPTransport yourself."
+    href="/docs/transports/smtp"
+  />
+  <Card
+    title="Compare"
+    description="Nodemailer, vendor SDKs, and orchestration platforms."
+    href="/docs/guides/compare"
+  />
+</Cards>

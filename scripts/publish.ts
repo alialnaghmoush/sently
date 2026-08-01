@@ -123,10 +123,26 @@ function syncVersion(): string {
 }
 
 /**
+ * Clone process.env as a string map, optionally deleting keys.
+ */
+function spawnEnv(omit: ReadonlyArray<string> = []): Record<string, string> {
+  const next: Record<string, string> = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value === undefined) continue;
+    if (omit.includes(key)) continue;
+    next[key] = value;
+  }
+  return next;
+}
+
+/**
  * Runs a command and returns true if exit code is 0.
  */
-function run(cmd: string[], opts: { cwd: string; verbose?: boolean }): Promise<boolean> {
-  const { cwd, verbose = true } = opts;
+function run(
+  cmd: string[],
+  opts: { cwd: string; verbose?: boolean; env?: Record<string, string> },
+): Promise<boolean> {
+  const { cwd, verbose = true, env } = opts;
   if (verbose) {
     console.error(`[publish] ${cmd.join(" ")}`);
   }
@@ -135,8 +151,44 @@ function run(cmd: string[], opts: { cwd: string; verbose?: boolean }): Promise<b
     stdout: "inherit",
     stderr: "inherit",
     stdin: "inherit",
+    env,
   });
   return proc.exited.then((code) => code === 0);
+}
+
+const NPM_PUBLISH_CMD = ["npm", "publish", "--provenance", "--cache", "./.npm-cache"] as const;
+
+/**
+ * Publish to npm with provenance. Prefer OIDC Trusted Publishing (no token).
+ * If that fails and NPM_TOKEN / NODE_AUTH_TOKEN is set, retry once with the token.
+ * Remove the token fallback only after a successful OIDC publish is verified.
+ */
+async function publishNpm(cwd: string): Promise<boolean> {
+  const token = process.env.NODE_AUTH_TOKEN || process.env.NPM_TOKEN;
+
+  console.error("[publish] Attempting npm publish via OIDC / Trusted Publishing…");
+  const oidcOk = await run([...NPM_PUBLISH_CMD], {
+    cwd,
+    env: spawnEnv(["NODE_AUTH_TOKEN", "NPM_TOKEN"]),
+  });
+  if (oidcOk) {
+    console.error("[publish] npm publish succeeded (OIDC / Trusted Publishing).");
+    return true;
+  }
+
+  if (!token) {
+    console.error(
+      "[publish] OIDC publish failed and no NPM_TOKEN / NODE_AUTH_TOKEN for fallback.",
+    );
+    return false;
+  }
+
+  console.error(
+    "[publish] OIDC failed; retrying with token fallback + --provenance (remove secret after OIDC works).",
+  );
+  const tokenEnv = spawnEnv(["NPM_TOKEN"]);
+  tokenEnv.NODE_AUTH_TOKEN = token;
+  return run([...NPM_PUBLISH_CMD], { cwd, env: tokenEnv });
 }
 
 /**
@@ -204,7 +256,9 @@ async function main(): Promise<void> {
     const version = syncVersion();
     console.error(`[publish] Version synced: ${version}`);
     console.error("[publish] Dry run — would execute:");
-    if (!flags.jsrOnly) console.error("  npm publish --provenance --cache ./.npm-cache");
+    if (!flags.jsrOnly) {
+      console.error("  npm publish --provenance --cache ./.npm-cache  # OIDC first, then token fallback");
+    }
     if (!flags.npmOnly) console.error("  bunx jsr publish --allow-dirty");
     process.exit(0);
   }
@@ -218,9 +272,7 @@ async function main(): Promise<void> {
   const doJsr = !flags.npmOnly;
 
   if (doNpm) {
-    const ok = await run(["npm", "publish", "--provenance", "--cache", "./.npm-cache"], {
-      cwd: REPO_ROOT,
-    });
+    const ok = await publishNpm(REPO_ROOT);
     if (!ok) {
       console.error("[publish] npm publish failed.");
       process.exit(2);

@@ -2,9 +2,16 @@
 #
 # Setup:
 # - JSR: Link this repo to the package in JSR settings (https://jsr.io/@alialnaghmoush/sently).
-# - npm: Configure trusted publisher (OIDC) for this workflow in npm package settings.
+# - npm Trusted Publishing (preferred): on https://www.npmjs.com/package/sently → Settings →
+#   Trusted Publisher → GitHub Actions:
+#     repository: alialnaghmoush/sently
+#     workflow: publish.yml
+#     environment: production
+# - npm token fallback (temporary): repo secret NPM_TOKEN — used only if OIDC publish fails.
+#   Remove NPM_TOKEN after one successful OIDC publish is verified.
 #
 # On push to main: runs test + lint, then publishes npm and JSR.
+# npm always uses `npm publish --provenance` (see scripts/publish.ts).
 
 name: CI and Publish
 
@@ -53,11 +60,29 @@ jobs:
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
+      - name: Require npm CLI for Trusted Publishing
+        run: |
+          npm --version
+          node -e "
+            const [maj, min, pat] = require('child_process')
+              .execSync('npm --version', { encoding: 'utf8' })
+              .trim()
+              .split('.')
+              .map(Number);
+            const ok = maj > 11 || (maj === 11 && (min > 5 || (min === 5 && pat >= 1)));
+            if (!ok) {
+              console.error('npm >= 11.5.1 required for Trusted Publishing, got', process.version);
+              process.exit(1);
+            }
+          "
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Build
         run: bun run build
-      - name: Publish to npm (trusted publisher / OIDC)
+      - name: Publish to npm (OIDC first, token fallback)
+        env:
+          # Fallback only — script strips this for the OIDC attempt. Remove after OIDC succeeds once.
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: bun run scripts/publish.ts -- --npm-only --force
       - name: Publish to JSR
         run: bun run scripts/publish.ts -- --jsr-only --force

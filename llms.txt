@@ -1,12 +1,14 @@
 # sently
 
 > Runtime-agnostic messaging library for Node.js, Bun, Deno, and Cloudflare Workers.
-> Channel-first email, SMS, WhatsApp, and Web Push. Zero runtime dependencies. ESM only.
-> Version: see package.json (currently 0.9.x). Full handbook: site/content/docs (bun run site:dev).
+> Channel-first email, SMS, WhatsApp, and push (Web Push / FCM). Zero runtime dependencies. ESM only.
+> Thesis: one sender shape, one error model, one retry/fallback path as channels grow — not a hosted orchestration platform.
+> Version: 1.0.x (see package.json). Full handbook: site/content/docs (bun run site:dev).
 
 ## Model
 
 Apps use channel senders — not vendor SDKs. Providers are transports under those senders.
+Preference centers, digests, workflow builders, and in-app inboxes (custom or Novu/Knock/Courier) sit on top of sently.
 
 | Channel | Sender import | Contract |
 |---------|---------------|----------|
@@ -61,7 +63,7 @@ const wa = createWhatsAppSender({
 await wa.send({ to: "15551234567", template: { name: "welcome", language: "en_US" } })
 ```
 
-### Web Push
+### Push (Web Push)
 
 ```ts
 import { createPushSender } from "sently/push"
@@ -77,26 +79,40 @@ const push = createPushSender({
 await push.send({ subscription, title: "Hi", body: "Hello" })
 ```
 
+### Push (FCM)
+
+```ts
+import { createPushSender } from "sently/push"
+import { FcmTransport } from "sently/transports/fcm"
+
+const push = createPushSender({
+  transport: new FcmTransport({ projectId, clientEmail, privateKey }),
+})
+await push.send({ token, title: "Hi", body: "Hello" })
+```
+
 ## Transports (exported)
 
-Email: smtp, resend, sendgrid, postmark, mailgun, ses, brevo, mailersend, plunk, sparkpost, mailtrap, loops, cloudflare-email, sndr, taqnyat-mail, preview, retry, fallback, weighted-fallback
+Email: smtp, resend, sendgrid, postmark, mailgun, ses, brevo, mailersend, plunk, sparkpost, mailtrap, mailpit, loops, cloudflare-email, sndr, taqnyat-mail, preview, retry, fallback, weighted-fallback
 
-SMS: twilio-sms, taqnyat-sms, msegat
+SMS: twilio-sms, taqnyat-sms, msegat, unifonic
 
 WhatsApp: whatsapp-cloud, taqnyat-whatsapp
 
-Push: webpush
+Push: webpush, fcm
 
-Also: `sently/idempotency`, `sently/webhooks`, `sently/dkim`, `sently/auth/oauth2`, `sently/pool`, `sently/plugins/template`, `sently/react`, `sently/adapters/*`
+Also: `sently/idempotency`, `sently/webhooks`, `sently/channel-result`, `sently/dkim`, `sently/auth/oauth2`, `sently/pool`, `sently/plugins/template`, `sently/react`, `sently/adapters/*`
 
 ## Docs for agents
 
 - Repo contract: AGENTS.md
+- Stability / support tiers: site/content/docs/get-started/stability.mdx, support-matrix.mdx
+- Compare / positioning: site/content/docs/guides/compare.mdx
 - Handbook MDX: site/content/docs/
 - Live site routes when running: /llms.txt, /llms-full.txt, /llms.mdx/docs/...
 
 ## Prefer
 
-- Channel senders + transport subpaths for tree-shaking
+- Channel senders + transport subpaths
 - Stable SentlyError codes from providers
 - No inventing APIs not in package.json exports

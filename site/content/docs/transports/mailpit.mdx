@@ -1,0 +1,123 @@
+---
+title: Mailpit
+description: Catch outbound email in a local Mailpit instance during development.
+icon: Inbox
+source: "src/transports/mailpit.ts"
+---
+
+Catch outbound email in a local [Mailpit](https://github.com/axllent/mailpit) instance while you develop.
+Use it for the welcome email or password-reset flow before you point at a production provider.
+
+<Callout title="The one rule">
+  Use Mailpit only in development — swap to a production transport before you deploy.
+</Callout>
+
+## Quick start
+
+Start Mailpit (SMTP `1025`, UI `8025`):
+
+```sh
+docker run -d --rm -p 1025:1025 -p 8025:8025 axllent/mailpit
+```
+
+<Steps>
+  <Step title="Create the transport">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { MailpitTransport } from "sently/transports/mailpit";
+
+const mailpit = new MailpitTransport();
+const mailer = await createMailer({ transport: mailpit });
+```
+
+  </Step>
+  <Step title="Send through the mailer">
+
+```ts
+await mailer.send({
+  from: "dev@example.com",
+  to: "you@example.com",
+  subject: "Hello",
+  text: "Captured by Mailpit",
+});
+```
+
+  </Step>
+  <Step title="Inspect the inbox">
+
+Open `http://localhost:8025`, or list messages from code:
+
+```ts
+const inbox = await mailpit.messages();
+console.log(inbox.messages[0]?.Subject);
+```
+
+  </Step>
+</Steps>
+
+## Configuration
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `host` | `string` | `"localhost"` | SMTP hostname |
+| `port` | `number` | `1025` | SMTP port |
+| `secure` | `boolean` | `false` | Implicit TLS on connect |
+| `requireTLS` | `boolean` | `false` | Refuse AUTH without TLS |
+| `auth` | `SMTPAuth` | — | Optional SMTP credentials |
+| `tls` | `TLSOptions` | — | TLS options when TLS is enabled |
+| `connectionTimeout` | `number` | — | Socket connect timeout (ms) |
+| `adapter` | `SocketAdapter` | auto-detected | Runtime TCP adapter |
+| `apiUrl` | `string` | `"http://localhost:8025"` | Web UI / REST API base |
+| `apiAuth` | `{ user, pass }` | — | Basic auth for the UI/API |
+
+`provider` is `"mailpit"`. `verify()` checks SMTP; `close()` closes the socket adapter.
+
+## REST helpers
+
+Vendor extras stay on the transport instance (not on `createMailer`):
+
+| Method | Mailpit API | Meaning |
+| --- | --- | --- |
+| `messages({ limit?, start? })` | `GET /api/v1/messages` | List captured messages (newest first) |
+| `getMessage(id)` | `GET /api/v1/message/{id}` | Full message body |
+| `deleteMessages(ids)` | `DELETE /api/v1/messages` | Delete by id |
+| `deleteAll()` | `DELETE` with empty `IDs` | Clear the inbox |
+| `webUrl` | — | UI base URL (same as `apiUrl`) |
+
+```ts
+await mailpit.deleteAll();
+await mailer.send({ from: "a@test.com", to: "b@test.com", subject: "T", text: "ok" });
+const list = await mailpit.messages({ limit: 1 });
+const full = await mailpit.getMessage(list.messages[0]!.ID);
+```
+
+REST failures throw `MailpitError` (`provider: "mailpit"`). Empty `getMessage("")` throws with status `400`.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Connection refused on port 1025">
+    Mailpit is not running, or the SMTP port is remapped. Start the container above, or set `host` / `port` to match your install.
+  </Accordion>
+  <Accordion title="API helpers fail but send works">
+    SMTP and the UI/API can bind to different hosts. Set `apiUrl` (and `apiAuth` if the UI requires Basic auth).
+  </Accordion>
+  <Accordion title="Should I use createSMTPMailer instead?">
+    Yes, if you only need SMTP. `MailpitTransport` adds local defaults and REST helpers for tests and inspection.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [SMTP](./smtp) — generic SMTP when you are not on Mailpit
+- [Preview](/docs/decorators/preview) — write `.eml` files to disk instead
+- [Email channel](/docs/channels/email) — `createMailer` contract
+
+## Next
+
+<Cards>
+  <Card title="Email channel" href="/docs/channels/email" />
+  <Card title="SMTP" href="/docs/transports/smtp" />
+  <Card title="Transports" href="/docs/transports" />
+</Cards>

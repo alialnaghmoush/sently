@@ -1,11 +1,12 @@
 ---
 title: FCM
-description: Send mobile push through Firebase Cloud Messaging HTTP v1.
+description: Send mobile push through Firebase Cloud Messaging (current HTTP API).
 icon: Bell
 source: "src/transports/fcm.ts"
 ---
 
-Send device-token push through Firebase Cloud Messaging HTTP v1 for native Android and iOS clients.
+Send device-token push through Firebase Cloud Messaging for native Android and iOS clients.
+The transport uses the current FCM HTTP API with a service-account JWT — no Google SDK.
 Use [Web Push](./webpush) when you have a browser Push API subscription instead.
 
 <Callout title="The one rule">Pass `token` in push options — not a Web Push `subscription`.</Callout>
@@ -29,15 +30,18 @@ const push = createPushSender({
 ```
 
   </Step>
-  <Step title="Send to a device token">
+  <Step title="Verify credentials, then send">
 
 ```ts
+const check = await push.verify();
+console.log(check.ok, check.message);
+
 const result = await push.send({
   token: deviceRegistrationToken,
   title: "Hello",
   body: "World",
 });
-console.log(result.messageId, result.status);
+console.log(result.messageId, result.status, result.provider);
 ```
 
   </Step>

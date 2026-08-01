@@ -34,6 +34,7 @@ const entrypoints = [
   'src/transports/plunk.ts',
   'src/transports/sparkpost.ts',
   'src/transports/mailtrap.ts',
+  'src/transports/mailpit.ts',
   'src/transports/loops.ts',
   'src/transports/sndr.ts',
   'src/transports/twilio-sms.ts',

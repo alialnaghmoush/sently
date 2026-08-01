@@ -4,7 +4,7 @@
  */
 
 import type { ReactNode } from "react";
-import { ProviderIcon } from "@/components/landing/provider-icons";
+import { ProviderIcon } from "@/components/provider-icons";
 
 const PROVIDERS: ReadonlyArray<string> = [
   "Resend",

@@ -78,6 +78,9 @@ Shared fields: `title`, `body`, optional `data`, `icon`, `ttl`, `messageId`.
   <Accordion title="Why does the transport reject my endpoint?">
     Web Push validates subscription endpoint hosts before sending. Add only exact private relay hostnames with `allowedEndpointHosts` when needed.
   </Accordion>
+  <Accordion title="Why does FCM reject my subscription object?">
+    `FcmTransport` requires `token`. Pass a Web Push `subscription` only to `WebPushTransport`.
+  </Accordion>
   <Accordion title="Why is the endpoint redacted in hooks?">
     Endpoint paths and FCM tokens are long-lived credentials, so hook context keeps only a redacted fingerprint.
   </Accordion>
@@ -88,6 +91,7 @@ Shared fields: `title`, `body`, optional `data`, `icon`, `ttl`, `messageId`.
 - [Push options](../reference/push-options)
 - [Web Push](../transports/webpush)
 - [FCM](../transports/fcm)
+- [Failover](../guides/failover)
 - [Hooks](./hooks)
 
 ## Next

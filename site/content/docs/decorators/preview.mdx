@@ -6,29 +6,72 @@ source: "src/transports/preview.ts"
 ---
 
 Write email previews to disk instead of delivering them.
+Use this when you want a local `.eml` or HTML file for the welcome email without a mail server.
 
 <Callout title="The one rule">Preview is for development, not delivery.</Callout>
 
-## Configuration
+## Quick start
 
-`outDir`, `open`, and `format` are optional; defaults are `./.emails`, false, and `eml`.
-
-<Steps><Step title="Wrap an email transport">
+<Steps>
+  <Step title="Create the preview transport">
 
 ```ts
+import { createMailer } from "sently/mailer";
 import { PreviewTransport } from "sently/transports/preview";
 
 const transport = new PreviewTransport({ outDir: ".emails", open: true });
-```
-
-</Step><Step title="Create the mailer">
-
-```ts
 const mailer = await createMailer({ transport });
 ```
 
-</Step></Steps>
+  </Step>
+  <Step title="Send and open the file">
 
-<Accordions><Accordion title="Does this replace the inner provider?">No. It delegates sends to the wrapped transport.</Accordion></Accordions>
+```ts
+await mailer.send({
+  from: "dev@example.com",
+  to: "you@example.com",
+  subject: "Welcome",
+  text: "Thanks for joining.",
+});
+```
 
-<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>
+Files land under `outDir` (default `./.emails`). With `open: true`, the OS opens the written file.
+
+  </Step>
+</Steps>
+
+## Configuration
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `outDir` | `string` | `"./.emails"` | Directory for preview files |
+| `open` | `boolean` | `false` | Open the file after write |
+| `format` | `"eml" \| "html"` | `"eml"` | Full MIME or HTML body only |
+
+`provider` is `"preview"`. `verify()` always succeeds.
+
+For a real SMTP catcher with a web UI, use [Mailpit](/docs/transports/mailpit) instead.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Does Preview wrap another transport?">
+    No. `PreviewTransport` is the delivery transport — it writes to disk and does not call a provider.
+  </Accordion>
+  <Accordion title="Where is the file?">
+    Check `outDir` (default `./.emails`). The console logs `[sently preview] Written: …` on each send.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Mailpit](/docs/transports/mailpit) — local SMTP catcher with inbox API
+- [Email channel](/docs/channels/email) — `createMailer` contract
+
+## Next
+
+<Cards>
+  <Card title="Mailpit" href="/docs/transports/mailpit" />
+  <Card title="Email channel" href="/docs/channels/email" />
+  <Card title="Decorators" href="/docs/decorators" />
+</Cards>

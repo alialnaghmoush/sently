@@ -6,7 +6,7 @@ source: "README.md"
 ---
 
 Choose a channel sender for the kind of message your application sends.
-Each sender accepts a provider transport, so delivery providers can change without rewriting send calls.
+Each sender accepts a provider transport — retry, fallback, and `SentlyError` codes stay the same as you add channels.
 
 <Callout title="The one rule">Application code calls a sently channel sender; provider-specific code stays in its transport.</Callout>
 
@@ -68,6 +68,8 @@ await sms.send({
 ## Learn more
 
 - [Choose an entrypoint](../get-started/entrypoints)
+- [Support matrix](../get-started/support-matrix)
+- [Failover](../guides/failover)
 - [Browse transports](../transports)
 
 ## Next

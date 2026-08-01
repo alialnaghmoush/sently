@@ -52,6 +52,20 @@ FCM stringifies non-string `data` values before send.
 
 Map any channel result with [channel send result](./channel-result).
 
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Can I send both subscription and token?">
+    No. Each call is either Web Push (`subscription`) or FCM (`token`). Match the shape to the transport.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Push channel](/docs/channels/push)
+- [Stability policy](/docs/get-started/stability) — union shape is frozen at 1.x
+- [Channel send result](./channel-result)
+
 ## Next
 
 <Cards>

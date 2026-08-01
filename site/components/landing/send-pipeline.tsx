@@ -8,6 +8,7 @@
 
 import { MotionConfig, motion, type Variants } from "framer-motion";
 import type { ReactNode } from "react";
+import { SendSimulator } from "@/components/landing/send-simulator";
 import { useClientReducedMotion } from "@/lib/use-client-reduced-motion";
 
 type Phase = {
@@ -62,67 +63,86 @@ export function SendPipeline(): ReactNode {
   return (
     <div className="flex flex-col gap-6">
       <MotionConfig reducedMotion="never">
-        <motion.ol
-          className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-fd-border bg-fd-border sm:grid-cols-2 lg:grid-cols-4"
+        {/* Live send lifecycle on wide screens; static phase cards below lg. */}
+        <div className="hidden lg:block">
+          <SendSimulator />
+        </div>
+
+        <div className="relative lg:hidden">
+          <span
+            aria-hidden
+            className="sently-beam-x pointer-events-none absolute -top-px z-[1] hidden h-px w-16 bg-linear-to-r from-transparent via-fd-foreground/60 to-transparent lg:block"
+          />
+          <motion.ol
+            className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-fd-border bg-fd-border sm:grid-cols-2"
+            variants={list}
+            initial={reduced ? false : "hidden"}
+            whileInView={reduced ? undefined : "show"}
+            viewport={{ once: true, margin: "-8% 0px" }}
+          >
+            {PHASES.map((phase, index) => (
+              <motion.li
+                key={phase.step}
+                variants={item}
+                className="group relative flex flex-col gap-2 bg-fd-card px-5 py-5 transition-colors hover:bg-fd-secondary/40"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-[10px] tracking-[0.16em] text-fd-muted-foreground transition-colors group-hover:text-fd-foreground">
+                    {phase.step}
+                  </span>
+                  {index < PHASES.length - 1 ? (
+                    <span
+                      aria-hidden
+                      className="sently-node-pulse hidden font-mono text-[10px] text-fd-muted-foreground/50 sm:inline"
+                      style={{ animationDelay: `${index * 0.45}s` }}
+                    >
+                      →
+                    </span>
+                  ) : null}
+                </div>
+                <span className="text-sm font-medium">{phase.title}</span>
+                <span className="font-mono text-[11px] leading-relaxed text-fd-muted-foreground">
+                  {phase.detail}
+                </span>
+              </motion.li>
+            ))}
+          </motion.ol>
+        </div>
+
+        <motion.div
+          className="grid gap-px overflow-hidden rounded-xl border border-fd-border bg-fd-border sm:grid-cols-2"
           variants={list}
           initial={reduced ? false : "hidden"}
           whileInView={reduced ? undefined : "show"}
           viewport={{ once: true, margin: "-8% 0px" }}
         >
-          {PHASES.map((phase, index) => (
-            <motion.li
-              key={phase.step}
-              variants={item}
-              className="relative flex flex-col gap-2 bg-fd-card px-5 py-5"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-[10px] tracking-[0.16em] text-fd-muted-foreground">
-                  {phase.step}
-                </span>
-                {index < PHASES.length - 1 ? (
-                  <span
-                    aria-hidden
-                    className="hidden font-mono text-[10px] text-fd-muted-foreground/50 lg:inline"
-                  >
-                    →
-                  </span>
-                ) : null}
-              </div>
-              <span className="text-sm font-medium">{phase.title}</span>
-              <span className="font-mono text-[11px] leading-relaxed text-fd-muted-foreground">
-                {phase.detail}
-              </span>
-            </motion.li>
-          ))}
-        </motion.ol>
+          <motion.div variants={item} className="flex flex-col gap-1.5 bg-fd-card px-5 py-4">
+            <span className="font-mono text-[10px] tracking-[0.16em] text-fd-muted-foreground uppercase">
+              Hooks
+            </span>
+            <p className="text-sm text-fd-muted-foreground">
+              Observe without changing the send —{" "}
+              <code className="text-fd-foreground/80">onSend</code>,{" "}
+              <code className="text-fd-foreground/80">onSuccess</code>,{" "}
+              <code className="text-fd-foreground/80">onError</code>,{" "}
+              <code className="text-fd-foreground/80">onRetry</code>. No body or PII in hook
+              context.
+            </p>
+          </motion.div>
+          <motion.div variants={item} className="flex flex-col gap-1.5 bg-fd-card px-5 py-4">
+            <span className="font-mono text-[10px] tracking-[0.16em] text-fd-muted-foreground uppercase">
+              Decorators
+            </span>
+            <p className="text-sm text-fd-muted-foreground">
+              Wrap any transport —{" "}
+              <code className="text-fd-foreground/80">RetryTransport</code>,{" "}
+              <code className="text-fd-foreground/80">FallbackTransport</code>,{" "}
+              <code className="text-fd-foreground/80">IdempotencyTransport</code>. Same contract,
+              stronger send path.
+            </p>
+          </motion.div>
+        </motion.div>
       </MotionConfig>
-
-      <div className="grid gap-px overflow-hidden rounded-xl border border-fd-border bg-fd-border sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5 bg-fd-card px-5 py-4">
-          <span className="font-mono text-[10px] tracking-[0.16em] text-fd-muted-foreground uppercase">
-            Hooks
-          </span>
-          <p className="text-sm text-fd-muted-foreground">
-            Observe without changing the send —{" "}
-            <code className="text-fd-foreground/80">onSend</code>,{" "}
-            <code className="text-fd-foreground/80">onSuccess</code>,{" "}
-            <code className="text-fd-foreground/80">onError</code>,{" "}
-            <code className="text-fd-foreground/80">onRetry</code>. No body or PII in hook context.
-          </p>
-        </div>
-        <div className="flex flex-col gap-1.5 bg-fd-card px-5 py-4">
-          <span className="font-mono text-[10px] tracking-[0.16em] text-fd-muted-foreground uppercase">
-            Decorators
-          </span>
-          <p className="text-sm text-fd-muted-foreground">
-            Wrap any transport —{" "}
-            <code className="text-fd-foreground/80">RetryTransport</code>,{" "}
-            <code className="text-fd-foreground/80">FallbackTransport</code>,{" "}
-            <code className="text-fd-foreground/80">IdempotencyTransport</code>. Same contract,
-            stronger send path.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,0 +1,87 @@
+---
+title: Compare
+description: How sently fits next to vendor SDKs, Nodemailer, and orchestration platforms.
+icon: Scale
+source: "README.md"
+---
+
+Teams often start with one channel — usually email via SendGrid or Resend — then add SMS and push.
+Each new vendor SDK brings its own auth, retries, and error shapes into app code.
+
+<Callout title="The one rule">
+  Treat sently as the channel-delivery layer. Put preference centers, digests, workflow builders, and in-app inboxes on top of it — custom code or a tool like Novu, Knock, or Courier — not instead of it.
+</Callout>
+
+## What sently replaces
+
+| Instead of… | Use sently for… |
+| --- | --- |
+| A growing pile of vendor SDKs in call sites | Channel senders + pluggable transports |
+| Per-channel retry and error glue | Shared `SentlyError` codes and retry/fallback decorators |
+| Nodemailer when you need multi-channel or non-Node runtimes | `createMailer` / `createSMTPMailer` plus SMS, WhatsApp, and push |
+
+## What sently does not replace
+
+| Need | Where it lives |
+| --- | --- |
+| Preference centers and unsubscribe UX | Your product, or Novu / Knock / Courier |
+| Digest / batching product logic | Your product, or an orchestration platform |
+| Workflow builders and multi-step journeys | Your product, or Novu / Knock / Courier |
+| In-app notification inboxes | Your product, or an orchestration platform |
+
+Those tools (or your own routing) call sently — or any transport — to deliver. sently does not ship dashboards or per-send SaaS.
+
+## Versus a vendor SDK pile
+
+| Concern | Typical stack | sently |
+| --- | --- | --- |
+| As you add channels | New SDK, new auth, new retries | Same sender factories |
+| Failures | Per-vendor exceptions | Stable `SentlyError` codes |
+| Reliability | Ad-hoc loops per client | `RetryTransport` + `FallbackTransport` |
+| Provider swap | Rewrite call sites | Swap the transport |
+
+## Versus Nodemailer
+
+| Concern | Nodemailer | sently |
+| --- | --- | --- |
+| Channels | Email | Email · SMS · WhatsApp · Push |
+| Runtimes | Node.js | Node · Bun · Deno · CF Workers |
+| Module format | CommonJS | ESM only |
+| Edge / Workers weight | Full mail stack on import | Tree-shakeable subpaths (~6.3 KB HTTP) |
+
+Bundle size matters most on Workers and cold starts. It is supporting evidence, not the primary reason to adopt.
+
+## Versus Novu, Knock, and Courier
+
+| Concern | Orchestration platforms | sently |
+| --- | --- | --- |
+| Role | Workflows, preferences, digests, in-app | Channel delivery / transports |
+| Hosting | Usually hosted SaaS | Library in your process |
+| Pricing model | Often per-send or seat | MIT package; you pay providers |
+
+Use both when you need product orchestration **and** a typed, multi-runtime delivery layer underneath.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Do I need sently if I already use Novu or Knock?">
+    Only if you want local, typed transports under your own routing — or to send outside that platform. Many teams use an orchestration tool for preferences and journeys, and a library like sently for direct transactional sends.
+  </Accordion>
+  <Accordion title="Is sently a Nodemailer drop-in?">
+    No. Migrate email with [Migrate from Nodemailer](/docs/get-started/migrate-nodemailer), then add other channels with the same sender pattern.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Introduction](/docs/get-started/introduction)
+- [Stability policy](/docs/get-started/stability)
+- [Support matrix](/docs/get-started/support-matrix)
+- [Migrate from Nodemailer](/docs/get-started/migrate-nodemailer)
+
+## Next
+
+<Cards>
+  <Card title="Introduction" href="/docs/get-started/introduction" />
+  <Card title="Support matrix" href="/docs/get-started/support-matrix" />
+</Cards>

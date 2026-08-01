@@ -98,10 +98,16 @@ export function InstallTerminal() {
       </div>
       <div className="space-y-3 px-4 py-4">
         <div className="font-mono text-[13px] leading-relaxed text-fd-foreground">
-          {active.commands.map((cmd) => (
+          {active.commands.map((cmd, index) => (
             <div key={cmd}>
               <span className="text-fd-muted-foreground select-none">$ </span>
               {cmd}
+              {index === active.commands.length - 1 ? (
+                <span
+                  aria-hidden
+                  className="ml-1 inline-block h-[13px] w-[7px] translate-y-[2px] bg-fd-foreground/70 motion-safe:animate-pulse"
+                />
+              ) : null}
             </div>
           ))}
         </div>

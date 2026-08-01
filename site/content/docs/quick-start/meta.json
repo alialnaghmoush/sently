@@ -1,5 +1,0 @@
-{
-  "title": "Quick start",
-  "icon": "Zap",
-  "pages": ["index", "email", "sms", "whatsapp", "push"]
-}

@@ -5,8 +5,8 @@ icon: Compass
 source: "README.md"
 ---
 
-sently sends email, SMS, WhatsApp, and push (Web Push or FCM) without making provider SDK calls your application API.
-Choose the channel sender first, then attach the provider transport that performs delivery.
+sently is the channel-delivery layer for email, SMS, WhatsApp, and push (Web Push or FCM).
+Choose a channel sender first, then attach a provider transport — so adding SMS or push later does not invent a new error and retry model in your app.
 
 <Callout title="The one rule">Use `createMailer`, `createSmsSender`, `createWhatsAppSender`, or `createPushSender` in app code; swap transports when provider configuration changes.</Callout>
 
@@ -67,11 +67,15 @@ Email factories are asynchronous. The other channel factories return their sende
 
 - [Install sently](./installation)
 - [Choose an entrypoint](./entrypoints)
+- [Stability policy](./stability)
+- [Support matrix](./support-matrix)
+- [Compare](/docs/guides/compare)
 - [Explore channels](../channels)
 
 ## Next
 
 <Cards>
-  <Card title="Email quick start" href="/docs/quick-start/email" />
+  <Card title="Email channel" href="/docs/channels/email" />
+  <Card title="Support matrix" href="/docs/get-started/support-matrix" />
   <Card title="Channels" href="/docs/channels" />
 </Cards>

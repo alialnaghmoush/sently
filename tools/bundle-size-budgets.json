@@ -22,6 +22,7 @@
   "sently/transports/plunk": 1800,
   "sently/transports/sparkpost": 4500,
   "sently/transports/mailtrap": 4500,
+  "sently/transports/mailpit": 14500,
   "sently/transports/loops": 1800,
   "sently/transports/sndr": 2500,
   "sently/transports/twilio-sms": 1800,

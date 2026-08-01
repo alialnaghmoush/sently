@@ -82,6 +82,13 @@ const subpathImports: Array<{ path: string; check: (mod: Record<string, unknown>
     check: (mod) => expect(mod.MailtrapTransport).toBeDefined(),
   },
   {
+    path: "../../dist/transports/mailpit.js",
+    check: (mod) => {
+      expect(mod.MailpitTransport).toBeDefined();
+      expect(mod.MailpitError).toBeDefined();
+    },
+  },
+  {
     path: "../../dist/transports/loops.js",
     check: (mod) => expect(mod.LoopsTransport).toBeDefined(),
   },

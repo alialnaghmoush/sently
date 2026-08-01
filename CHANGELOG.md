@@ -2,6 +2,46 @@
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-08-01
+
+First stable release. Channel contracts and Supported transports are semver-frozen;
+npm publishes ship with provenance attestations and Trusted Publishing (OIDC).
+sently is the channel-delivery layer — preference centers, digests, workflows, and
+in-app inboxes sit on top (custom or Novu / Knock / Courier), not instead of it.
+
+### ✨ Added
+
+- **Stability policy** — what is frozen at 1.x vs allowed without a major
+  (`PushOptions` union, `providerIndex`, email-only preview / idempotency)
+- **Support matrix** — Supported vs Available transports and runtimes
+- **Non-goals** — library-not-platform boundaries (no preference centers /
+  digests / workflow builders inside sently)
+- **Security policy** — root `SECURITY.md` (private reporting, response targets,
+  supported versions for patches, Trusted Publisher setup notes)
+- **Compare guide** — positioning vs vendor SDK piles, Nodemailer, and
+  Novu / Knock / Courier
+- **Failover guide** — cross-channel retry-then-fallback recipes
+- **Mailpit transport** — `sently/transports/mailpit` for local email capture
+  (SMTP defaults `localhost:1025`, REST helpers for list / get / delete)
+
+### ♻️ Changed
+
+- **Messaging positioning** — homepage, README, `llms.txt`, and package
+  description/keywords lead with multi-channel scope creep (one sender / error /
+  retry model); bundle size as supporting evidence for edge / Workers; FCM
+  documented as current HTTP API support, not a feature boast
+- **Handbook landing** — install → send loop, channel map, where-next table,
+  and library-vs-platform troubleshooting
+- **Docs IA** — remove duplicate Quick start section; Channels is the first-send
+  path; cross-links for stability, support matrix, failover, and security
+- **Migrate from Nodemailer** — diff-style transporter and `sendMail` → `send`
+  swaps, field map, SMTP → HTTP follow-on, fuller options tables
+- **npm publish** — OIDC Trusted Publishing first, optional `NPM_TOKEN`
+  fallback; continues to use `npm publish --provenance` from CI (npm CLI ≥11.5.1
+  check in the publish workflow)
+- **Semver** — public channel factories, contracts, hooks, `SentlyError` codes,
+  `ChannelSendResult`, and published subpaths follow 1.x stability
+
 ## [0.10.0] — 2026-08-01
 
 ### ✨ Added
@@ -14,8 +54,8 @@
   WhatsApp / push senders wire `onRetry` / `onFallback` like email
 - **Unifonic SMS** — `sently/transports/unifonic` (`AppSid` + el.cloud REST
   send); webhook parser at `sently/webhooks/unifonic`
-- **FCM push** — `sently/transports/fcm` (HTTP v1 + service-account JWT, zero
-  Google SDK)
+- **FCM push** — `sently/transports/fcm` (current FCM HTTP API + service-account
+  JWT, no Google SDK)
 - **Non-email webhooks** — `DeliveryEvent` plus parsers for Twilio SMS and
   WhatsApp Cloud (`sently/webhooks/twilio-sms`, `whatsapp-cloud`);
   `toDeliveryEvent` maps `EmailEvent` into the shared shape; Twilio and

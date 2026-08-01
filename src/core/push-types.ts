@@ -44,7 +44,7 @@ export interface WebPushOptions extends PushNotificationFields {
 }
 
 /**
- * Options for sending via Firebase Cloud Messaging HTTP v1 (device token).
+ * Options for sending via Firebase Cloud Messaging (device token).
  * Data values are stringified by the FCM transport when needed.
  */
 export interface FcmPushOptions extends PushNotificationFields {

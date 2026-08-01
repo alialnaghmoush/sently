@@ -1,7 +1,7 @@
 {
   "name": "sently",
-  "version": "0.10.0",
-  "description": "Runtime-agnostic messaging library for Node.js, Bun, Deno, and Cloudflare Workers. Channel-first email, SMS, WhatsApp, and push with pluggable provider transports.",
+  "version": "1.0.0",
+  "description": "Runtime-agnostic channel-delivery library for Node.js, Bun, Deno, and Cloudflare Workers. One sender shape, one error model, and one retry path across email, SMS, WhatsApp, and push — with pluggable provider transports.",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -11,6 +11,7 @@
     "README.md",
     "LICENSE",
     "CHANGELOG.md",
+    "SECURITY.md",
     "AGENTS.md",
     "site/content/docs"
   ],
@@ -58,11 +59,18 @@
     "typescript": "6.0.3"
   },
   "keywords": [
+    "messaging",
     "email",
+    "sms",
+    "whatsapp",
+    "push",
+    "web-push",
+    "fcm",
     "smtp",
     "mailer",
     "nodemailer",
     "nodemailer-alternative",
+    "channel-first",
     "bun",
     "deno",
     "cloudflare-workers",
@@ -75,6 +83,7 @@
     "ses",
     "aws-ses",
     "brevo",
+    "twilio",
     "dkim",
     "oauth2",
     "transactional-email",
@@ -178,6 +187,10 @@
     "./transports/mailtrap": {
       "import": "./dist/transports/mailtrap.js",
       "types": "./dist/transports/mailtrap.d.ts"
+    },
+    "./transports/mailpit": {
+      "import": "./dist/transports/mailpit.js",
+      "types": "./dist/transports/mailpit.d.ts"
     },
     "./transports/loops": {
       "import": "./dist/transports/loops.js",

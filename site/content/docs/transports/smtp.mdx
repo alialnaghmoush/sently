@@ -1,47 +1,86 @@
 ---
 title: SMTP
-description: Connect to an SMTP relay with an explicit transport.
+description: Connect to an SMTP relay with host, port, and auth.
 icon: Truck
 source: "src/transports/smtp.ts"
 ---
 
-Connect to an SMTP relay with an explicit transport.
+Connect to an SMTP relay for production or a local catcher.
+Prefer `createSMTPMailer` when your config starts with host and port — it picks a runtime adapter for you.
 
-<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+<Callout title="The one rule">
+  Use `createSMTPMailer` for host/port config; use `createMailer` only with an explicit `SMTPTransport` that already has an adapter.
+</Callout>
 
-## Configuration
-
-| Option | Type | Default or requirement |
-| --- | --- | --- |
-| `host` | `string` | required |
-| `port` | `number` | 587 or 465 based on secure |
-| `secure` | `boolean` | false |
-| `auth` | `SMTPAuth` | optional |
-| `requireTLS` | `boolean` | true when auth is set |
-| `adapter` | `SocketAdapter` | optional |
-| `pool` | `boolean` | false |
-| `dkim` | `DKIMConfig` | optional |
+## Quick start
 
 <Steps>
-  <Step title="Configure the transport">
+  <Step title="Create an SMTP mailer">
 
 ```ts
-import { createMailer } from "sently/mailer";
-import { SMTPTransport } from "sently/transports/smtp";
+import { createSMTPMailer } from "sently/smtp";
 
-const sender = createMailer({ transport: new SMTPTransport({ host: "smtp.example.com", auth: { user: "user@example.com", pass: "..." } }) });
+const mailer = await createSMTPMailer({
+  host: "smtp.example.com",
+  port: 587,
+  auth: { user: "you@example.com", pass: process.env.SMTP_PASSWORD! },
+});
 ```
 
   </Step>
   <Step title="Send with the channel API">
 
 ```ts
-await sender.send({ from: "hello@example.com", to: "person@example.com", subject: "Hello", text: "Hi" });
+await mailer.send({
+  from: "hello@example.com",
+  to: "person@example.com",
+  subject: "Hello",
+  text: "Hi",
+});
 ```
 
   </Step>
 </Steps>
 
-<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+## Configuration
 
-<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `host` | `string` | required |
+| `port` | `number` | `587`, or `465` when `secure` |
+| `secure` | `boolean` | `false` |
+| `auth` | `SMTPAuth` | optional |
+| `requireTLS` | `boolean` | `true` when `auth` is set |
+| `adapter` | `SocketAdapter` | auto via `createSMTPMailer` |
+| `pool` | `boolean` | `false` |
+| `dkim` | `DKIMConfig` | optional |
+
+For local capture with defaults and REST helpers, use [Mailpit](./mailpit) instead of hand-wiring `localhost:1025`.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Should I call the provider SDK?">
+    No. Use the sently sender; provider-specific extras stay on the transport instance.
+  </Accordion>
+  <Accordion title="createMailer rejects host and port">
+    Pass an explicit transport, or use `createSMTPMailer` for relay configuration.
+  </Accordion>
+  <Accordion title="Local development without a real relay">
+    Use [Mailpit](./mailpit) (`sently/transports/mailpit`) or [Preview](/docs/decorators/preview).
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Mailpit](./mailpit) — local SMTP catcher with inbox API
+- [Email channel](/docs/channels/email) — `createMailer` / `createSMTPMailer`
+- [Runtimes](/docs/get-started/runtimes) — socket adapters
+
+## Next
+
+<Cards>
+  <Card title="Mailpit" href="/docs/transports/mailpit" />
+  <Card title="Email channel" href="/docs/channels/email" />
+  <Card title="Transports" href="/docs/transports" />
+</Cards>

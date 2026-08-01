@@ -56,6 +56,7 @@ Every import below is an exported package subpath.
 | [Plunk](./plunk) | Email | `sently/transports/plunk` |
 | [SparkPost](./sparkpost) | Email | `sently/transports/sparkpost` |
 | [Mailtrap](./mailtrap) | Email | `sently/transports/mailtrap` |
+| [Mailpit](./mailpit) | Email (dev) | `sently/transports/mailpit` |
 | [Loops](./loops) | Email | `sently/transports/loops` |
 | [Cloudflare Email](./cloudflare-email) | Email | `sently/transports/cloudflare-email` |
 | [SNDR](./sndr) | Email | `sently/transports/sndr` |
@@ -87,13 +88,18 @@ For retry, fallback, preview, and idempotency wrappers, see [Decorators](../deco
     No. A transport implements one channel contract. Choose a transport listed for the channel sender you use.
   </Accordion>
   <Accordion title="How do I add retries or fallback?">
-    Wrap any channel transport with a [decorator](../decorators), then pass the wrapper to the matching sender.
+    Wrap any channel transport with a [decorator](../decorators), then pass the wrapper to the matching sender. See also the [failover guide](../guides/failover).
+  </Accordion>
+  <Accordion title="Is every exported transport equally Supported?">
+    No. See the [support matrix](../get-started/support-matrix) for Supported vs Available.
   </Accordion>
 </Accordions>
 
 ## Learn more
 
+- [Support matrix](../get-started/support-matrix)
 - [Decorators](../decorators)
+- [Failover](../guides/failover)
 - [Email channel](../channels/email)
 - [SMS channel](../channels/sms)
 - [Transport contracts](../reference/transport-contracts)
@@ -101,7 +107,7 @@ For retry, fallback, preview, and idempotency wrappers, see [Decorators](../deco
 ## Next
 
 <Cards>
+  <Card title="Support matrix" href="/docs/get-started/support-matrix" />
   <Card title="Decorators" href="/docs/decorators" />
-  <Card title="Email channel" href="/docs/channels/email" />
-  <Card title="SMS channel" href="/docs/channels/sms" />
+  <Card title="Failover" href="/docs/guides/failover" />
 </Cards>

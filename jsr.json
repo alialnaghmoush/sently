@@ -1,7 +1,7 @@
 {
   "name": "@alialnaghmoush/sently",
-  "version": "0.10.0",
-  "description": "Runtime-agnostic messaging library for Node.js, Bun, Deno, and Cloudflare Workers. Channel-first email, SMS, WhatsApp, and push with pluggable provider transports.",
+  "version": "1.0.0",
+  "description": "Runtime-agnostic channel-delivery library for Node.js, Bun, Deno, and Cloudflare Workers. One sender shape, one error model, and one retry path across email, SMS, WhatsApp, and push — with pluggable provider transports.",
   "license": "MIT",
   "publish": {
     "exclude": [
@@ -45,6 +45,7 @@
     "./transports/plunk": "./src/transports/plunk.ts",
     "./transports/sparkpost": "./src/transports/sparkpost.ts",
     "./transports/mailtrap": "./src/transports/mailtrap.ts",
+    "./transports/mailpit": "./src/transports/mailpit.ts",
     "./transports/loops": "./src/transports/loops.ts",
     "./transports/sndr": "./src/transports/sndr.ts",
     "./transports/twilio-sms": "./src/transports/twilio-sms.ts",

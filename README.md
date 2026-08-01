@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <em>Stop wiring vendor SDKs into every channel. One sender shape for email, SMS, WhatsApp, and push — swap the transport, keep your call sites. Node, Bun, Deno, Workers.</em>
+  <em>Start with email, add SMS and push later — one sender shape, one error model, one retry path. Swap the transport; keep your call sites. Node, Bun, Deno, Workers.</em>
 </p>
 
 <p align="center">
@@ -32,11 +32,6 @@
   <a href="https://sently.omqkhafi.dev/llms.txt"><code>llms.txt</code></a> ·
   <a href="https://www.npmjs.com/package/sently"><code>sently</code></a>
 </p>
-
-> [!WARNING]
-> **Early development (`v0.x`) — API may change.**
->
-> Pin an exact version for production until v1.0.0. See [CHANGELOG](CHANGELOG.md).
 
 ## Install
 
@@ -78,18 +73,24 @@ Full walkthrough: [Get started](https://sently.omqkhafi.dev/docs/get-started).
 
 ## Why sently?
 
-Nodemailer is Node.js–only and ships the full mail stack on every import (~59 KB gzip for [v9.0.3](https://bundlephobia.com/package/nodemailer@9.0.3)). sently is tree-shakeable, multi-runtime, and multi-channel.
+Teams usually start on one channel (often email), then add SMS and push. Each vendor SDK brings its own auth, retries, and error shapes. sently keeps **one sender shape**, **one `SentlyError` model**, and **one retry/fallback path** as you add channels.
 
-|                   | Nodemailer              | sently                                      |
-| ----------------- | ----------------------- | ------------------------------------------- |
-| Bundle size       | ~59 KB gzip always      | ~6.3 KB HTTP · ~14.9 KB SMTP                |
-| Runtimes          | Node.js only            | Node, Bun, Deno, CF Workers                 |
-| Module format     | CommonJS                | ESM only                                    |
-| Dependencies      | 0                       | 0                                           |
-| Channels          | Email                   | Email · SMS · WhatsApp · Push               |
-| HTTP transports   | via plugins             | built-in subpaths                           |
-| Provider failover | —                       | `FallbackTransport` + weighted routing      |
-| TypeScript        | `@types/nodemailer`     | built-in                                    |
+**Library, not platform.** sently is the channel-delivery layer. Preference centers, digests, workflow builders, and in-app inboxes — custom logic or tools like [Novu](https://novu.co), [Knock](https://knock.app), or [Courier](https://www.courier.com) — sit **on top of** sently, not instead of it.
+
+Compared with email-only stacks (e.g. Nodemailer) and a pile of vendor clients:
+
+|                   | Typical stack                         | sently                                      |
+| ----------------- | ------------------------------------- | ------------------------------------------- |
+| As channels grow  | New SDK per channel                   | Same sender factories                       |
+| Failures          | Per-vendor exceptions                 | Stable `SentlyError` codes                  |
+| Reliability       | Ad-hoc per client                     | `RetryTransport` + `FallbackTransport`      |
+| Providers         | Vendor clients in app code            | Pluggable transports                        |
+| Runtimes          | Often Node only                       | Node, Bun, Deno, CF Workers                 |
+| Edge / Workers    | Fat SDKs hurt cold start              | Tree-shakeable (~6.3 KB HTTP · ~14.9 KB SMTP) |
+| Module format     | Often CJS                             | ESM only                                    |
+| Dependencies      | Varies                                | 0 runtime deps                              |
+
+More detail: [Compare](https://sently.omqkhafi.dev/docs/guides/compare) · [Stability](https://sently.omqkhafi.dev/docs/get-started/stability) · [Support matrix](https://sently.omqkhafi.dev/docs/get-started/support-matrix).
 
 ## Entrypoints
 
@@ -113,10 +114,12 @@ Nodemailer is Node.js–only and ships the full mail stack on every import (~59 
 | Get started  | [/docs/get-started](https://sently.omqkhafi.dev/docs/get-started)     |
 | Channels     | [/docs/channels](https://sently.omqkhafi.dev/docs/channels)           |
 | Transports   | [/docs/transports](https://sently.omqkhafi.dev/docs/transports)       |
+| Compare      | [/docs/guides/compare](https://sently.omqkhafi.dev/docs/guides/compare) |
 | Agents index | [/llms.txt](https://sently.omqkhafi.dev/llms.txt)                     |
 | Changelog    | [`CHANGELOG.md`](CHANGELOG.md)                               |
+| Security     | [`SECURITY.md`](SECURITY.md)                                 |
 | Agents       | [`AGENTS.md`](AGENTS.md)                                     |
 
 Local docs: `bun run site:dev`. Verify: `bun run verify`.
 
-Pre-1.0. Published on [npm](https://www.npmjs.com/package/sently) and [JSR](https://jsr.io/@alialnaghmoush/sently). MIT.
+**1.0.0** — semver-stable channel contracts. Published on [npm](https://www.npmjs.com/package/sently) (provenance + Trusted Publishing) and [JSR](https://jsr.io/@alialnaghmoush/sently). MIT.

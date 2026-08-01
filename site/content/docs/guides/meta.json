@@ -3,6 +3,8 @@
   "icon": "Map",
   "pages": [
     "index",
+    "compare",
+    "failover",
     "adapters",
     "dkim",
     "oauth2",

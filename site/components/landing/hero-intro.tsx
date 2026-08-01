@@ -6,9 +6,12 @@
 "use client";
 
 import { MotionConfig, motion, type Variants } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { siBun, siCloudflareworkers, siDeno, siNodedotjs } from "simple-icons";
 import { AiOnboardButton } from "@/components/landing/ai-onboard-button";
+import { HeroSignalMap } from "@/components/landing/hero-signal-map";
 import { useClientReducedMotion } from "@/lib/use-client-reduced-motion";
 
 const EASE = { type: "spring", stiffness: 420, damping: 38, mass: 0.9 } as const;
@@ -32,6 +35,37 @@ const settleStatic: Variants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { duration: 0 } },
 };
+
+/**
+ * Runtime brand marks — brand hex where simple-icons is colorful; Bun/Deno
+ * use cream/mint accents (their SI hex is black and vanishes on dark).
+ */
+const RUNTIMES = [
+  {
+    name: "Node",
+    title: "Node.js",
+    path: siNodedotjs.path,
+    colorClass: "text-[#5FA04E]",
+  },
+  {
+    name: "Bun",
+    title: "Bun",
+    path: siBun.path,
+    colorClass: "text-[#B45309] dark:text-[#FBF0DF]",
+  },
+  {
+    name: "Deno",
+    title: "Deno",
+    path: siDeno.path,
+    colorClass: "text-[#0F766E] dark:text-[#70FFAF]",
+  },
+  {
+    name: "Workers",
+    title: "Cloudflare Workers",
+    path: siCloudflareworkers.path,
+    colorClass: "text-[#F38020]",
+  },
+] as const;
 
 /**
  * Left hero pane: quiet grid atmosphere and settle motion.
@@ -58,6 +92,17 @@ export function HeroIntro(): ReactNode {
           initial={reduced ? false : "hidden"}
           animate="show"
         >
+          <motion.p
+            variants={settleVariants}
+            className="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-fd-muted-foreground uppercase"
+          >
+            <span
+              aria-hidden
+              className="sently-dot-pulse size-1.5 rounded-full bg-fd-foreground/70"
+            />
+            v1.0 · ESM-only · zero runtime deps
+          </motion.p>
+
           <motion.h1
             variants={settleVariants}
             className="max-w-[18ch] text-3xl font-semibold tracking-tight text-balance sm:text-4xl xl:text-[2.85rem] xl:leading-[1.08]"
@@ -70,8 +115,8 @@ export function HeroIntro(): ReactNode {
             variants={settleVariants}
             className="max-w-md text-sm leading-relaxed text-pretty text-fd-muted-foreground sm:text-base"
           >
-            Email, SMS, WhatsApp, and Web Push — one channel-first API for Node.js, Bun, Deno, and
-            Cloudflare Workers. Zero runtime dependencies.
+            Start with email, add SMS and push later — one sender shape, one error model, one
+            retry path. Node, Bun, Deno, and Cloudflare Workers. Zero runtime dependencies.
           </motion.p>
 
           <motion.div
@@ -80,19 +125,49 @@ export function HeroIntro(): ReactNode {
           >
             <Link
               href="/docs/get-started/installation"
-              className="inline-flex items-center bg-fd-foreground px-5 py-2.5 text-sm font-medium text-fd-background transition-opacity hover:opacity-90"
+              className="group inline-flex items-center bg-fd-foreground px-5 py-2.5 text-sm font-medium text-fd-background transition-opacity hover:opacity-90"
             >
               Get started
+              <ArrowRight
+                aria-hidden
+                className="ml-2 size-3.5 transition-transform duration-300 group-hover:translate-x-0.5"
+              />
             </Link>
             <AiOnboardButton />
           </motion.div>
 
-          <motion.p
+          <motion.ul
             variants={settleVariants}
-            className="font-mono text-[11px] tracking-[0.12em] text-fd-muted-foreground uppercase"
+            aria-label="Runs on Node, Bun, Deno, and Cloudflare Workers"
+            className="flex flex-wrap items-center gap-x-4 gap-y-2"
           >
-            Runs on Node · Bun · Deno · Cloudflare Workers
-          </motion.p>
+            <li className="font-mono text-[11px] tracking-[0.12em] text-fd-muted-foreground uppercase">
+              Runs on
+            </li>
+            {RUNTIMES.map((runtime) => (
+              <li key={runtime.name}>
+                <span
+                  title={runtime.title}
+                  className={`inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.12em] uppercase ${runtime.colorClass}`}
+                >
+                  <svg
+                    role="img"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="size-3.5 shrink-0"
+                    aria-hidden
+                  >
+                    <path d={runtime.path} />
+                  </svg>
+                  {runtime.name}
+                </span>
+              </li>
+            ))}
+          </motion.ul>
+
+          <motion.div variants={settleVariants} className="hidden max-w-[30rem] pt-2 sm:block">
+            <HeroSignalMap />
+          </motion.div>
         </motion.div>
       </MotionConfig>
     </div>

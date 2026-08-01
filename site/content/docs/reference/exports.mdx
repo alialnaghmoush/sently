@@ -37,7 +37,7 @@ The main `sently` package is for shared types and factories — not every provid
 
 | Import | Use |
 | ------ | --- |
-| `sently/transports/<name>` | One provider or decorator (e.g. `sndr`, `unifonic`, `fcm`, `retry`) |
+| `sently/transports/<name>` | One provider or decorator (e.g. `sndr`, `mailpit`, `fcm`, `retry`) |
 
 HTTP providers such as SNDR, Resend, and Plunk are **not** re-exported from `sently`.
 
@@ -75,11 +75,14 @@ Provider transports live on `sently/transports/*` so bare Node/Deno imports of `
 ## Learn more
 
 - [Entrypoints](/docs/get-started/entrypoints) — which import to pick first
-- [Bundle size](/docs/guides/bundle-size) — measured stacks
+- [Stability policy](/docs/get-started/stability) — frozen entrypoints at 1.x
+- [Support matrix](/docs/get-started/support-matrix) — Supported vs Available
+- [Bundle size](/docs/guides/bundle-size) — measured stacks (supporting for Workers)
 
 ## Next
 
 <Cards>
   <Card title="Entrypoints" description="Choose a channel import path." href="/docs/get-started/entrypoints" />
+  <Card title="Support matrix" description="Production support promise." href="/docs/get-started/support-matrix" />
   <Card title="Transports" description="Provider list by channel." href="/docs/transports" />
 </Cards>

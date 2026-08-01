@@ -1,0 +1,121 @@
+---
+title: Failover
+description: Retry inside a provider, then fail over across providers on any channel.
+icon: GitBranch
+source: "src/transports/fallback.ts"
+---
+
+When a provider blips, retry that transport first, then fail over to the next.
+The same decorator pattern works for email, SMS, WhatsApp, and push.
+
+<Callout title="The one rule">
+  Wrap each provider in `RetryTransport`, then pass the list to `FallbackTransport`. Use the channel sender that matches the transport contract.
+</Callout>
+
+## Quick start
+
+<Steps>
+  <Step title="Email — Resend then SES">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { FallbackTransport } from "sently/transports/fallback";
+import { RetryTransport } from "sently/transports/retry";
+import { ResendTransport } from "sently/transports/resend";
+import { SESTransport } from "sently/transports/ses";
+
+const mailer = await createMailer({
+  transport: new FallbackTransport(
+    [
+      new RetryTransport(new ResendTransport({ apiKey: process.env.RESEND_API_KEY! })),
+      new RetryTransport(
+        new SESTransport({
+          region: process.env.AWS_REGION!,
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        }),
+      ),
+    ],
+    { cooldownMs: 300_000 },
+  ),
+});
+```
+
+  </Step>
+  <Step title="SMS — Twilio then Unifonic">
+
+```ts
+import { createSmsSender } from "sently/sms";
+import { FallbackTransport } from "sently/transports/fallback";
+import { RetryTransport } from "sently/transports/retry";
+import { TwilioSmsTransport } from "sently/transports/twilio-sms";
+import { UnifonicTransport } from "sently/transports/unifonic";
+
+const sms = createSmsSender({
+  transport: new FallbackTransport(
+    [
+      new RetryTransport(
+        new TwilioSmsTransport({
+          accountSid: process.env.TWILIO_ACCOUNT_SID!,
+          authToken: process.env.TWILIO_AUTH_TOKEN!,
+        }),
+      ),
+      new RetryTransport(
+        new UnifonicTransport({
+          appSid: process.env.UNIFONIC_APPSID!,
+          senderId: "MyBrand",
+        }),
+      ),
+    ],
+    { cooldownMs: 300_000 },
+  ),
+});
+```
+
+  </Step>
+  <Step title="Inspect which provider won">
+
+```ts
+const result = await sms.send({
+  to: "+15551234567",
+  body: "Hello",
+  from: "+15557654321",
+});
+console.log(result.provider, result.providerIndex);
+```
+
+  </Step>
+</Steps>
+
+## Behavior
+
+| Behavior | Default |
+| --- | --- |
+| Fail over on 5xx / network | Yes |
+| Fail over on 400 / 401 / 403 | No (same client error on every provider) |
+| `cooldownMs` | Skip a failed provider until the cooldown ends |
+| Hooks | `onRetry` / `onFallback` on the channel sender when wired |
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Why did both providers reject the same message?">
+    Permanent client errors do not fail over by default. Fix the payload or credentials before expecting a second provider to succeed.
+  </Accordion>
+  <Accordion title="Can I mix email and SMS in one FallbackTransport?">
+    No. Every entry must implement the same channel contract as the sender.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Retry](/docs/decorators/retry)
+- [Fallback](/docs/decorators/fallback)
+- [Support matrix](/docs/get-started/support-matrix)
+
+## Next
+
+<Cards>
+  <Card title="Fallback decorator" href="/docs/decorators/fallback" />
+  <Card title="Retry decorator" href="/docs/decorators/retry" />
+</Cards>

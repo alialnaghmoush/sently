@@ -1,6 +1,7 @@
 import type { LoaderPlugin } from "fumadocs-core/source";
 import { createElement, type ReactNode } from "react";
 import { icons, type LucideIcon } from "lucide-react";
+import { ProviderIcon } from "@/components/provider-icons";
 
 /**
  * Lucide icon names keyed by docs URL path (better-auth sidebar-content pattern).
@@ -12,11 +13,6 @@ const PATH_ICONS: Readonly<Record<string, keyof typeof icons>> = {
   "/docs/get-started/why": "Compass",
   "/docs/get-started/installation": "Download",
   "/docs/get-started/basic-usage": "SquareTerminal",
-  "/docs/quick-start": "Zap",
-  "/docs/quick-start/email": "Mail",
-  "/docs/quick-start/sms": "MessageSquareText",
-  "/docs/quick-start/whatsapp": "MessagesSquare",
-  "/docs/quick-start/push": "Bell",
   "/docs/decorators": "Layers",
   "/docs/decorators/preview": "Eye",
   "/docs/decorators/retry": "RotateCw",
@@ -79,12 +75,42 @@ const PATH_ICONS: Readonly<Record<string, keyof typeof icons>> = {
   "/docs/reference/errors": "CircleAlert",
 };
 
+/**
+ * Transport brand marks keyed by docs URL path. Values are provider display
+ * names from the shared ProviderIcon registry (also used by the landing marquee).
+ */
+const TRANSPORT_ICONS: Readonly<Record<string, string>> = {
+  "/docs/transports/smtp": "SMTP",
+  "/docs/transports/resend": "Resend",
+  "/docs/transports/sendgrid": "SendGrid",
+  "/docs/transports/postmark": "Postmark",
+  "/docs/transports/mailgun": "Mailgun",
+  "/docs/transports/ses": "AWS SES",
+  "/docs/transports/brevo": "Brevo",
+  "/docs/transports/mailersend": "MailerSend",
+  "/docs/transports/plunk": "Plunk",
+  "/docs/transports/sparkpost": "SparkPost",
+  "/docs/transports/mailtrap": "Mailtrap",
+  "/docs/transports/mailpit": "Mailpit",
+  "/docs/transports/loops": "Loops",
+  "/docs/transports/cloudflare-email": "Cloudflare Email",
+  "/docs/transports/sndr": "SNDR",
+  "/docs/transports/taqnyat-mail": "Taqnyat",
+  "/docs/transports/twilio-sms": "Twilio",
+  "/docs/transports/taqnyat-sms": "Taqnyat",
+  "/docs/transports/msegat": "Msegat",
+  "/docs/transports/unifonic": "Unifonic",
+  "/docs/transports/whatsapp-cloud": "WhatsApp Cloud",
+  "/docs/transports/taqnyat-whatsapp": "Taqnyat",
+  "/docs/transports/webpush": "Web Push",
+  "/docs/transports/fcm": "FCM",
+};
+
 /** Folder display name → docs path for icon lookup. */
 const FOLDER_PATHS: Readonly<Record<string, string>> = {
   Documentation: "/docs",
   "Get Started": "/docs/get-started",
   "Get started": "/docs/get-started",
-  "Quick start": "/docs/quick-start",
   Decorators: "/docs/decorators",
   Transports: "/docs/transports",
   Channels: "/docs/channels",
@@ -96,12 +122,15 @@ const FOLDER_PATHS: Readonly<Record<string, string>> = {
 };
 
 /**
- * Resolve a Lucide icon element for a docs path.
+ * Resolve an icon element for a docs path: transport brand mark first,
+ * then the Lucide map.
  *
  * @param path - Absolute docs URL path
  */
 function iconForPath(path: string | undefined): ReactNode {
   if (!path) return undefined;
+  const provider = TRANSPORT_ICONS[path];
+  if (provider) return createElement(ProviderIcon, { name: provider });
   const name = PATH_ICONS[path];
   if (!name) return undefined;
   const Icon = icons[name] as LucideIcon | undefined;

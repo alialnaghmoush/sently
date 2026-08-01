@@ -1,6 +1,6 @@
 # sently — agent contract
 
-sently is a runtime-agnostic TypeScript messaging library (email, SMS, WhatsApp, Web Push, FCM) for Node.js, Bun, Deno, and Cloudflare Workers. ESM-only, zero runtime dependencies.
+sently is a runtime-agnostic TypeScript channel-delivery library (email, SMS, WhatsApp, Web Push, FCM) for Node.js, Bun, Deno, and Cloudflare Workers. ESM-only, zero runtime dependencies. One sender shape / error model / retry path as channels grow — not a hosted orchestration platform.
 
 ## Sently-first provider model
 

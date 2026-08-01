@@ -1,0 +1,69 @@
+---
+title: Stability policy
+description: What is frozen at 1.0 and what may grow under semver.
+icon: Shield
+source: "package.json"
+---
+
+From **1.0.0**, sently follows semver for the public channel-delivery surface.
+Apps should depend on channel senders and contracts — not on vendor SDK shapes.
+
+<Callout title="The one rule">
+  Treat channel factories, transport contracts, hooks, `SentlyError` codes, and
+  published subpath entrypoints as stable. New transports and optional fields may
+  appear in minor releases; renames or narrowed types require a major.
+</Callout>
+
+## Frozen at 1.x (Tier A)
+
+| Surface | Stable APIs |
+| --- | --- |
+| Factories | `createMailer`, `createSMTPMailer`, `createSmsSender`, `createWhatsAppSender`, `createPushSender` |
+| Contracts | `Transport`, `SmsTransport`, `WhatsAppTransport`, `PushTransport` option and result shapes |
+| Shared | Lifecycle hooks, `SentlyError` / `sentlyCode`, `ChannelSendResult` / `toChannelSendResult` |
+| Decorators | `RetryTransport`, `FallbackTransport` on all channels |
+| Email-only decorators | `IdempotencyTransport`, `PreviewTransport` (documented as email-only; not removed) |
+| Entrypoints | Subpaths listed in `package.json` `exports` — no silent moves |
+
+## Intentional shapes (stable, not transitional)
+
+| Shape | Meaning |
+| --- | --- |
+| `PushOptions` | Discriminated union: Web Push `subscription` **or** FCM `token` |
+| `providerIndex` | Optional on send results when a fallback decorator handled the send |
+| Email-only preview / idempotency | Stay email-scoped; not a signal they will move to other channels soon |
+
+## Allowed without a major
+
+- New transport classes and webhook parsers
+- New optional fields on options/results
+- New subpath exports
+- Bug fixes and security patches on the current **1.x** line
+
+## Security patches
+
+See [`SECURITY.md`](https://github.com/alialnaghmoush/sently/blob/main/SECURITY.md) for reporting and which versions receive patches.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Can I pin 0.x in production after 1.0?">
+    Prefer upgrading to 1.x. Pre-1.0 may still receive best-effort fixes but is not the supported security line.
+  </Accordion>
+  <Accordion title="Where is the production support promise?">
+    See [Support matrix](./support-matrix) for Supported vs Available transports.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Support matrix](./support-matrix)
+- [Non-goals](./non-goals)
+- [Compare](/docs/guides/compare)
+
+## Next
+
+<Cards>
+  <Card title="Support matrix" href="/docs/get-started/support-matrix" />
+  <Card title="Non-goals" href="/docs/get-started/non-goals" />
+</Cards>

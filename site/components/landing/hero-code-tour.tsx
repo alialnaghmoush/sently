@@ -1,6 +1,7 @@
 /**
  * Hero code tour — server-highlighted channel snippets for the homepage.
- * Snippets mirror get-started quick starts + fallback transport docs.
+ * Four tabs mirror the product channels (email · SMS · WhatsApp · push) and
+ * the hero signal map. Snippets match channels docs quick starts.
  */
 
 import { highlight } from "fumadocs-core/highlight";
@@ -73,33 +74,27 @@ await whatsapp.send({
 });`,
   },
   {
-    id: "fallback",
-    title: "fallback.ts",
-    footer: "Resend first — SES if it fails. Same createMailer call site.",
-    code: `import { createMailer } from "sently/mailer";
-import { ResendTransport } from "sently/transports/resend";
-import { SESTransport } from "sently/transports/ses";
-import { FallbackTransport } from "sently/transports/fallback";
+    id: "push",
+    title: "push.ts",
+    footer: "Web Push (VAPID) or FCM — same createPushSender shape.",
+    code: `import { createPushSender } from "sently/push";
+import { WebPushTransport } from "sently/transports/webpush";
 
-const transport = new FallbackTransport(
-  [
-    new ResendTransport({ apiKey: process.env.RESEND_API_KEY! }),
-    new SESTransport({
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      region: "us-east-1",
-    }),
-  ],
-  { cooldownMs: 300_000 },
-);
+const push = createPushSender({
+  transport: new WebPushTransport({
+    vapidPublicKey: process.env.VAPID_PUBLIC_KEY!,
+    vapidPrivateKey: process.env.VAPID_PRIVATE_KEY!,
+    subject: "mailto:you@example.com",
+  }),
+});
 
-const mailer = await createMailer({ transport });
-
-await mailer.send({
-  from: "hello@example.com",
-  to: "you@example.com",
-  subject: "Welcome",
-  text: "Primary fails over to SES.",
+await push.send({
+  subscription: {
+    endpoint: "https://fcm.googleapis.com/fcm/send/example",
+    keys: { p256dh: "browser-public-key", auth: "browser-auth-secret" },
+  },
+  title: "Report ready",
+  body: "Your weekly report is ready to view.",
 });`,
   },
 ];

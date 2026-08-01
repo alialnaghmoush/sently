@@ -297,6 +297,13 @@ const scenarios: Scenario[] = [
     code: `import { MailtrapTransport } from "../src/transports/mailtrap.ts"; export const keep = MailtrapTransport;`,
   },
   {
+    id: "sently/transports/mailpit",
+    category: "transport",
+    label: "transports/mailpit",
+    description: "Mailpit local SMTP + REST helpers",
+    code: `import { MailpitTransport } from "../src/transports/mailpit.ts"; export const keep = MailpitTransport;`,
+  },
+  {
     id: "sently/transports/loops",
     category: "transport",
     label: "transports/loops",
@@ -377,7 +384,7 @@ const scenarios: Scenario[] = [
     id: "sently/transports/fcm",
     category: "transport",
     label: "transports/fcm",
-    description: "Firebase Cloud Messaging HTTP v1",
+    description: "Firebase Cloud Messaging (current HTTP API)",
     code: `import { FcmTransport } from "../src/transports/fcm.ts"; export const keep = FcmTransport;`,
   },
   {
