@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### ♻️ Changed
+
+- **Publish CI** — `.github/workflows/publish.yml` runs only on `v*` tag
+  pushes; Verify (typecheck, lint, build, test) and npm / JSR publish jobs
+  run in parallel (no longer sequential npm-then-JSR on push to `main`)
+- **README** — shieldcn grid/left header with cleaned logo SVGs (no
+  clip-path square), drop Bundlephobia badge, add npm downloads chart;
+  version badges match the okengine pattern (`/npm/…`, `/jsr/…`)
+
+### 🔥 Removed
+
+- **`test.yml` workflow** — PR / push CI matrix removed; release Verify lives
+  in `publish.yml` on version tags
+
 ## [1.0.1] — 2026-08-01
 
 ### 🐛 Fixed
