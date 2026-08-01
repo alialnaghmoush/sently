@@ -1,0 +1,26 @@
+---
+title: Adapters
+description: Configure an explicit SMTP socket adapter for a supported runtime.
+icon: Plug
+source: "src/adapters/node.ts"
+---
+
+<Callout title="The one rule">Use an adapter only when SMTP auto-detection is not suitable for your runtime.</Callout>
+
+| Runtime | Import | Class |
+| --- | --- | --- |
+| Node.js | `sently/adapters/node` | `NodeAdapter` |
+| Bun | `sently/adapters/bun` | `BunAdapter` |
+| Deno | `sently/adapters/deno` | `DenoAdapter` |
+| Cloudflare Workers | `sently/adapters/cf` | `CloudflareAdapter` |
+
+```ts
+import { createSMTPMailer } from "sently/smtp";
+import { NodeAdapter } from "sently/adapters/node";
+
+const mailer = await createSMTPMailer({ host: "smtp.example.com", adapter: new NodeAdapter() });
+```
+
+<Accordions><Accordion title="Why does SMTP fail on an edge runtime?">Use an HTTP transport, or provide the runtime's supported SMTP adapter.</Accordion></Accordions>
+
+<Cards><Card title="SMTP transport" href="/docs/transports/smtp" /></Cards>

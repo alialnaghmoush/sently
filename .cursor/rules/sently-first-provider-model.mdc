@@ -1,0 +1,24 @@
+---
+description: Sently-first provider model — channel senders are the API; vendors are transports.
+globs: "src/sms.ts, src/whatsapp.ts, src/push.ts, src/mailer.ts, src/transports/**/*.ts, src/core/sms-types.ts, src/core/whatsapp-types.ts, src/core/push-types.ts"
+alwaysApply: false
+---
+
+# Sently-first provider model
+
+Apps use **sently channel senders**, not vendor SDKs.
+
+- Email → `createMailer` / `createSMTPMailer` + `Transport`
+- SMS → `createSmsSender` + `SmsTransport`
+- WhatsApp → `createWhatsAppSender` + `WhatsAppTransport`
+- Push → `createPushSender` + `PushTransport`
+
+**Providers are transports** under those senders. Swap the transport; app code stays on sently.
+
+**Do not** make a mega vendor client (`new Taqnyat()`, `new Msegat()` as a full SDK) the primary surface.
+
+**Multi-product vendors** (Taqnyat SMS / WhatsApp / mail / verify): one transport per channel (`taqnyat-sms`, `taqnyat-whatsapp`, …), each wired into the matching `create*Sender`.
+
+**Vendor extras** (OTP send/verify, cost, templates): methods on the concrete transport only (pattern: `MsegatTransport.sendOtp` / `verifyOtp`). Never add them to the shared channel contract.
+
+**New channels** (e.g. Voice): add a library-wide sender + types first; then provider transports.

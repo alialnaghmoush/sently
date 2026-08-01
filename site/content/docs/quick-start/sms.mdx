@@ -1,0 +1,36 @@
+---
+title: SMS
+description: Send an SMS through a channel sender.
+icon: MessageSquareText
+source: "src/sms.ts"
+---
+
+<Callout title="The one rule">Create the SMS sender once, then call `send` with `to` and `body`.</Callout>
+
+<Steps>
+  <Step title="Create the sender">
+
+```ts
+import { createSmsSender } from "sently/sms";
+import { TwilioSmsTransport } from "sently/transports/twilio-sms";
+
+const sms = createSmsSender({
+  transport: new TwilioSmsTransport({
+    accountSid: process.env.TWILIO_ACCOUNT_SID!,
+    authToken: process.env.TWILIO_AUTH_TOKEN!,
+    from: "+15557654321",
+  }),
+});
+```
+
+  </Step>
+  <Step title="Send">
+
+```ts
+await sms.send({ to: "+15551234567", body: "Your code is ready." });
+```
+
+  </Step>
+</Steps>
+
+<Cards><Card title="SMS channel" href="/docs/channels/sms" /></Cards>

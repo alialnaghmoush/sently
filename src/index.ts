@@ -2,8 +2,11 @@
  * @module
  * Main sently entrypoint — shared types, mailer factories, runtime detection, and OAuth2.
  *
- * Import transports, webhooks, idempotency, DKIM, and plugins from their subpaths
- * (e.g. `sently/transports/resend`, `sently/webhooks`) for the smallest bundle.
+ * Import provider transports and webhook parsers from their subpaths
+ * (e.g. `sently/transports/resend`, `sently/transports/sndr`, `sently/webhooks/sndr`)
+ * for the smallest bundle. The main barrel only re-exports core APIs plus
+ * routing helpers (`FallbackTransport`, `WeightedFallbackTransport`) and
+ * `CloudflareEmailTransport`.
  *
  * @example
  * ```ts
@@ -110,41 +113,6 @@ export {
   /** Provider failover decorator — routes through an ordered list of transports. */
   FallbackTransport,
 } from "./transports/fallback.js";
-export type { LoopsConfig } from "./transports/loops.js";
-export {
-  /** Error thrown when the Loops API returns a non-success response. */
-  LoopsError,
-  /** Loops transactional HTTP API transport (template-first). */
-  LoopsTransport,
-} from "./transports/loops.js";
-export type { MailerSendConfig } from "./transports/mailersend.js";
-export {
-  /** Error thrown when the MailerSend API returns a non-success response. */
-  MailerSendError,
-  /** MailerSend HTTP API transport. */
-  MailerSendTransport,
-} from "./transports/mailersend.js";
-export type { MailtrapConfig } from "./transports/mailtrap.js";
-export {
-  /** Error thrown when the Mailtrap API returns a non-success response. */
-  MailtrapError,
-  /** Mailtrap HTTP API transport. */
-  MailtrapTransport,
-} from "./transports/mailtrap.js";
-export type { PlunkConfig } from "./transports/plunk.js";
-export {
-  /** Error thrown when the Plunk API returns a non-success response. */
-  PlunkError,
-  /** Plunk HTTP API transport. */
-  PlunkTransport,
-} from "./transports/plunk.js";
-export type { SparkPostConfig } from "./transports/sparkpost.js";
-export {
-  /** Error thrown when the SparkPost API returns a non-success response. */
-  SparkPostError,
-  /** SparkPost HTTP API transport. */
-  SparkPostTransport,
-} from "./transports/sparkpost.js";
 export type { WeightedTransportEntry } from "./transports/weighted-fallback.js";
 export {
   /** Weighted provider routing with failover on error. */

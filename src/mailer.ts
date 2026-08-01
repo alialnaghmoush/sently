@@ -2,6 +2,7 @@
  * @module
  * Lightweight mailer factory for custom transports — no SMTP code in the bundle.
  *
+ * Sently-first: apps call {@link createMailer}; providers implement `Transport`.
  * Use this entry instead of `sently` when you pass a transport explicitly
  * (Resend, SendGrid, etc.) and want the smallest bundle size.
  *
@@ -24,6 +25,7 @@
  */
 import { extractEmails } from "./core/address.js";
 import { SentlyError } from "./core/errors.js";
+import { invokeHook } from "./core/hooks.js";
 import { runPlugins } from "./core/plugin.js";
 import { getProviderLabel } from "./core/provider-label.js";
 import { RateLimiter } from "./core/rate-limiter.js";
@@ -94,27 +96,6 @@ function buildHookContext(options: MailOptions, transport: Transport): MailerHoo
     subject: options.subject,
     provider: inferProvider(transport),
   };
-}
-
-/**
- * Invoke a mailer hook without letting hook failures break the send.
- * In non-production environments, hook errors are logged with `console.warn`.
- */
-async function invokeHook<T extends unknown[]>(
-  hook: ((...args: T) => void | Promise<void>) | undefined,
-  ...args: T
-): Promise<void> {
-  if (hook === undefined) {
-    return;
-  }
-  try {
-    await hook(...args);
-  } catch (hookError) {
-    const isProduction = typeof process !== "undefined" && process.env?.NODE_ENV === "production";
-    if (!isProduction) {
-      console.warn("[sently] Mailer hook threw; send continues:", hookError);
-    }
-  }
 }
 
 /** Internal mailer implementation shared with the full `sently` entry. */

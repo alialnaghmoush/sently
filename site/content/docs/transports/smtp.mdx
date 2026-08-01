@@ -1,0 +1,47 @@
+---
+title: SMTP
+description: Connect to an SMTP relay with an explicit transport.
+icon: Truck
+source: "src/transports/smtp.ts"
+---
+
+Connect to an SMTP relay with an explicit transport.
+
+<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `host` | `string` | required |
+| `port` | `number` | 587 or 465 based on secure |
+| `secure` | `boolean` | false |
+| `auth` | `SMTPAuth` | optional |
+| `requireTLS` | `boolean` | true when auth is set |
+| `adapter` | `SocketAdapter` | optional |
+| `pool` | `boolean` | false |
+| `dkim` | `DKIMConfig` | optional |
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { SMTPTransport } from "sently/transports/smtp";
+
+const sender = createMailer({ transport: new SMTPTransport({ host: "smtp.example.com", auth: { user: "user@example.com", pass: "..." } }) });
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await sender.send({ from: "hello@example.com", to: "person@example.com", subject: "Hello", text: "Hi" });
+```
+
+  </Step>
+</Steps>
+
+<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

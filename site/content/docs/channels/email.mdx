@@ -1,0 +1,100 @@
+---
+title: Email
+description: Compose and deliver email through a mailer and a transport.
+icon: Mail
+source: "src/mailer.ts"
+---
+
+Use the email channel for receipts, invitations, and other messages sent by your application.
+A mailer owns the send pipeline; a transport delivers each message through SMTP or an email API.
+
+<Callout title="The one rule">Create the mailer once with a transport, then `await` `createMailer` before sending.</Callout>
+
+<Steps>
+  <Step title="Create a transport-backed mailer">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { ResendTransport } from "sently/transports/resend";
+
+const mailer = await createMailer({
+  transport: new ResendTransport({
+    apiKey: process.env.RESEND_API_KEY!,
+  }),
+});
+```
+
+  </Step>
+  <Step title="Send an email">
+
+```ts
+const result = await mailer.send({
+  from: "Acme <hello@example.com>",
+  to: "person@example.com",
+  subject: "Welcome",
+  text: "Thanks for joining Acme.",
+});
+
+console.log(result.messageId);
+```
+
+  </Step>
+</Steps>
+
+## Mailer configuration
+
+| Option | Type | Meaning |
+| --- | --- | --- |
+| `transport` | `Transport` | Required delivery implementation, such as `ResendTransport`. |
+| `plugins` | `MailPlugin[]` | Optional transforms run before delivery. |
+| `hooks` | `MailerHooks` | Optional callbacks for send activity. |
+
+## Message options
+
+| Option | Type | Meaning |
+| --- | --- | --- |
+| `from` | `AddressInput` | Required sender address. |
+| `to` | `AddressInput` | Required recipient or recipients. |
+| `subject` | `string` | Required message subject. |
+| `text` / `html` | `string` | Plain-text or HTML body. |
+| `attachments` | `Attachment[]` | Optional in-memory or supported-runtime file attachments. |
+| `cc`, `bcc`, `replyTo` | `AddressInput` | Optional recipient fields. |
+
+For SMTP relay configuration, use the asynchronous `createSMTPMailer` factory instead.
+
+```ts
+import { createSMTPMailer } from "sently/smtp";
+
+const mailer = await createSMTPMailer({
+  host: "smtp.example.com",
+  port: 587,
+  auth: { user: "you@example.com", pass: process.env.SMTP_PASSWORD! },
+});
+```
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Why does createMailer reject host and port?">
+    `createMailer` only accepts an explicit transport. Use `createSMTPMailer` when your configuration starts with an SMTP host and port.
+  </Accordion>
+  <Accordion title="Can I change email providers?">
+    Yes. Keep calls to `mailer.send` and create the mailer with a different email transport.
+  </Accordion>
+  <Accordion title="What does verify do?">
+    `mailer.verify()` delegates to the transport when it provides `verify`; otherwise it reports a successful mailer result.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Email options](../reference/mail-options)
+- [Transport contracts](../reference/transport-contracts)
+- [Hooks](./hooks)
+
+## Next
+
+<Cards>
+  <Card title="Transports" href="/docs/transports" />
+  <Card title="Send in bulk" href="/docs/guides/send-bulk" />
+</Cards>

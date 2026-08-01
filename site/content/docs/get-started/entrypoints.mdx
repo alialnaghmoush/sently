@@ -1,0 +1,114 @@
+---
+title: Entrypoints
+description: Use focused subpaths to import only the channel or integration you need.
+icon: Route
+source: "package.json"
+---
+
+sently exports focused subpaths so a channel can import its sender and a single provider transport.
+The main `sently` package exports shared email factories and a few helpers — not every HTTP provider.
+
+<Callout title="The one rule">
+  Import a sender from its channel entrypoint and its provider from a `sently/transports/*`
+  entrypoint.
+</Callout>
+
+## Quick start
+
+<Steps>
+
+<Step>
+### Pick an email entrypoint
+
+```ts
+import { createMailer } from "sently/mailer";
+import { SndrTransport } from "sently/transports/sndr";
+
+const mailer = await createMailer({
+  transport: new SndrTransport({
+    apiKey: process.env.SNDR_API_KEY!,
+  }),
+});
+```
+
+</Step>
+
+<Step>
+### Use SMTP only when you have relay configuration
+
+```ts
+import { createSMTPMailer } from "sently/smtp";
+
+const mailer = await createSMTPMailer({
+  host: "smtp.example.com",
+  port: 587,
+  auth: { user: "you@example.com", pass: process.env.SMTP_PASS! },
+});
+```
+
+</Step>
+
+</Steps>
+
+## Channel entrypoints
+
+| Import | Exports | Use |
+| ------ | ------- | --- |
+| `sently` | Shared factories, types, OAuth2, errors, Fallback / WeightedFallback / Cloudflare Email | General email entrypoint. |
+| `sently/mailer` | `createMailer` | Email with an explicit transport (smallest HTTP path). |
+| `sently/smtp` | `createSMTPMailer` | SMTP relay configuration. |
+| `sently/sms` | `createSmsSender` | SMS sender. |
+| `sently/whatsapp` | `createWhatsAppSender` | WhatsApp sender. |
+| `sently/push` | `createPushSender` | Web Push sender. |
+
+## Supporting entrypoints
+
+| Import | Use |
+| ------ | --- |
+| `sently/transports/*` | One provider or email decorator transport. |
+| `sently/webhooks/<provider>` | One webhook parser (smallest graph). |
+| `sently/webhooks` | Convenience barrel of all webhook helpers. |
+| `sently/errors` | Stable sently error classes and codes. |
+| `sently/plugins/template` | Template plugin and simple engine. |
+| `sently/auth/oauth2` | SMTP OAuth2 client. |
+| `sently/pool` | SMTP connection pool. |
+| `sently/dkim` | DKIM signing entrypoint. |
+| `sently/idempotency` | Idempotency transport and memory store. |
+
+## Troubleshooting
+
+<Accordions>
+
+<Accordion title="Can I pass SMTP host and port to createMailer?">
+
+No. `createMailer` requires a transport. Import `createSMTPMailer` from `sently/smtp` for relay configuration.
+
+</Accordion>
+
+<Accordion title="Where do provider transports come from?">
+
+Import the concrete transport from its exported `sently/transports/*` subpath, such as `sently/transports/sndr` or `sently/transports/resend`.
+
+</Accordion>
+
+<Accordion title="Why is Plunk or SNDR missing from import sently?">
+
+HTTP providers were removed from the main barrel so bare Node/Deno imports do not load every client. Use the transport subpath.
+
+</Accordion>
+
+</Accordions>
+
+## Learn more
+
+- [Export reference](/docs/reference/exports) — full entrypoint map
+- [All transports](/docs/transports) — providers by channel
+- [Bundle size](/docs/guides/bundle-size) — keep stacks small
+
+## Next
+
+<Cards>
+  <Card title="Exports reference" description="Public package entrypoints." href="/docs/reference/exports" />
+  <Card title="Email channel" description="createMailer and MailOptions." href="/docs/channels/email" />
+  <Card title="SNDR" description="HTTP email via SNDR." href="/docs/transports/sndr" />
+</Cards>

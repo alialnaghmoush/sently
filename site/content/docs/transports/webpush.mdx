@@ -1,0 +1,43 @@
+---
+title: Web Push
+description: Encrypt and send browser notifications with VAPID.
+icon: Truck
+source: "src/transports/webpush.ts"
+---
+
+Encrypt and send browser notifications with VAPID.
+
+<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `vapidPublicKey` | `string` | required |
+| `vapidPrivateKey` | `string` | required |
+| `subject` | `string` | required |
+| `allowedEndpointHosts` | `string[]` | optional |
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createPushSender } from "sently/push";
+import { WebPushTransport } from "sently/transports/webpush";
+
+const sender = createPushSender({ transport: new WebPushTransport({ vapidPublicKey: "...", vapidPrivateKey: "...", subject: "mailto:you@example.com" }) });
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await sender.send({ subscription, title: "Hello", body: "World" });
+```
+
+  </Step>
+</Steps>
+
+<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+
+<Cards><Card title="Push channel" href="/docs/channels/push" /></Cards>

@@ -2,6 +2,36 @@
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-08-01
+
+### Added
+
+- **Channel senders** — `createSmsSender` (`sently/sms`), `createWhatsAppSender`
+  (`sently/whatsapp`), `createPushSender` (`sently/push`) alongside email; each
+  sender supports plugins and lifecycle hooks
+- **SMS transports** — Twilio, Taqnyat SMS, Msegat (`sently/transports/twilio-sms`,
+  `taqnyat-sms`, `msegat`); vendor OTP helpers stay on the transport class
+- **WhatsApp transports** — WhatsApp Cloud API, Taqnyat WhatsApp
+  (`sently/transports/whatsapp-cloud`, `taqnyat-whatsapp`)
+- **Web Push transport** — VAPID Web Push (`sently/transports/webpush`)
+- **Email transports** — Sndr, Taqnyat Mail (`sently/transports/sndr`,
+  `taqnyat-mail`)
+- **Sndr webhooks** — `parseSndrWebhook` / `verifySndrSignature`
+  (`sently/webhooks/sndr`, also via `sently/webhooks`)
+- **Per-provider webhook subpaths** — `sently/webhooks/{brevo,mailgun,postmark,
+  resend,sendgrid,ses,sndr}` for tree-shakeable imports
+- **Docs site** — Next.js + Fumadocs handbook under `site/` (`bun run site:dev`)
+- **Web Push interop example** — `examples/webpush-interop`
+- **`AGENTS.md`** — agent contract for the sently-first provider model (replaces
+  `CLAUDE.md`; published with the package)
+
+### Changed
+
+- **Library scope** — channel-first messaging (email, SMS, WhatsApp, push), not
+  email-only; package description and README updated accordingly
+- **Docs site branding** — real sently wordmark / mark in the header, homepage,
+  404, favicon, Apple touch icon, and docs OG images; README shows the logo
+
 ## [0.8.0] — 2026-06-07
 
 ### Added
@@ -392,4 +422,6 @@ Remaining gaps (SOCKS proxy, iCal) are out of scope by design.
 
 ## [0.1.0] — 2026-05-29
 
-Initial release.
+### Added
+
+- Initial release.

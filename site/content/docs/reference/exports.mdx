@@ -1,0 +1,83 @@
+---
+title: Exports
+description: Public package entrypoints and what each one is for.
+icon: Boxes
+source: "package.json"
+---
+
+Import the channel sender and one transport subpath for the smallest install surface.
+The main `sently` package is for shared types and factories — not every provider.
+
+<Callout title="The one rule">
+  Prefer `sently/mailer` + `sently/transports/<provider>` (or the matching SMS / WhatsApp / push
+  entrypoints) over pulling providers from the main barrel.
+</Callout>
+
+## Channel and core
+
+| Import | Primary API |
+| ------ | ----------- |
+| `sently` | `createMailer`, `createSMTPMailer`, types, OAuth2, `SentlyError`, `consoleObserver`, `FallbackTransport`, `WeightedFallbackTransport`, `CloudflareEmailTransport` |
+| `sently/mailer` | `createMailer` only |
+| `sently/smtp` | `createSMTPMailer` |
+| `sently/sms` | `createSmsSender` |
+| `sently/whatsapp` | `createWhatsAppSender` |
+| `sently/push` | `createPushSender` |
+| `sently/errors` | `SentlyError` hierarchy |
+| `sently/idempotency` | `IdempotencyTransport` |
+| `sently/dkim` | DKIM signing |
+| `sently/react` | `reactPlugin` |
+| `sently/plugins/template` | template plugin |
+| `sently/auth/oauth2` | `OAuth2Client` |
+| `sently/pool` | `SMTPPool` |
+| `sently/observability` | `consoleObserver` |
+
+## Transports
+
+| Import | Use |
+| ------ | --- |
+| `sently/transports/<name>` | One provider or email decorator (e.g. `sndr`, `resend`, `twilio-sms`) |
+
+HTTP providers such as SNDR, Resend, and Plunk are **not** re-exported from `sently`.
+
+## Webhooks
+
+| Import | Use |
+| ------ | --- |
+| `sently/webhooks/<provider>` | One parser (+ verify helper when exported) |
+| `sently/webhooks` | Convenience barrel of all named helpers |
+
+Providers: `brevo`, `mailgun`, `postmark`, `resend`, `sendgrid`, `ses`, `sndr`.
+
+## Adapters
+
+| Import | Use |
+| ------ | --- |
+| `sently/adapters/node` | Node TCP/TLS |
+| `sently/adapters/bun` | Bun TCP/TLS |
+| `sently/adapters/deno` | Deno TCP/TLS |
+| `sently/adapters/cf` | Cloudflare `cloudflare:sockets` |
+
+## Troubleshooting
+
+<Accordions>
+
+<Accordion title="Why is SndrTransport missing from import sently?">
+
+Provider transports live on `sently/transports/*` so bare Node/Deno imports of `sently` do not load every HTTP client. Use `sently/transports/sndr`.
+
+</Accordion>
+
+</Accordions>
+
+## Learn more
+
+- [Entrypoints](/docs/get-started/entrypoints) — which import to pick first
+- [Bundle size](/docs/guides/bundle-size) — measured stacks
+
+## Next
+
+<Cards>
+  <Card title="Entrypoints" description="Choose a channel import path." href="/docs/get-started/entrypoints" />
+  <Card title="Transports" description="Provider list by channel." href="/docs/transports" />
+</Cards>

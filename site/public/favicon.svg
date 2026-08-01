@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <style>
+    .box {
+      fill: #0d0d0d;
+    }
+    .mark {
+      fill: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      .box {
+        fill: #ffffff;
+      }
+      .mark {
+        fill: #0d0d0d;
+      }
+    }
+  </style>
+  <rect class="box" width="32" height="32" rx="8" />
+  <path
+    class="mark"
+    transform="translate(5.5 5.5) scale(0.0702)"
+    d="M0 101.366L299 0L211.414 300L175.279 281.032L151.933 177.269L242.651 55.8633L121.689 146.914L26.3102 131.706L0 101.366Z"
+  />
+</svg>

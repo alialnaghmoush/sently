@@ -1,0 +1,70 @@
+---
+title: Webhook events
+description: Normalized EmailEvent fields returned by every provider webhook parser.
+icon: Webhook
+source: "src/webhooks/types.ts"
+---
+
+Every parser returns `EmailEvent[]` so delivery webhooks can share one application pipeline.
+Verify signatures in the [webhooks guide](/docs/guides/webhooks) before you process events.
+
+<Callout title="The one rule">
+  Branch on `event.type` and keep provider-specific details in `event.raw` when you need them.
+</Callout>
+
+## EmailEvent
+
+| Field | Type | Meaning |
+| ----- | ---- | ------- |
+| `provider` | `string` | Parser id (e.g. `"sndr"`, `"resend"`). |
+| `type` | union below | Normalized lifecycle type. |
+| `messageId` | `string?` | Provider message id when present. |
+| `recipient` | `string?` | Primary recipient when present. |
+| `timestamp` | `Date?` | Event time when present. |
+| `raw` | `unknown` | Original provider payload. |
+
+## Normalized `type` values
+
+| Value | Meaning |
+| ----- | ------- |
+| `delivered` | Accepted / delivered to the mailbox provider. |
+| `bounced` | Hard failure or bounce. |
+| `complained` | Spam complaint. |
+| `opened` | Open tracking. |
+| `clicked` | Click tracking. |
+| `deferred` | Temporary deferral. |
+| `unknown` | Unmapped or informational provider event. |
+
+## SNDR mapping
+
+| SNDR `type` | Normalized `type` |
+| ----------- | ----------------- |
+| `email.delivered` | `delivered` |
+| `email.bounced` | `bounced` |
+| `email.unsubscribed` | `unknown` |
+
+SNDR `data.email_id` becomes `messageId`. Recipients come from `data.to` or `data.addresses`.
+
+## Troubleshooting
+
+<Accordions>
+
+<Accordion title="Why is unsubscribed mapped to unknown?">
+
+The shared `EmailEvent.type` union has no unsubscribe value. Keep the vendor payload in `raw` if you need unsubscribe-specific handling.
+
+</Accordion>
+
+</Accordions>
+
+## Learn more
+
+- [Webhooks guide](/docs/guides/webhooks) — verify + parse flow
+- [SNDR transport](/docs/transports/sndr) — sending side
+
+## Next
+
+<Cards>
+  <Card title="Webhooks" description="Parse and verify provider payloads." href="/docs/guides/webhooks" />
+  <Card title="Exports" description="Package entrypoints." href="/docs/reference/exports" />
+</Cards>

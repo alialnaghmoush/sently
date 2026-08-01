@@ -1,0 +1,23 @@
+---
+title: OAuth2
+description: Refresh OAuth2 tokens and use them for SMTP XOAUTH2 authentication.
+icon: Key
+source: "src/auth/oauth2.ts"
+---
+
+<Callout title="The one rule">Use a refresh token or `getToken`; do not embed a short-lived access token in application code.</Callout>
+
+```ts
+import { OAuth2Client } from "sently/auth/oauth2";
+
+const client = new OAuth2Client({
+  user: "me@example.com", clientId: "...", clientSecret: "...", refreshToken: "...",
+});
+const token = await client.getAccessToken();
+```
+
+`OAuth2Client` caches tokens in memory and refreshes them before expiry.
+
+<Accordions><Accordion title="Can I supply tokens myself?">Yes. Provide `getToken` in the OAuth2 configuration.</Accordion></Accordions>
+
+<Cards><Card title="SMTP transport" href="/docs/transports/smtp" /></Cards>

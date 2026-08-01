@@ -1,0 +1,40 @@
+---
+title: Taqnyat WhatsApp
+description: Send WhatsApp templates and session text through Taqnyat.
+icon: Truck
+source: "src/transports/taqnyat-whatsapp.ts"
+---
+
+Send WhatsApp templates and session text through Taqnyat.
+
+<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `bearerToken` | `string` | required |
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createWhatsAppSender } from "sently/whatsapp";
+import { TaqnyatWhatsAppTransport } from "sently/transports/taqnyat-whatsapp";
+
+const sender = createWhatsAppSender({ transport: new TaqnyatWhatsAppTransport({ bearerToken: "..." }) });
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await sender.send({ to: "15551234567", template: { name: "welcome", language: "en_US" } });
+```
+
+  </Step>
+</Steps>
+
+<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+
+<Cards><Card title="Whatsapp channel" href="/docs/channels/whatsapp" /></Cards>

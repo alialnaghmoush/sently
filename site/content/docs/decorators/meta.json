@@ -1,0 +1,12 @@
+{
+  "title": "Decorators",
+  "icon": "Layers",
+  "pages": [
+    "index",
+    "preview",
+    "retry",
+    "fallback",
+    "weighted-fallback",
+    "idempotency"
+  ]
+}

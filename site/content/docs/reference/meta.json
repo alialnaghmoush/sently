@@ -1,0 +1,15 @@
+{
+  "title": "Reference",
+  "icon": "Code",
+  "pages": [
+    "index",
+    "exports",
+    "mail-options",
+    "sms-options",
+    "whatsapp-options",
+    "push-options",
+    "transport-contracts",
+    "errors",
+    "webhook-events"
+  ]
+}

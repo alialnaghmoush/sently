@@ -1,0 +1,41 @@
+---
+title: Loops
+description: Send template-based transactional email through Loops.
+icon: Truck
+source: "src/transports/loops.ts"
+---
+
+Send template-based transactional email through Loops.
+
+<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `apiKey` | `string` | required |
+| `defaultTransactionalId` | `string` | optional |
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { LoopsTransport } from "sently/transports/loops";
+
+const sender = createMailer({ transport: new LoopsTransport({ apiKey: process.env.LOOPS_API_KEY!, defaultTransactionalId: "cl..." }) });
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await sender.send({ from: "hello@example.com", to: "person@example.com", subject: "Hello", text: "Hi" });
+```
+
+  </Step>
+</Steps>
+
+<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

@@ -1,0 +1,12 @@
+{
+  "title": "Channels",
+  "icon": "Send",
+  "pages": [
+    "index",
+    "email",
+    "sms",
+    "whatsapp",
+    "push",
+    "hooks"
+  ]
+}

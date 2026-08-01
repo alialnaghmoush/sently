@@ -1,0 +1,81 @@
+---
+title: Channels
+description: Send through a stable channel API while transports handle providers.
+icon: FolderOpen
+source: "README.md"
+---
+
+Choose a channel sender for the kind of message your application sends.
+Each sender accepts a provider transport, so delivery providers can change without rewriting send calls.
+
+<Callout title="The one rule">Application code calls a sently channel sender; provider-specific code stays in its transport.</Callout>
+
+<Steps>
+  <Step title="Choose the message channel">
+
+| Channel | Sender | Send shape |
+| --- | --- | --- |
+| Email | `createMailer` or `createSMTPMailer` | Sender, recipient, subject, and body. |
+| SMS | `createSmsSender` | Recipient number and body. |
+| WhatsApp | `createWhatsAppSender` | Template or text message. |
+| Push | `createPushSender` | Browser subscription, title, and body. |
+
+  </Step>
+  <Step title="Wire in a transport">
+
+```ts
+import { createSmsSender } from "sently/sms";
+import { TwilioSmsTransport } from "sently/transports/twilio-sms";
+
+const sms = createSmsSender({
+  transport: new TwilioSmsTransport({
+    accountSid: process.env.TWILIO_ACCOUNT_SID!,
+    authToken: process.env.TWILIO_AUTH_TOKEN!,
+  }),
+});
+
+await sms.send({
+  to: "+15551234567",
+  body: "Your order is on its way.",
+  from: "+15557654321",
+});
+```
+
+  </Step>
+</Steps>
+
+## Channel factories
+
+| Factory | Async | When to use it |
+| --- | --- | --- |
+| `createMailer` | Yes | Email with an explicit transport. |
+| `createSMTPMailer` | Yes | Email configured with SMTP host, port, and authentication. |
+| `createSmsSender` | No | SMS with an `SmsTransport`. |
+| `createWhatsAppSender` | No | WhatsApp with a `WhatsAppTransport`. |
+| `createPushSender` | No | Web Push with a `PushTransport`. |
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Should I call a provider SDK directly?">
+    Use the matching sently sender for normal delivery. Provider-only features belong on the concrete transport rather than the shared channel contract.
+  </Accordion>
+  <Accordion title="How do I switch providers?">
+    Keep the sender call and create it with a different transport for the same channel.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Choose an entrypoint](../get-started/entrypoints)
+- [Browse transports](../transports)
+
+## Next
+
+<Cards>
+  <Card title="Email" href="/docs/channels/email" />
+  <Card title="SMS" href="/docs/channels/sms" />
+  <Card title="WhatsApp" href="/docs/channels/whatsapp" />
+  <Card title="Push" href="/docs/channels/push" />
+  <Card title="Hooks" href="/docs/channels/hooks" />
+</Cards>

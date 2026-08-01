@@ -1,0 +1,18 @@
+---
+title: Vendor OTP helpers
+description: Use OTP helpers only on concrete SMS transport instances.
+icon: BadgeCheck
+source: "src/transports/msegat.ts"
+---
+
+<Callout title="The one rule">OTP methods are provider extras; they are not part of `SmsSender` or `SmsTransport`.</Callout>
+
+```ts
+const msegat = new MsegatTransport({ userName: "...", apiKey: "...", sender: "MyBrand" });
+const otp = await msegat.sendOtp({ to: "+9665...", lang: "En" });
+await msegat.verifyOtp({ id: otp.id, code: "1234", lang: "En" });
+```
+
+Taqnyat SMS also exposes `sendOtp` and `verifyOtp` on its transport.
+
+<Cards><Card title="Msegat" href="/docs/transports/msegat" /><Card title="Taqnyat SMS" href="/docs/transports/taqnyat-sms" /></Cards>

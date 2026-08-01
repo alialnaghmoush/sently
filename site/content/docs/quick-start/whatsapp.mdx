@@ -1,0 +1,38 @@
+---
+title: WhatsApp
+description: Send a WhatsApp message through a channel sender.
+icon: MessagesSquare
+source: "src/whatsapp.ts"
+---
+
+<Callout title="The one rule">Use a template outside the open customer-service window; use free text only inside it.</Callout>
+
+<Steps>
+  <Step title="Create the sender">
+
+```ts
+import { createWhatsAppSender } from "sently/whatsapp";
+import { WhatsAppCloudTransport } from "sently/transports/whatsapp-cloud";
+
+const whatsapp = createWhatsAppSender({
+  transport: new WhatsAppCloudTransport({
+    accessToken: process.env.WHATSAPP_TOKEN!,
+    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID!,
+  }),
+});
+```
+
+  </Step>
+  <Step title="Send a template">
+
+```ts
+await whatsapp.send({
+  to: "15551234567",
+  template: { name: "welcome", language: "en_US" },
+});
+```
+
+  </Step>
+</Steps>
+
+<Cards><Card title="WhatsApp channel" href="/docs/channels/whatsapp" /></Cards>

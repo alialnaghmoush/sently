@@ -1,0 +1,40 @@
+---
+title: Brevo
+description: Send email through the Brevo HTTP API.
+icon: Truck
+source: "src/transports/brevo.ts"
+---
+
+Send email through the Brevo HTTP API.
+
+<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `apiKey` | `string` | required |
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { BrevoTransport } from "sently/transports/brevo";
+
+const sender = createMailer({ transport: new BrevoTransport({ apiKey: process.env.BREVO_API_KEY! }) });
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await sender.send({ from: "hello@example.com", to: "person@example.com", subject: "Hello", text: "Hi" });
+```
+
+  </Step>
+</Steps>
+
+<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

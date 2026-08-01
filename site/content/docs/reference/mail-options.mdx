@@ -1,0 +1,22 @@
+---
+title: Mail options
+description: Fields accepted by `mailer.send` and `mailer.sendBulk`.
+icon: Mail
+source: "src/core/types.ts"
+---
+
+| Field | Type |
+| --- | --- |
+| `from`, `to` | `AddressInput` |
+| `subject` | `string` |
+| `text`, `html` | `string` |
+| `cc`, `bcc`, `replyTo` | `AddressInput` |
+| `attachments` | `Attachment[]` |
+| `headers` | `Record<string, string>` |
+| `messageId`, `idempotencyKey` | `string` |
+| `template`, `data` | template plugin fields |
+| `react` | React plugin field |
+
+`AddressInput` accepts a string, `{ address, name? }`, or an array of either.
+
+<Cards><Card title="Attachments" href="/docs/guides/attachments" /></Cards>

@@ -1,0 +1,78 @@
+---
+title: Installation
+description: Install sently with Bun or use its published ESM package.
+icon: Package
+source: "package.json"
+---
+
+sently is an ESM package for applications that send email, SMS, WhatsApp, or browser push.
+Install it in the application that owns your delivery credentials and provider transport configuration.
+
+<Callout title="The one rule">Import the narrowest sently entrypoint that contains the sender or transport you use.</Callout>
+
+<Steps>
+  <Step title="Add the package">
+
+```bash
+bun add sently
+```
+
+  </Step>
+  <Step title="Import a focused entrypoint">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { ResendTransport } from "sently/transports/resend";
+
+const mailer = await createMailer({
+  transport: new ResendTransport({
+    apiKey: process.env.RESEND_API_KEY!,
+  }),
+});
+```
+
+  </Step>
+</Steps>
+
+## Install and runtime requirements
+
+| Requirement | Details |
+| --- | --- |
+| Package manager | Bun: `bun add sently`. |
+| Module format | Use ESM imports. |
+| Node.js | Version 18 or later. |
+| Bun | Version 1 or later. |
+| Email via SMTP | Use an SMTP-capable runtime adapter; HTTP transports are the portable option. |
+
+## Common imports
+
+| Need | Import |
+| --- | --- |
+| Email with a transport | `sently/mailer` |
+| Email over SMTP | `sently/smtp` |
+| SMS | `sently/sms` |
+| WhatsApp | `sently/whatsapp` |
+| Web Push | `sently/push` |
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Why cannot my runtime resolve sently?">
+    Use ESM package imports such as `sently/mailer`, rather than a file path into the package.
+  </Accordion>
+  <Accordion title="Should I import every transport from the main package?">
+    No. Provider transports are exported from their own `sently/transports/*` subpaths.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Entrypoints](./entrypoints)
+- [Transports](../transports)
+
+## Next
+
+<Cards>
+  <Card title="Entrypoints" href="/docs/get-started/entrypoints" />
+  <Card title="Choose a channel" href="/docs/channels" />
+</Cards>

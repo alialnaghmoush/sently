@@ -1,0 +1,43 @@
+---
+title: Resend
+description: Send email through the Resend HTTP API.
+icon: Truck
+source: "src/transports/resend.ts"
+---
+
+Send email through the Resend HTTP API.
+
+<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `apiKey` | `string` | required |
+| `baseUrl` | `string` | https://api.resend.com |
+| `rateDelta` | `number` | 2 |
+| `rateLimit` | `number` | 1000 |
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { ResendTransport } from "sently/transports/resend";
+
+const sender = createMailer({ transport: new ResendTransport({ apiKey: process.env.RESEND_API_KEY! }) });
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await sender.send({ from: "hello@example.com", to: "person@example.com", subject: "Hello", text: "Hi" });
+```
+
+  </Step>
+</Steps>
+
+<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

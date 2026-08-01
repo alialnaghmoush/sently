@@ -1,0 +1,32 @@
+{
+  "title": "Transports",
+  "icon": "Truck",
+  "pages": [
+    "index",
+    "---Email---",
+    "smtp",
+    "resend",
+    "sendgrid",
+    "postmark",
+    "mailgun",
+    "ses",
+    "brevo",
+    "mailersend",
+    "plunk",
+    "sparkpost",
+    "mailtrap",
+    "loops",
+    "cloudflare-email",
+    "sndr",
+    "taqnyat-mail",
+    "---SMS---",
+    "twilio-sms",
+    "taqnyat-sms",
+    "msegat",
+    "---WhatsApp---",
+    "whatsapp-cloud",
+    "taqnyat-whatsapp",
+    "---Push---",
+    "webpush"
+  ]
+}

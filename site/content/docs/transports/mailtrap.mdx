@@ -1,0 +1,42 @@
+---
+title: Mailtrap
+description: Send email through Mailtrap delivery or sandbox mode.
+icon: Truck
+source: "src/transports/mailtrap.ts"
+---
+
+Send email through Mailtrap delivery or sandbox mode.
+
+<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `apiToken` | `string` | required |
+| `sandbox` | `boolean` | false |
+| `inboxId` | `string` | required when sandbox is true |
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { MailtrapTransport } from "sently/transports/mailtrap";
+
+const sender = createMailer({ transport: new MailtrapTransport({ apiToken: process.env.MAILTRAP_API_TOKEN! }) });
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await sender.send({ from: "hello@example.com", to: "person@example.com", subject: "Hello", text: "Hi" });
+```
+
+  </Step>
+</Steps>
+
+<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

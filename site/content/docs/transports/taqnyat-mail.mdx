@@ -1,0 +1,41 @@
+---
+title: Taqnyat Mail
+description: Send email through the Taqnyat Email API.
+icon: Truck
+source: "src/transports/taqnyat-mail.ts"
+---
+
+Send email through the Taqnyat Email API.
+
+<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `bearerToken` | `string` | required |
+| `campaignName` | `string` | required |
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { TaqnyatMailTransport } from "sently/transports/taqnyat-mail";
+
+const sender = createMailer({ transport: new TaqnyatMailTransport({ bearerToken: process.env.TAQNYAT_MAIL_TOKEN!, campaignName: "transactional" }) });
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await sender.send({ from: "hello@example.com", to: "person@example.com", subject: "Hello", text: "Hi" });
+```
+
+  </Step>
+</Steps>
+
+<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

@@ -1,0 +1,20 @@
+---
+title: React Email
+description: Render a React email element through the optional sently React plugin.
+icon: Atom
+source: "src/react.ts"
+---
+
+Install the optional `react` and `@react-email/render` peer dependencies before using this integration.
+
+<Callout title="The one rule">Import the React plugin from `sently/react`; it is not part of the main entrypoint.</Callout>
+
+```ts
+import { reactPlugin } from "sently/react";
+
+const mailer = await createMailer({ transport, plugins: [reactPlugin()] });
+```
+
+Pass the element as `react` in the mail options.
+
+<Cards><Card title="Mail options" href="/docs/reference/mail-options" /></Cards>

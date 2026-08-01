@@ -5,6 +5,7 @@ import { parse as parsePostmark } from "../../src/webhooks/postmark.js";
 import { parse as parseResend } from "../../src/webhooks/resend.js";
 import { parse as parseSendGrid } from "../../src/webhooks/sendgrid.js";
 import { parse as parseSes } from "../../src/webhooks/ses.js";
+import { parse as parseSndr } from "../../src/webhooks/sndr.js";
 
 describe("parseResendWebhook", () => {
   test("normalizes a delivered event with top-level created_at", () => {
@@ -296,5 +297,47 @@ describe("parseSesWebhook", () => {
 
     expect(events).toHaveLength(1);
     expect(events[0]?.type).toBe("unknown");
+  });
+});
+
+describe("parseSndrWebhook", () => {
+  test("normalizes email.delivered", () => {
+    const events = parseSndr({
+      id: "evt_1",
+      type: "email.delivered",
+      created_at: "2025-04-26T18:32:01Z",
+      data: {
+        email_id: "em_1jfk2mq8s4r9wc",
+        to: ["customer@example.com"],
+      },
+    });
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      provider: "sndr",
+      type: "delivered",
+      messageId: "em_1jfk2mq8s4r9wc",
+      recipient: "customer@example.com",
+    });
+    expect(events[0]?.timestamp).toBeInstanceOf(Date);
+  });
+
+  test("maps email.bounced and email.unsubscribed", () => {
+    expect(
+      parseSndr({
+        type: "email.bounced",
+        data: { email_id: "em_bounce", error: "hard bounce" },
+      })[0]?.type,
+    ).toBe("bounced");
+
+    expect(
+      parseSndr({
+        type: "email.unsubscribed",
+        data: { email_id: "em_unsub", addresses: ["a@example.com"] },
+      })[0],
+    ).toMatchObject({
+      type: "unknown",
+      recipient: "a@example.com",
+    });
   });
 });

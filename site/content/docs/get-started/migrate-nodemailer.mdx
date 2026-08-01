@@ -1,0 +1,23 @@
+---
+title: Migrate from Nodemailer
+description: Move SMTP configuration and message fields to sently incrementally.
+icon: ArrowRightLeft
+source: "README.md"
+---
+
+Keep your message object, replace transporter construction, and await the sently factory.
+
+```ts
+import { createSMTPMailer } from "sently/smtp";
+
+const mailer = await createSMTPMailer({
+  host: "smtp.example.com",
+  auth: { user: "user@example.com", pass: process.env.SMTP_PASSWORD! },
+});
+```
+
+<Callout title="The one rule">Use `createSMTPMailer` for relay configuration; use `createMailer` only with an explicit transport.</Callout>
+
+<Accordions><Accordion title="Why does transport-only createMailer reject host?">It only accepts a `transport`. Move relay configuration to `createSMTPMailer`.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

@@ -1,0 +1,50 @@
+---
+title: Decorators
+description: Wrap an email transport with retry, fallback, preview, or idempotency.
+icon: Layers
+source: "src/transports/retry.ts"
+---
+
+Decorators wrap another email transport. The mailer still calls `send` the same way — only the transport path changes.
+
+<Callout title="The one rule">Pass the outermost decorator to `createMailer`. Inner transports stay providers (or other decorators).</Callout>
+
+## Available decorators
+
+| Decorator | Import |
+| --- | --- |
+| [Preview](./preview) | `sently/transports/preview` |
+| [Retry](./retry) | `sently/transports/retry` |
+| [Fallback](./fallback) | `sently/transports/fallback` |
+| [Weighted fallback](./weighted-fallback) | `sently/transports/weighted-fallback` |
+| [Idempotency](./idempotency) | `sently/idempotency` |
+
+## Typical stack
+
+```ts
+import { createMailer } from "sently/mailer";
+import { ResendTransport } from "sently/transports/resend";
+import { RetryTransport } from "sently/transports/retry";
+import { FallbackTransport } from "sently/transports/fallback";
+
+const transport = new FallbackTransport([
+  new RetryTransport(new ResendTransport({ apiKey: process.env.RESEND_API_KEY! })),
+  new ResendTransport({ apiKey: process.env.RESEND_BACKUP_KEY! }),
+]);
+
+const mailer = await createMailer({ transport });
+```
+
+## Learn more
+
+- [Transports](../transports)
+- [Email channel](../channels/email)
+- [Hooks](../channels/hooks)
+
+## Next
+
+<Cards>
+  <Card title="Retry" href="/docs/decorators/retry" />
+  <Card title="Fallback" href="/docs/decorators/fallback" />
+  <Card title="Transports" href="/docs/transports" />
+</Cards>

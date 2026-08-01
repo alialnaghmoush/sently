@@ -1,0 +1,128 @@
+---
+title: Twilio SMS
+description: Send SMS through the Twilio Messages API with createSmsSender.
+icon: Truck
+source: "src/transports/twilio-sms.ts"
+---
+
+Use Twilio when your SMS traffic should go through the Programmable Messaging Messages API.
+Wire `TwilioSmsTransport` into `createSmsSender` — Verify, Voice, and other Twilio products stay off this transport.
+
+<Callout title="The one rule">
+  Provide `From` **or** `messagingServiceSid` (or both), keep E.164 `+` prefixes, and send only
+  through `createSmsSender`.
+</Callout>
+
+## Quick start
+
+<Steps>
+
+<Step>
+### Configure
+
+```ts
+import { createSmsSender } from "sently/sms";
+import { TwilioSmsTransport } from "sently/transports/twilio-sms";
+
+const sms = createSmsSender({
+  transport: new TwilioSmsTransport({
+    accountSid: process.env.TWILIO_ACCOUNT_SID!,
+    apiKey: process.env.TWILIO_API_KEY!,
+    authToken: process.env.TWILIO_API_KEY_SECRET!,
+    from: "+15557654321",
+  }),
+});
+```
+
+Production auth: API Key SID as Basic username and API Key Secret as password, with Account SID still in the URL path.
+For local testing you may omit `apiKey` and use Account SID + Auth Token.
+
+</Step>
+
+<Step>
+### Send
+
+```ts
+const result = await sms.send({
+  to: "+15551234567",
+  body: "Your code is 123456",
+});
+```
+
+</Step>
+
+<Step>
+### See the result
+
+```ts
+console.log(result.messageId); // SM…
+console.log(result.status); // e.g. queued
+```
+
+</Step>
+
+</Steps>
+
+## Configuration
+
+| Option | Type | Default | Meaning |
+| ------ | ---- | ------- | ------- |
+| `accountSid` | `string` | required | Account SID in the Messages URL path. |
+| `authToken` | `string` | required | Auth Token, or API Key Secret when `apiKey` is set. |
+| `apiKey` | `string` | — | API Key SID used as Basic-auth username (recommended in production). |
+| `from` | `string` | — | Default From number / sender id. |
+| `messagingServiceSid` | `string` | — | Messaging Service SID (`MG…`) as sender alternative. |
+| `statusCallback` | `string` | — | Delivery status callback URL. |
+
+Either `from` / `options.from` or `messagingServiceSid` is required for each send.
+
+## Messaging Service
+
+When `messagingServiceSid` is set and `From` is omitted, Twilio picks a sender from the service pool.
+You may set both to pin a specific From inside that pool.
+
+```ts
+const sms = createSmsSender({
+  transport: new TwilioSmsTransport({
+    accountSid: process.env.TWILIO_ACCOUNT_SID!,
+    authToken: process.env.TWILIO_AUTH_TOKEN!,
+    messagingServiceSid: "MG…",
+  }),
+});
+```
+
+## Verify and errors
+
+`verify()` fetches `GET /2010-04-01/Accounts/{AccountSid}.json` with the same Basic credentials.
+
+Failed Messages responses throw `TwilioSmsError` with Twilio’s `message` / `code` payload when present.
+
+## Troubleshooting
+
+<Accordions>
+
+<Accordion title="Twilio SMS requires From or MessagingServiceSid">
+
+Set `from` on the transport or per send, or configure `messagingServiceSid`.
+
+</Accordion>
+
+<Accordion title="Invalid To phone number">
+
+Twilio expects E.164 with a leading `+`. Do not strip `+` the way some regional SMS APIs require.
+
+</Accordion>
+
+</Accordions>
+
+## Learn more
+
+- [SMS channel](/docs/channels/sms) — `createSmsSender` and hooks
+- [Transports](/docs/transports) — other SMS providers
+
+## Next
+
+<Cards>
+  <Card title="SMS channel" description="createSmsSender options." href="/docs/channels/sms" />
+  <Card title="Transports" description="Providers by channel." href="/docs/transports" />
+</Cards>

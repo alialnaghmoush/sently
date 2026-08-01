@@ -1,0 +1,26 @@
+---
+title: DKIM
+description: Sign outgoing messages with RSA-SHA256 or Ed25519-SHA256.
+icon: KeyRound
+source: "src/dkim.ts"
+---
+
+<Callout title="The one rule">Keep the private key out of source control and publish the matching DNS record before sending.</Callout>
+
+<Steps><Step title="Sign a raw message">
+
+```ts
+import { signDKIM } from "sently/dkim";
+
+const result = await signDKIM(rawMessage, {
+  domainName: "example.com", keySelector: "2024", privateKey: process.env.DKIM_PRIVATE_KEY!,
+});
+```
+
+</Step></Steps>
+
+SMTP configuration also accepts `dkim`.
+
+<Accordions><Accordion title="Which keys are supported?">RSA keys of at least 1024 bits and Ed25519 keys are supported.</Accordion></Accordions>
+
+<Cards><Card title="SMTP transport" href="/docs/transports/smtp" /></Cards>

@@ -179,6 +179,25 @@ function wrapBase64Lines(base64: string): string {
   return lines.join("\r\n");
 }
 
+/**
+ * Encode bytes to Base64url (RFC 4648 §5) without padding.
+ * Used by Web Push (VAPID / RFC 8291) and similar protocols.
+ */
+export function encodeBase64Url(data: Uint8Array | string): string {
+  const encoded = encodeBase64(data).replace(/\r\n/g, "");
+  return encoded.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/u, "");
+}
+
+/**
+ * Decode a Base64url (RFC 4648 §5) string to bytes.
+ * Accepts both padded and unpadded input.
+ */
+export function decodeBase64Url(data: string): Uint8Array {
+  const normalized = data.replace(/-/g, "+").replace(/_/g, "/");
+  const padding = normalized.length % 4 === 0 ? "" : "=".repeat(4 - (normalized.length % 4));
+  return decodeBase64(normalized + padding);
+}
+
 /** Decode bytes to UTF-8 string. */
 export function decodeUtf8(bytes: Uint8Array): string {
   return decoder.decode(bytes);

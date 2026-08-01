@@ -1,0 +1,144 @@
+---
+title: SNDR
+description: Send transactional email through the SNDR HTTP API with createMailer.
+icon: Truck
+source: "src/transports/sndr.ts"
+---
+
+Use SNDR when you want an HTTP email API for receipts, sign-in mail, and other app-triggered messages.
+Wire `SndrTransport` into `createMailer` — do not call the vendor SDK from application code.
+
+<Callout title="The one rule">
+  Import from `sently/transports/sndr`, pass the transport to `await createMailer(...)`, and send
+  with the mailer — keep delivery on the email channel.
+</Callout>
+
+## Quick start
+
+<Steps>
+
+<Step>
+### Configure
+
+```ts
+import { createMailer } from "sently/mailer";
+import { SndrTransport } from "sently/transports/sndr";
+
+const mailer = await createMailer({
+  transport: new SndrTransport({
+    apiKey: process.env.SNDR_API_KEY!,
+  }),
+});
+```
+
+</Step>
+
+<Step>
+### Send
+
+```ts
+const result = await mailer.send({
+  from: "hello@yourdomain.com",
+  to: "customer@example.com",
+  subject: "Welcome aboard",
+  html: "<p>Thanks for joining us.</p>",
+});
+```
+
+</Step>
+
+<Step>
+### See the result
+
+```ts
+console.log(result.messageId); // e.g. em_…
+console.log(result.response); // e.g. queued
+```
+
+`from` must use a domain verified in the SNDR dashboard.
+
+</Step>
+
+</Steps>
+
+## Configuration
+
+| Option | Type | Default | Meaning |
+| ------ | ---- | ------- | ------- |
+| `apiKey` | `string` | required | Bearer key (`sndr_live_…` / `sndr_test_…`). |
+| `baseUrl` | `string` | `https://api.sndr.sh` | API origin (no trailing slash needed). |
+| `defaultTemplateId` | `string` | — | Default SNDR `template_id` when not set per message. |
+
+## Message mapping
+
+| Mail option | SNDR field | Notes |
+| ----------- | ---------- | ----- |
+| `from` | `from` | MIME form `Name <addr>` when a display name is present. |
+| `to` / `cc` / `bcc` | `to` / `cc` / `bcc` | Arrays of email addresses. |
+| `replyTo` | `reply_to` | First address only. |
+| `subject` | `subject` | Required. |
+| `html` / `text` | `html` / `text` | Optional body fields. |
+| `headers` | `headers` | Custom headers; template header is stripped. |
+| `idempotencyKey` / `messageId` | `Idempotency-Key` | Sent when present. |
+| `data` | `variables` | Only when a template id is set. |
+
+## Templates
+
+Set a template with the `x-sndr-template-id` header (or `defaultTemplateId` on the transport).
+Pass template variables through `data`.
+
+```ts
+import { SNDR_TEMPLATE_ID_HEADER } from "sently/transports/sndr";
+
+await mailer.send({
+  from: "hello@yourdomain.com",
+  to: "customer@example.com",
+  subject: "Welcome",
+  headers: { [SNDR_TEMPLATE_ID_HEADER]: "tpl_welcome" },
+  data: { name: "Ada" },
+});
+```
+
+## Verify and errors
+
+`verify()` calls `GET /v1/domains` with the same Bearer key.
+
+Failed HTTP responses throw `SndrError` (`SentlyError`) with the API `error.message` when present.
+
+## Troubleshooting
+
+<Accordions>
+
+<Accordion title="from domain is not verified">
+
+SNDR rejects sends from unverified domains. Verify DNS in the SNDR dashboard, then retry with that domain in `from`.
+
+</Accordion>
+
+<Accordion title="Should I import SndrTransport from sently?">
+
+No. Use `sently/transports/sndr`. The main `sently` package does not re-export HTTP provider transports.
+
+</Accordion>
+
+<Accordion title="Should I call the @rkiza/sndr SDK?">
+
+No. Use `createMailer` plus `SndrTransport`. Keep vendor extras off the shared email contract.
+
+</Accordion>
+
+</Accordions>
+
+## Learn more
+
+- [Email channel](/docs/channels/email) — mailer options and send pipeline
+- [Webhooks](/docs/guides/webhooks) — SNDR delivery events and signature verification
+- [Bundle size](/docs/guides/bundle-size) — why subpath imports stay small
+
+## Next
+
+<Cards>
+  <Card title="Email channel" description="createMailer and MailOptions." href="/docs/channels/email" />
+  <Card title="Webhooks" description="Parse and verify SNDR events." href="/docs/guides/webhooks" />
+  <Card title="Transports" description="All provider transports by channel." href="/docs/transports" />
+</Cards>

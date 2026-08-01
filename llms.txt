@@ -1,119 +1,102 @@
 # sently
 
-> Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. v0.7.2
+> Runtime-agnostic messaging library for Node.js, Bun, Deno, and Cloudflare Workers.
+> Channel-first email, SMS, WhatsApp, and Web Push. Zero runtime dependencies. ESM only.
+> Version: see package.json (currently 0.9.x). Full handbook: site/content/docs (bun run site:dev).
 
-## What it does
-Sends emails via SMTP or HTTP APIs (Resend, SendGrid, Postmark, Mailgun, AWS SES, Brevo).
-Zero runtime dependencies in core. HTTP stacks ~6.1 KB gzip (`sently/mailer` + transport); SMTP via `sently/smtp` ~15 KB. Full TypeScript support.
+## Model
 
-Features: single send, `sendBulk` (native batch on Resend/SendGrid), idempotency decorator, webhook event parsers, optional React Email plugin, DKIM, OAuth2 SMTP, connection pool + rate limiting.
+Apps use channel senders — not vendor SDKs. Providers are transports under those senders.
 
-## When to use sently
-- You need to send email from Bun, Deno, or Cloudflare Workers
-- You want to replace Nodemailer with an ESM-native library
-- You need DKIM signing without external dependencies
-- You want to swap email providers without changing send code
-- You need delivery webhooks normalized across providers
+| Channel | Sender import | Contract |
+|---------|---------------|----------|
+| Email | `sently/mailer` or `sently/smtp` | `Transport` |
+| SMS | `sently/sms` | `SmsTransport` |
+| WhatsApp | `sently/whatsapp` | `WhatsAppTransport` |
+| Push | `sently/push` | `PushTransport` |
 
-## When NOT to use sently
-- You need SOCKS proxy support
-- You need iCal/calendar attachments
-- You require CommonJS
+Vendor extras (OTP, etc.) live on the concrete transport class only.
 
 ## Install
+
+```
 bun add sently
+```
 
-Optional peers (only if using React Email): `react`, `@react-email/render`
+## Quick examples
 
-## Quick example (HTTP — smallest bundle)
+### Email (HTTP)
+
+```ts
 import { createMailer } from "sently/mailer"
 import { ResendTransport } from "sently/transports/resend"
 
 const mailer = await createMailer({
-  transport: new ResendTransport({ apiKey: process.env.RESEND_API_KEY }),
+  transport: new ResendTransport({ apiKey: process.env.RESEND_API_KEY! }),
 })
 await mailer.send({ from, to, subject, html })
+```
 
-## Quick example (SMTP)
-import { createSMTPMailer } from "sently/smtp"
+### SMS
 
-const mailer = await createSMTPMailer({
-  host: "smtp.example.com",
-  port: 587,
-  auth: { user: "you@example.com", pass: "secret" },
+```ts
+import { createSmsSender } from "sently/sms"
+import { TwilioSmsTransport } from "sently/transports/twilio-sms"
+
+const sms = createSmsSender({
+  transport: new TwilioSmsTransport({ accountSid, authToken }),
 })
-await mailer.send({ from, to, subject, text: "Hello" })
+await sms.send({ to: "+15551234567", body: "Hello", from: "+15557654321" })
+```
 
-## Quick example (batch)
-const result = await mailer.sendBulk(messages, {
-  rateDelta: 2,       // batch HTTP requests per second (Resend default)
-  rateLimit: 1000,
-  onError: (msg, i, err) => console.error(i, err),
+### WhatsApp
+
+```ts
+import { createWhatsAppSender } from "sently/whatsapp"
+import { WhatsAppCloudTransport } from "sently/transports/whatsapp-cloud"
+
+const wa = createWhatsAppSender({
+  transport: new WhatsAppCloudTransport({ accessToken, phoneNumberId }),
 })
+await wa.send({ to: "15551234567", template: { name: "welcome", language: "en_US" } })
+```
 
-## Quick example (idempotency — wrap outside RetryTransport)
-import { IdempotencyTransport } from "sently/idempotency"
-import { RetryTransport } from "sently/transports/retry"
+### Web Push
 
-const transport = new IdempotencyTransport(
-  new RetryTransport(new ResendTransport({ apiKey })),
-)
+```ts
+import { createPushSender } from "sently/push"
+import { WebPushTransport } from "sently/transports/webpush"
 
-## Quick example (webhooks)
-import { parseResendWebhook, verifyResendSignature } from "sently/webhooks"
-
-const events = parseResendWebhook(await request.json())
-
-## Quick example (React Email — sently/react only, not main barrel)
-import { reactPlugin } from "sently/react"
-import { createMailer } from "sently/mailer"
-
-const mailer = await createMailer({
-  transport: new ResendTransport({ apiKey }),
-  plugins: [reactPlugin()],
+const push = createPushSender({
+  transport: new WebPushTransport({
+    vapidPublicKey,
+    vapidPrivateKey,
+    subject: "mailto:you@example.com",
+  }),
 })
+await push.send({ subscription, title: "Hi", body: "Hello" })
+```
 
-## Breaking (v0.7.0)
-- Main `"sently"` barrel: types, createMailer, createSMTPMailer, detectRuntime, OAuth2, SentlyError only
-- `sently/smtp` exports createSMTPMailer (no createMailer alias)
-- CreateMailerOptions removed → TransportMailerOptions / SMTPMailerOptions
-- SMTP config on transport createMailer → INVALID_CONFIG at factory time
+## Transports (exported)
 
-## Breaking (v0.6.2)
-- Main `createMailer` from `"sently"` is transport-only. SMTP: `createSMTPMailer` from `"sently/smtp"` or `"sently"`.
+Email: smtp, resend, sendgrid, postmark, mailgun, ses, brevo, mailersend, plunk, sparkpost, mailtrap, loops, cloudflare-email, sndr, taqnyat-mail, preview, retry, fallback, weighted-fallback
 
-## Breaking (v0.5.1)
-- `reactPlugin` and `ReactMailOptions` are NOT exported from `"sently"`. Use `"sently/react"`.
+SMS: twilio-sms, taqnyat-sms, msegat
 
-## Subpath exports
-- sently — types, transport createMailer, createSMTPMailer, detectRuntime, OAuth2, SentlyError
-- sently/mailer — createMailer for custom transports (~2.6 KB); sendBulk, plugins
-- sently/smtp — createSMTPMailer (host/port, pool, adapters, ~15 KB)
-- sently/dkim — DKIM signing (lazy-loaded when dkim option set)
-- sently/react — reactPlugin, ReactMailOptions (optional peers)
-- sently/idempotency — IdempotencyTransport, MemoryIdempotencyStore
-- sently/webhooks — parse*Webhook, verifyResendSignature, verifyMailgunSignature, EmailEvent
-- sently/errors — SentlyError, stable error codes
-- sently/transports/resend — ResendTransport, RESEND_BATCH_MAX
-- sently/transports/sendgrid — SendGridTransport
-- sently/transports/postmark — PostmarkTransport
-- sently/transports/mailgun — MailgunTransport
-- sently/transports/ses — SESTransport
-- sently/transports/brevo — BrevoTransport
-- sently/transports/smtp — SMTPTransport, SMTPError
-- sently/transports/retry — RetryTransport
-- sently/transports/preview — PreviewTransport
-- sently/adapters/node — NodeAdapter
-- sently/adapters/bun — BunAdapter
-- sently/adapters/deno — DenoAdapter
-- sently/adapters/cf — CloudflareAdapter
-- sently/auth/oauth2 — OAuth2Client
-- sently/pool — SMTPPool (rate limiting via rateDelta/rateLimit)
-- sently/plugins/template — templatePlugin, simpleEngine
+WhatsApp: whatsapp-cloud, taqnyat-whatsapp
 
-## SendResult optional fields
-- deduped?: true — idempotency cache hit (absent on normal sends)
-- batchError?: unknown — per-message failure inside a successful batch response
+Push: webpush
 
-## Docs
-https://github.com/alialnaghmoush/sently
+Also: `sently/idempotency`, `sently/webhooks`, `sently/dkim`, `sently/auth/oauth2`, `sently/pool`, `sently/plugins/template`, `sently/react`, `sently/adapters/*`
+
+## Docs for agents
+
+- Repo contract: AGENTS.md
+- Handbook MDX: site/content/docs/
+- Live site routes when running: /llms.txt, /llms-full.txt, /llms.mdx/docs/...
+
+## Prefer
+
+- Channel senders + transport subpaths for tree-shaking
+- Stable SentlyError codes from providers
+- No inventing APIs not in package.json exports

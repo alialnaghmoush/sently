@@ -1,0 +1,22 @@
+---
+title: Template plugin
+description: Render named HTML email templates before delivery.
+icon: FileCode
+source: "src/plugins/template.ts"
+---
+
+<Callout title="The one rule">Return a new message object from plugins; do not mutate the input.</Callout>
+
+```ts
+import { simpleEngine, templatePlugin } from "sently/plugins/template";
+
+const plugin = templatePlugin({
+  engine: simpleEngine, templates: { welcome: "<h1>Hello, {{name}}!</h1>" },
+});
+```
+
+Send with `template: "welcome"` and `data: { name: "Ada" }`.
+
+<Accordions><Accordion title="What happens to missing variables?">`simpleEngine` renders unknown variables as an empty string.</Accordion></Accordions>
+
+<Cards><Card title="Mail options" href="/docs/reference/mail-options" /></Cards>

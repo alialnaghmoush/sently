@@ -1,0 +1,88 @@
+---
+title: SMS
+description: Send SMS through a sender and an SMS transport.
+icon: MessageSquare
+source: "src/sms.ts"
+---
+
+Use SMS for short transactional messages such as codes, delivery updates, and alerts.
+The sender stays the same when you change the provider transport.
+
+<Callout title="The one rule">Put the recipient, body, and optional `from` value on `sms.send`, not on the shared sender.</Callout>
+
+<Steps>
+  <Step title="Create an SMS sender">
+
+```ts
+import { createSmsSender } from "sently/sms";
+import { TwilioSmsTransport } from "sently/transports/twilio-sms";
+
+const sms = createSmsSender({
+  transport: new TwilioSmsTransport({
+    accountSid: process.env.TWILIO_ACCOUNT_SID!,
+    authToken: process.env.TWILIO_AUTH_TOKEN!,
+  }),
+});
+```
+
+  </Step>
+  <Step title="Send a message">
+
+```ts
+const result = await sms.send({
+  to: "+15551234567",
+  body: "Your verification code is 482915.",
+  from: "+15557654321",
+});
+
+console.log(result.status);
+```
+
+  </Step>
+</Steps>
+
+## Sender configuration
+
+| Option | Type | Meaning |
+| --- | --- | --- |
+| `transport` | `SmsTransport` | Required provider delivery implementation. |
+| `plugins` | `SmsPlugin[]` | Optional transforms run before delivery. |
+| `hooks` | `SmsHooks` | Optional callbacks for delivery activity. |
+
+## Message options
+
+| Option | Type | Meaning |
+| --- | --- | --- |
+| `to` | `string` | Required recipient number; E.164 is recommended. |
+| `body` | `string` | Required message text. |
+| `from` | `string` | Optional sender number or alphanumeric sender ID. |
+| `messageId` | `string` | Optional client-supplied identifier. |
+
+Twilio also accepts a default `from` or `messagingServiceSid` when you construct its concrete transport.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Why does Twilio reject my send without a sender?">
+    Twilio requires `from` on the message or its transport configuration, unless its transport has `messagingServiceSid`.
+  </Accordion>
+  <Accordion title="Can I change SMS providers?">
+    Yes. Construct the sender with another `SmsTransport`; calls to `sms.send` keep the same message shape.
+  </Accordion>
+  <Accordion title="What does verify do?">
+    `sms.verify()` delegates to the transport when available; otherwise it reports a successful sender result.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [SMS options](../reference/sms-options)
+- [Transport contracts](../reference/transport-contracts)
+- [Hooks](./hooks)
+
+## Next
+
+<Cards>
+  <Card title="SMS transports" href="/docs/transports" />
+  <Card title="Provider OTP extras" href="/docs/guides/vendor-extras-otp" />
+</Cards>

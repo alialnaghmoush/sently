@@ -1,0 +1,34 @@
+---
+title: Weighted fallback
+description: Choose a weighted primary transport and fail over on errors.
+icon: Scale
+source: "src/transports/weighted-fallback.ts"
+---
+
+Choose a weighted primary transport and fail over on errors.
+
+<Callout title="The one rule">At least one entry with positive total weight is required.</Callout>
+
+## Configuration
+
+Each entry has `transport` and positive `weight`; it accepts fallback options and optional `random`.
+
+<Steps><Step title="Wrap an email transport">
+
+```ts
+import { WeightedFallbackTransport } from "sently/transports/weighted-fallback";
+
+const transport = new WeightedFallbackTransport([{ transport: primary, weight: 80 }, { transport: secondary, weight: 20 }]);
+```
+
+</Step><Step title="Create the mailer">
+
+```ts
+const mailer = await createMailer({ transport });
+```
+
+</Step></Steps>
+
+<Accordions><Accordion title="Does this replace the inner provider?">No. It delegates sends to the wrapped transport.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

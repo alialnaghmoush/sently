@@ -1,0 +1,87 @@
+---
+title: Lifecycle hooks
+description: Observe sender activity without putting message bodies in hook context.
+icon: Activity
+source: "src/core/hooks.ts"
+---
+
+Hooks observe sends for metrics and tracing without coupling your application to a provider.
+Their contexts include delivery metadata, not a message body.
+
+<Callout title="The one rule">Do not log message bodies in hooks; their contexts intentionally expose only delivery metadata.</Callout>
+
+<Steps>
+  <Step title="Configure hooks when creating the sender">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { ResendTransport } from "sently/transports/resend";
+
+const mailer = await createMailer({
+  transport: new ResendTransport({
+    apiKey: process.env.RESEND_API_KEY!,
+  }),
+  hooks: {
+    onSuccess: ({ provider, subject, to }, result, durationMs) => {
+      console.log(provider, subject, result.messageId, durationMs);
+      console.log(to);
+    },
+  },
+});
+```
+
+  </Step>
+  <Step title="Send normally">
+
+```ts
+await mailer.send({
+  from: "hello@example.com",
+  to: "person@example.com",
+  subject: "Welcome",
+  text: "Thanks for joining.",
+});
+```
+
+  </Step>
+</Steps>
+
+## Hook callbacks
+
+| Channel | Callbacks | Context |
+| --- | --- | --- |
+| Email | `onSend`, `onSuccess`, `onError`, `onRetry`, `onFallback` | `messageId`, recipients, subject, provider. |
+| SMS | `onSend`, `onSuccess`, `onError` | `messageId`, recipient number, provider. |
+| WhatsApp | `onSend`, `onSuccess`, `onError` | `messageId`, recipient number, provider. |
+| Push | `onSend`, `onSuccess`, `onError` | `messageId`, redacted endpoint, provider. |
+
+`onSuccess` receives the delivery result and optional duration in milliseconds. `onError` receives the error and optional duration.
+
+## Retry and fallback
+
+Email `onRetry` runs only with `RetryTransport`. Email `onFallback` runs only with a fallback transport; both are configured as decorators around an email transport.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Why does onRetry not run?">
+    `onRetry` is wired only when the mailer's transport is `RetryTransport`.
+  </Accordion>
+  <Accordion title="Why does my hook error not stop the send?">
+    Hook failures are intentionally swallowed so observability code cannot break message delivery.
+  </Accordion>
+  <Accordion title="Why is a push endpoint redacted?">
+    The endpoint path can contain a long-lived delivery token and is not exposed in full to hooks.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Email channel](./email)
+- [Observability](../guides/observability)
+
+## Next
+
+<Cards>
+  <Card title="Observability" href="/docs/guides/observability" />
+  <Card title="Retry" href="/docs/decorators/retry" />
+</Cards>

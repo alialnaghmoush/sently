@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { IdempotencyTransport } from "../../src/idempotency.js";
 import type { SendResult, Transport } from "../../src/core/types.js";
+import { IdempotencyTransport } from "../../src/idempotency.js";
 import { BrevoTransport } from "../../src/transports/brevo.js";
 import { CloudflareEmailTransport } from "../../src/transports/cloudflare-email.js";
 import { FallbackTransport } from "../../src/transports/fallback.js";
@@ -16,6 +16,7 @@ import { RetryTransport } from "../../src/transports/retry.js";
 import { SendGridTransport } from "../../src/transports/sendgrid.js";
 import { SESTransport } from "../../src/transports/ses.js";
 import { SMTPTransport } from "../../src/transports/smtp.js";
+import { SndrTransport } from "../../src/transports/sndr.js";
 import { SparkPostTransport } from "../../src/transports/sparkpost.js";
 import { WeightedFallbackTransport } from "../../src/transports/weighted-fallback.js";
 
@@ -49,6 +50,7 @@ describe("Transport.provider", () => {
     { transport: new BrevoTransport({ apiKey: "brevo_test" }), expected: "brevo" },
     { transport: new MailerSendTransport({ apiToken: "ms_test" }), expected: "mailersend" },
     { transport: new PlunkTransport({ apiKey: "plunk_test" }), expected: "plunk" },
+    { transport: new SndrTransport({ apiKey: "sndr_test" }), expected: "sndr" },
     { transport: new SparkPostTransport({ apiKey: "sp_test" }), expected: "sparkpost" },
     { transport: new MailtrapTransport({ apiToken: "mt_test" }), expected: "mailtrap" },
     { transport: new LoopsTransport({ apiKey: "loops_test" }), expected: "loops" },

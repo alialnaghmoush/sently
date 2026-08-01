@@ -1,0 +1,17 @@
+---
+title: Transport contracts
+description: Implement a channel transport to integrate a provider not shipped by sently.
+icon: FileType
+source: "src/core/types.ts"
+---
+
+| Contract | Required method | Optional methods |
+| --- | --- | --- |
+| `Transport` | `send(MailOptions)` | `sendBatch`, `verify`, `close` |
+| `SmsTransport` | `send(SmsOptions)` | `verify`, `close` |
+| `WhatsAppTransport` | `send(WhatsAppOptions)` | `verify`, `close` |
+| `PushTransport` | `send(PushOptions)` | `verify`, `close` |
+
+Each contract can expose a stable optional `provider` identifier for hooks and observability.
+
+<Cards><Card title="Channels" href="/docs/channels" /></Cards>

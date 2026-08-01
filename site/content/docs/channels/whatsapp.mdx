@@ -1,0 +1,95 @@
+---
+title: WhatsApp
+description: Send template or session text messages through a WhatsApp transport.
+icon: MessagesSquare
+source: "src/whatsapp.ts"
+---
+
+Use WhatsApp for customer messages sent through a WhatsApp provider transport.
+Send a template for business-initiated delivery, or text during an open customer-service window.
+
+<Callout title="The one rule">Use templates for business-initiated messages outside the 24-hour customer-service window.</Callout>
+
+<Steps>
+  <Step title="Create a WhatsApp sender">
+
+```ts
+import { createWhatsAppSender } from "sently/whatsapp";
+import { WhatsAppCloudTransport } from "sently/transports/whatsapp-cloud";
+
+const whatsapp = createWhatsAppSender({
+  transport: new WhatsAppCloudTransport({
+    accessToken: process.env.WHATSAPP_TOKEN!,
+    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID!,
+  }),
+});
+```
+
+  </Step>
+  <Step title="Send an approved template">
+
+```ts
+const result = await whatsapp.send({
+  to: "15551234567",
+  template: {
+    name: "welcome",
+    language: "en_US",
+  },
+});
+
+console.log(result.messageId);
+```
+
+  </Step>
+</Steps>
+
+## Sender configuration
+
+| Option | Type | Meaning |
+| --- | --- | --- |
+| `transport` | `WhatsAppTransport` | Required provider delivery implementation. |
+| `plugins` | `WhatsAppPlugin[]` | Optional transforms run before delivery. |
+| `hooks` | `WhatsAppHooks` | Optional callbacks for delivery activity. |
+
+## Message options
+
+| Shape | Required fields | Use |
+| --- | --- | --- |
+| Template | `to`, `template.name`, `template.language` | Business-initiated delivery. |
+| Text | `to`, `text` | An open 24-hour customer-service window. |
+
+Template messages may include `template.components` for header, body, or button parameters.
+
+```ts
+await whatsapp.send({
+  to: "15551234567",
+  text: "Thanks—we received your reply.",
+});
+```
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Why did my free-text message fail?">
+    Free text is valid only during an open customer-service window. Use a pre-approved template outside that window.
+  </Accordion>
+  <Accordion title="Can I change WhatsApp providers?">
+    Yes. Construct the sender with another `WhatsAppTransport`; message shapes remain template or text.
+  </Accordion>
+  <Accordion title="What does verify do?">
+    `whatsapp.verify()` delegates to the transport when available; otherwise it reports a successful sender result.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [WhatsApp options](../reference/whatsapp-options)
+- [Transport contracts](../reference/transport-contracts)
+- [Hooks](./hooks)
+
+## Next
+
+<Cards>
+  <Card title="WhatsApp Cloud transport" href="/docs/transports/whatsapp-cloud" />
+  <Card title="All transports" href="/docs/transports" />
+</Cards>

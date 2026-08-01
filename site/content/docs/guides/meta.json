@@ -1,0 +1,21 @@
+{
+  "title": "Guides",
+  "icon": "Map",
+  "pages": [
+    "index",
+    "adapters",
+    "dkim",
+    "oauth2",
+    "pool",
+    "plugins-template",
+    "react-email",
+    "webhooks",
+    "observability",
+    "vendor-extras-otp",
+    "security",
+    "attachments",
+    "send-bulk",
+    "webpush-interop",
+    "bundle-size"
+  ]
+}

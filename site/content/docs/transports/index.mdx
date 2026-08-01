@@ -1,0 +1,105 @@
+---
+title: Transports
+description: Choose a provider transport for a channel sender.
+icon: Truck
+source: "package.json"
+---
+
+Transports connect a sently channel sender to a delivery provider.
+Pick the transport that matches the channel you are sending on.
+
+<Callout title="The one rule">Keep application delivery calls on a sently channel sender and replace only its transport when you change providers.</Callout>
+
+<Steps>
+  <Step title="Import a sender and its transport">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { ResendTransport } from "sently/transports/resend";
+
+const mailer = await createMailer({
+  transport: new ResendTransport({
+    apiKey: process.env.RESEND_API_KEY!,
+  }),
+});
+```
+
+  </Step>
+  <Step title="Send through the channel">
+
+```ts
+await mailer.send({
+  from: "hello@example.com",
+  to: "person@example.com",
+  subject: "Welcome",
+  text: "Thanks for joining.",
+});
+```
+
+  </Step>
+</Steps>
+
+## Exported transports
+
+Every import below is an exported package subpath.
+
+| Transport | Channel | Import |
+| --- | --- | --- |
+| [SMTP](./smtp) | Email | `sently/transports/smtp` |
+| [Resend](./resend) | Email | `sently/transports/resend` |
+| [SendGrid](./sendgrid) | Email | `sently/transports/sendgrid` |
+| [Postmark](./postmark) | Email | `sently/transports/postmark` |
+| [Mailgun](./mailgun) | Email | `sently/transports/mailgun` |
+| [SES](./ses) | Email | `sently/transports/ses` |
+| [Brevo](./brevo) | Email | `sently/transports/brevo` |
+| [MailerSend](./mailersend) | Email | `sently/transports/mailersend` |
+| [Plunk](./plunk) | Email | `sently/transports/plunk` |
+| [SparkPost](./sparkpost) | Email | `sently/transports/sparkpost` |
+| [Mailtrap](./mailtrap) | Email | `sently/transports/mailtrap` |
+| [Loops](./loops) | Email | `sently/transports/loops` |
+| [Cloudflare Email](./cloudflare-email) | Email | `sently/transports/cloudflare-email` |
+| [SNDR](./sndr) | Email | `sently/transports/sndr` |
+| [Taqnyat Mail](./taqnyat-mail) | Email | `sently/transports/taqnyat-mail` |
+| [Twilio SMS](./twilio-sms) | SMS | `sently/transports/twilio-sms` |
+| [Taqnyat SMS](./taqnyat-sms) | SMS | `sently/transports/taqnyat-sms` |
+| [Msegat](./msegat) | SMS | `sently/transports/msegat` |
+| [WhatsApp Cloud](./whatsapp-cloud) | WhatsApp | `sently/transports/whatsapp-cloud` |
+| [Taqnyat WhatsApp](./taqnyat-whatsapp) | WhatsApp | `sently/transports/taqnyat-whatsapp` |
+| [Web Push](./webpush) | Push | `sently/transports/webpush` |
+
+For retry, fallback, preview, and idempotency wrappers, see [Decorators](../decorators).
+
+## Channel contracts
+
+| Channel | Sender | Transport contract |
+| --- | --- | --- |
+| Email | `createMailer` / `createSMTPMailer` | `Transport` |
+| SMS | `createSmsSender` | `SmsTransport` |
+| WhatsApp | `createWhatsAppSender` | `WhatsAppTransport` |
+| Push | `createPushSender` | `PushTransport` |
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Can I use an email transport for SMS or WhatsApp?">
+    No. A transport implements one channel contract. Choose a transport listed for the channel sender you use.
+  </Accordion>
+  <Accordion title="How do I add retries or fallback?">
+    Wrap an email transport with a [decorator](../decorators), then pass the wrapper to `createMailer`.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Decorators](../decorators)
+- [Email channel](../channels/email)
+- [SMS channel](../channels/sms)
+- [Transport contracts](../reference/transport-contracts)
+
+## Next
+
+<Cards>
+  <Card title="Decorators" href="/docs/decorators" />
+  <Card title="Email channel" href="/docs/channels/email" />
+  <Card title="SMS channel" href="/docs/channels/sms" />
+</Cards>

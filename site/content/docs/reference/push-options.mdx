@@ -1,0 +1,20 @@
+---
+title: Push options
+description: Fields accepted by `PushSender.send`.
+icon: Bell
+source: "src/core/push-types.ts"
+---
+
+| Field | Type | Required |
+| --- | --- | --- |
+| `subscription` | `PushSubscription` | yes |
+| `title` | `string` | yes |
+| `body` | `string` | yes |
+| `data` | `Record<string, unknown>` | no |
+| `icon` | `string` | no |
+| `ttl` | `number` | no |
+| `messageId` | `string` | no |
+
+A subscription contains `endpoint`, `keys.p256dh`, and `keys.auth`.
+
+<Cards><Card title="Push channel" href="/docs/channels/push" /></Cards>

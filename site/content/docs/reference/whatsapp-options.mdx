@@ -1,0 +1,15 @@
+---
+title: WhatsApp options
+description: Template and session text shapes accepted by `WhatsAppSender.send`.
+icon: MessagesSquare
+source: "src/core/whatsapp-types.ts"
+---
+
+| Shape | Required fields |
+| --- | --- |
+| Template | `to`, `template.name`, `template.language` |
+| Text | `to`, `text` |
+
+Both shapes accept optional `messageId`. Template components can include `header`, `body`, or `button` parameters.
+
+<Cards><Card title="WhatsApp channel" href="/docs/channels/whatsapp" /></Cards>

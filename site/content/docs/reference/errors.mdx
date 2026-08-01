@@ -1,0 +1,22 @@
+---
+title: Errors
+description: Handle stable sently error codes and provider-specific error instances.
+icon: CircleAlert
+source: "src/core/errors.ts"
+---
+
+All library transport and protocol failures derive from `SentlyError`; use `sentlyCode` for stable handling.
+
+```ts
+import { SentlyError } from "sently/errors";
+
+try {
+  await mailer.send(message);
+} catch (error) {
+  if (error instanceof SentlyError) console.error(error.sentlyCode);
+}
+```
+
+Provider error classes also retain provider response details where their transport exposes them.
+
+<Cards><Card title="Security" href="/docs/guides/security" /></Cards>

@@ -1,0 +1,34 @@
+---
+title: Preview
+description: Write email previews to disk instead of delivering them.
+icon: Eye
+source: "src/transports/preview.ts"
+---
+
+Write email previews to disk instead of delivering them.
+
+<Callout title="The one rule">Preview is for development, not delivery.</Callout>
+
+## Configuration
+
+`outDir`, `open`, and `format` are optional; defaults are `./.emails`, false, and `eml`.
+
+<Steps><Step title="Wrap an email transport">
+
+```ts
+import { PreviewTransport } from "sently/transports/preview";
+
+const transport = new PreviewTransport({ outDir: ".emails", open: true });
+```
+
+</Step><Step title="Create the mailer">
+
+```ts
+const mailer = await createMailer({ transport });
+```
+
+</Step></Steps>
+
+<Accordions><Accordion title="Does this replace the inner provider?">No. It delegates sends to the wrapped transport.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

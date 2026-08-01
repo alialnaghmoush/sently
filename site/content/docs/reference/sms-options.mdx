@@ -1,0 +1,17 @@
+---
+title: SMS options
+description: Fields accepted by `SmsSender.send`.
+icon: MessageSquare
+source: "src/core/sms-types.ts"
+---
+
+| Field | Type | Required |
+| --- | --- | --- |
+| `to` | `string` | yes |
+| `body` | `string` | yes |
+| `from` | `string` | no |
+| `messageId` | `string` | no |
+
+The result includes `messageId`, `to`, `status`, `response`, and optional `provider`.
+
+<Cards><Card title="SMS channel" href="/docs/channels/sms" /></Cards>

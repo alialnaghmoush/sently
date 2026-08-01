@@ -18,6 +18,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # local overrides
 *.local
 
+# local agent/implementation reports
+reports/
+
 # dotenv environment variable files
 .env
 .env.development.local
@@ -32,6 +35,12 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .tmp-size
 .tmp-index-test
 *.tsbuildinfo
+
+# docs site
+site/.next
+site/out
+site/.source
+site/node_modules
 
 # IntelliJ based IDEs
 .idea

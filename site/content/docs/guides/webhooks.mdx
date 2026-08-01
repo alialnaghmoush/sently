@@ -1,0 +1,120 @@
+---
+title: Webhooks
+description: Parse provider delivery events into a shared EmailEvent shape, with optional signature checks.
+icon: Webhook
+source: "src/webhooks.ts"
+---
+
+Use webhooks when a provider posts delivery updates (delivered, bounced, and similar).
+sently turns each provider payload into `EmailEvent[]` so your app can share one handler.
+
+<Callout title="The one rule">
+  Verify the signature against the unmodified raw request body before you trust or act on the event.
+</Callout>
+
+## Quick start
+
+<Steps>
+
+<Step>
+### Import one provider subpath
+
+Prefer `sently/webhooks/<provider>` so runtimes without a bundler do not load every parser.
+
+```ts
+import { parse, verifySignature } from "sently/webhooks/sndr";
+```
+
+</Step>
+
+<Step>
+### Verify, then parse
+
+```ts
+const rawBody = await request.text(); // exact bytes as a string
+const signature = request.headers.get("x-sndr-signature") ?? "";
+
+const ok = await verifySignature(
+  rawBody,
+  signature,
+  process.env.SNDR_WEBHOOK_SECRET!,
+);
+if (!ok) {
+  return new Response("bad signature", { status: 400 });
+}
+
+const events = parse(JSON.parse(rawBody));
+```
+
+</Step>
+
+<Step>
+### Handle normalized events
+
+```ts
+for (const event of events) {
+  if (event.type === "bounced") {
+    // suppress or alert using event.messageId / event.recipient
+  }
+}
+```
+
+</Step>
+
+</Steps>
+
+## Provider entrypoints
+
+| Import | Parse export | Verify export |
+| ------ | ------------ | ------------- |
+| `sently/webhooks/brevo` | `parse` | — |
+| `sently/webhooks/mailgun` | `parse` | `verifySignature`, `verifyPayload` |
+| `sently/webhooks/postmark` | `parse` | — |
+| `sently/webhooks/resend` | `parse` | `verifySignature` |
+| `sently/webhooks/sendgrid` | `parse` | — |
+| `sently/webhooks/ses` | `parse` | — |
+| `sently/webhooks/sndr` | `parse` | `verifySignature` |
+
+The convenience barrel `sently/webhooks` re-exports named helpers such as `parseSndrWebhook` and `verifySndrSignature`.
+Bundlers tree-shake unused names; Node/Deno without a bundler evaluate every re-export.
+
+## SNDR signatures
+
+SNDR signs with `X-Sndr-Signature: t=<unix>,v1=<hex>`.
+The digest is HMAC-SHA256 over `` `${t}.${rawBody}` ``.
+
+**Consequence:** Re-serializing JSON changes whitespace and key order and breaks verification — always use the raw body string.
+
+Default timestamp tolerance is 300 seconds. Pass `{ toleranceSeconds: 0 }` to disable the freshness check.
+
+## Troubleshooting
+
+<Accordions>
+
+<Accordion title="Signature verifies in docs but fails in production">
+
+Most frameworks parse JSON before your handler runs. Read the raw body first (`request.text()`, `express.raw()`, or equivalent), verify, then `JSON.parse`.
+
+</Accordion>
+
+<Accordion title="Which providers are supported?">
+
+Brevo, Mailgun, Postmark, Resend, SendGrid, SES, and SNDR. Import each from its `sently/webhooks/<provider>` subpath.
+
+</Accordion>
+
+</Accordions>
+
+## Learn more
+
+- [Webhook events](/docs/reference/webhook-events) — `EmailEvent` fields and type unions
+- [SNDR transport](/docs/transports/sndr) — send path that produces those message ids
+- [Exports](/docs/reference/exports) — package entrypoints
+
+## Next
+
+<Cards>
+  <Card title="Webhook events" description="Normalized EmailEvent fields." href="/docs/reference/webhook-events" />
+  <Card title="SNDR" description="Send email through SNDR." href="/docs/transports/sndr" />
+  <Card title="Exports" description="Public package entrypoints." href="/docs/reference/exports" />
+</Cards>

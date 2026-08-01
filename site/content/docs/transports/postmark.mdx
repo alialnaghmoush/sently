@@ -1,0 +1,40 @@
+---
+title: Postmark
+description: Send email through the Postmark API.
+icon: Truck
+source: "src/transports/postmark.ts"
+---
+
+Send email through the Postmark API.
+
+<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `serverToken` | `string` | required |
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { PostmarkTransport } from "sently/transports/postmark";
+
+const sender = createMailer({ transport: new PostmarkTransport({ serverToken: process.env.POSTMARK_TOKEN! }) });
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await sender.send({ from: "hello@example.com", to: "person@example.com", subject: "Hello", text: "Hi" });
+```
+
+  </Step>
+</Steps>
+
+<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

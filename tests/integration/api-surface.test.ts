@@ -81,6 +81,35 @@ const subpathImports: Array<{ path: string; check: (mod: Record<string, unknown>
     check: (mod) => expect(mod.LoopsTransport).toBeDefined(),
   },
   {
+    path: "../../dist/transports/sndr.js",
+    check: (mod) => {
+      expect(mod.SndrTransport).toBeDefined();
+      expect(mod.SndrError).toBeDefined();
+    },
+  },
+  {
+    path: "../../dist/webhooks.js",
+    check: (mod) => {
+      expect(mod.parseResendWebhook).toBeDefined();
+      expect(mod.parseSndrWebhook).toBeDefined();
+      expect(mod.verifySndrSignature).toBeDefined();
+    },
+  },
+  {
+    path: "../../dist/webhooks/sndr.js",
+    check: (mod) => {
+      expect(mod.parse).toBeDefined();
+      expect(mod.verifySignature).toBeDefined();
+    },
+  },
+  {
+    path: "../../dist/webhooks/resend.js",
+    check: (mod) => {
+      expect(mod.parse).toBeDefined();
+      expect(mod.verifySignature).toBeDefined();
+    },
+  },
+  {
     path: "../../dist/observability/console.js",
     check: (mod) => expect(mod.consoleObserver).toBeDefined(),
   },

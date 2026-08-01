@@ -5,11 +5,17 @@
  * Pure parsing only; no server framework required. Signature verification
  * helpers are optional and never required to call `parse`.
  *
+ * Prefer per-provider subpaths for the smallest runtime graph
+ * (`sently/webhooks/resend`, `sently/webhooks/sndr`, …). This barrel re-exports
+ * every parser for convenience — bundlers tree-shake unused named imports, but
+ * Node/Deno without a bundler evaluate every re-export.
+ *
  * @example
  * ```ts
- * import { parseResendWebhook } from "sently/webhooks";
+ * import { parse } from "sently/webhooks/resend";
+ * // or: import { parseResendWebhook } from "sently/webhooks";
  *
- * const events = parseResendWebhook(await request.json());
+ * const events = parse(await request.json());
  * for (const event of events) {
  *   if (event.type === "bounced") {
  *     // handle bounce
@@ -31,4 +37,8 @@ export {
 } from "./webhooks/resend.js";
 export { parse as parseSendGridWebhook } from "./webhooks/sendgrid.js";
 export { parse as parseSesWebhook } from "./webhooks/ses.js";
+export {
+  parse as parseSndrWebhook,
+  verifySignature as verifySndrSignature,
+} from "./webhooks/sndr.js";
 export type { EmailEvent } from "./webhooks/types.js";

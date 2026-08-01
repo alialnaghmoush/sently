@@ -1,0 +1,34 @@
+---
+title: Fallback
+description: Fail over across ordered email transports.
+icon: GitBranch
+source: "src/transports/fallback.ts"
+---
+
+Fail over across ordered email transports.
+
+<Callout title="The one rule">Permanent client errors do not fall through by default.</Callout>
+
+## Configuration
+
+Pass a non-empty transport array; options include `shouldFallback`, `onFallback`, and `cooldownMs`.
+
+<Steps><Step title="Wrap an email transport">
+
+```ts
+import { FallbackTransport } from "sently/transports/fallback";
+
+const transport = new FallbackTransport([primary, secondary], { cooldownMs: 300_000 });
+```
+
+</Step><Step title="Create the mailer">
+
+```ts
+const mailer = await createMailer({ transport });
+```
+
+</Step></Steps>
+
+<Accordions><Accordion title="Does this replace the inner provider?">No. It delegates sends to the wrapped transport.</Accordion></Accordions>
+
+<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>

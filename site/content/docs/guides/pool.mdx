@@ -1,0 +1,24 @@
+---
+title: SMTP pooling
+description: Reuse SMTP connections and apply shared rate limits.
+icon: Network
+source: "src/core/types.ts"
+---
+
+<Callout title="The one rule">Enable pooling only for a long-lived process that sends more than one message.</Callout>
+
+```ts
+import { createSMTPMailer } from "sently/smtp";
+
+const mailer = await createSMTPMailer({
+  host: "smtp.example.com", pool: true, maxConnections: 5, maxMessages: 100,
+});
+```
+
+| Option | Default |
+| --- | --- |
+| `maxConnections` | 5 |
+| `maxMessages` | 100 |
+| `rateLimit` | 1000 ms |
+
+<Cards><Card title="SMTP transport" href="/docs/transports/smtp" /></Cards>

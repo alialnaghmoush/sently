@@ -1,0 +1,77 @@
+---
+title: Introduction
+description: Choose a sender for the channel and a transport for the provider.
+icon: Compass
+source: "README.md"
+---
+
+sently sends email, SMS, WhatsApp, and browser push without making provider SDK calls your application API.
+Choose the channel sender first, then attach the provider transport that performs delivery.
+
+<Callout title="The one rule">Use `createMailer`, `createSmsSender`, `createWhatsAppSender`, or `createPushSender` in app code; swap transports when provider configuration changes.</Callout>
+
+<Steps>
+  <Step title="Install the package">
+
+```bash
+bun add sently
+```
+
+  </Step>
+  <Step title="Send with a channel sender">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { ResendTransport } from "sently/transports/resend";
+
+const mailer = await createMailer({
+  transport: new ResendTransport({
+    apiKey: process.env.RESEND_API_KEY!,
+  }),
+});
+
+await mailer.send({
+  from: "hello@example.com",
+  to: "person@example.com",
+  subject: "Welcome",
+  text: "Thanks for joining.",
+});
+```
+
+  </Step>
+</Steps>
+
+## Choose a channel
+
+| Channel | Factory | Delivery contract |
+| --- | --- | --- |
+| Email | `createMailer` / `createSMTPMailer` | `Transport` |
+| SMS | `createSmsSender` | `SmsTransport` |
+| WhatsApp | `createWhatsAppSender` | `WhatsAppTransport` |
+| Push | `createPushSender` | `PushTransport` |
+
+Email factories are asynchronous. The other channel factories return their sender synchronously; all send operations are asynchronous.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Which factory should I use for SMTP?">
+    Use `createSMTPMailer` with SMTP host, port, and authentication. Use `createMailer` when you already have a transport.
+  </Accordion>
+  <Accordion title="Can I replace a provider later?">
+    Yes. Keep your channel sender calls and construct it with another transport that implements the same channel contract.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Install sently](./installation)
+- [Choose an entrypoint](./entrypoints)
+- [Explore channels](../channels)
+
+## Next
+
+<Cards>
+  <Card title="Email quick start" href="/docs/quick-start/email" />
+  <Card title="Channels" href="/docs/channels" />
+</Cards>

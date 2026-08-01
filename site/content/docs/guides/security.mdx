@@ -1,0 +1,17 @@
+---
+title: Security
+description: Protect credentials, delivery endpoints, and webhook integrity.
+icon: ShieldCheck
+source: "src/transports/webpush.ts"
+---
+
+<Callout title="The one rule">Keep provider keys and VAPID private keys in a secrets manager or environment variables.</Callout>
+
+- Enable TLS for SMTP authentication; `requireTLS` defaults to true when auth is set.
+- Verify provider webhook signatures before parsing trusted events.
+- Do not log email bodies, SMS bodies, or full push subscription endpoints.
+- Treat a push endpoint as a delivery token.
+
+<Accordions><Accordion title="Why is a push endpoint redacted in hooks?">Its path can contain a long-lived delivery token.</Accordion></Accordions>
+
+<Cards><Card title="Webhooks" href="/docs/guides/webhooks" /></Cards>

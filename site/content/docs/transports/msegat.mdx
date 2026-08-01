@@ -1,0 +1,42 @@
+---
+title: Msegat
+description: Send SMS through Msegat and use its concrete OTP helpers.
+icon: Truck
+source: "src/transports/msegat.ts"
+---
+
+Send SMS through Msegat and use its concrete OTP helpers.
+
+<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `userName` | `string` | required |
+| `apiKey` | `string` | required |
+| `sender` | `string` | required |
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createSmsSender } from "sently/sms";
+import { MsegatTransport } from "sently/transports/msegat";
+
+const sender = createSmsSender({ transport: new MsegatTransport({ userName: "...", apiKey: "...", sender: "MyBrand" }) });
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await sender.send({ to: "+15551234567", body: "Hello" });
+```
+
+  </Step>
+</Steps>
+
+<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+
+<Cards><Card title="Sms channel" href="/docs/channels/sms" /></Cards>

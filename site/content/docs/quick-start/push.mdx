@@ -1,0 +1,36 @@
+---
+title: Push
+description: Send a browser notification through a channel sender.
+icon: Bell
+source: "src/push.ts"
+---
+
+<Callout title="The one rule">Store the browser subscription and send it back unchanged as `subscription`.</Callout>
+
+<Steps>
+  <Step title="Create the sender">
+
+```ts
+import { createPushSender } from "sently/push";
+import { WebPushTransport } from "sently/transports/webpush";
+
+const push = createPushSender({
+  transport: new WebPushTransport({
+    vapidPublicKey: process.env.VAPID_PUBLIC_KEY!,
+    vapidPrivateKey: process.env.VAPID_PRIVATE_KEY!,
+    subject: "mailto:you@example.com",
+  }),
+});
+```
+
+  </Step>
+  <Step title="Send">
+
+```ts
+await push.send({ subscription, title: "Update", body: "Your report is ready." });
+```
+
+  </Step>
+</Steps>
+
+<Cards><Card title="Push channel" href="/docs/channels/push" /></Cards>

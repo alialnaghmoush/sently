@@ -1,0 +1,18 @@
+---
+title: Bulk sending
+description: Send multiple email messages with concurrency and batch-aware transports.
+icon: Layers
+source: "src/mailer.ts"
+---
+
+<Callout title="The one rule">Use `sendBulk` for independent messages; it reports per-message failures instead of throwing the entire batch result away.</Callout>
+
+```ts
+const result = await mailer.sendBulk(messages, { concurrency: 5, stopOnError: false });
+```
+
+Resend and SendGrid can use transport batch support; messages with attachments are sent individually.
+
+<Accordions><Accordion title="How are errors represented?">Each result entry is either `{ status: "sent", result }` or `{ status: "failed", error }`.</Accordion></Accordions>
+
+<Cards><Card title="Mail options" href="/docs/reference/mail-options" /></Cards>

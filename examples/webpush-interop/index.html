@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>sently Web Push interop</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        line-height: 1.45;
+      }
+      body {
+        max-width: 52rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      label {
+        display: block;
+        font-weight: 600;
+        margin-top: 1rem;
+      }
+      input[type="text"] {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.5rem;
+        margin-top: 0.35rem;
+        font: inherit;
+      }
+      button {
+        margin-top: 1rem;
+        margin-right: 0.5rem;
+        padding: 0.55rem 0.9rem;
+        font: inherit;
+        cursor: pointer;
+      }
+      pre {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        overflow: auto;
+        border: 1px solid color-mix(in oklab, CanvasText 25%, transparent);
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .status {
+        margin-top: 1rem;
+        color: color-mix(in oklab, CanvasText 70%, transparent);
+      }
+      .error {
+        color: tomato;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>sently Web Push interop</h1>
+    <p>
+      Registers a service worker, subscribes with your VAPID public key, and
+      prints a <code>PushSubscription</code> JSON you can paste into
+      <code>send.ts</code>.
+    </p>
+
+    <label for="vapidPublicKey">VAPID public key (base64url)</label>
+    <input
+      id="vapidPublicKey"
+      type="text"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="Paste VAPID_PUBLIC_KEY here"
+    />
+
+    <div>
+      <button id="subscribeBtn" type="button">Subscribe</button>
+      <button id="copyBtn" type="button" disabled>Copy subscription JSON</button>
+    </div>
+
+    <p id="status" class="status">Idle.</p>
+    <pre id="output">(subscription JSON will appear here)</pre>
+
+    <script>
+      function urlBase64ToUint8Array(base64Url) {
+        const padding = "=".repeat((4 - (base64Url.length % 4)) % 4);
+        const base64 = (base64Url + padding).replace(/-/g, "+").replace(/_/g, "/");
+        const raw = atob(base64);
+        const out = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+        return out;
+      }
+
+      const vapidInput = document.getElementById("vapidPublicKey");
+      const subscribeBtn = document.getElementById("subscribeBtn");
+      const copyBtn = document.getElementById("copyBtn");
+      const statusEl = document.getElementById("status");
+      const outputEl = document.getElementById("output");
+
+      let lastJson = "";
+
+      function setStatus(message, isError = false) {
+        statusEl.textContent = message;
+        statusEl.classList.toggle("error", isError);
+      }
+
+      const savedKey = localStorage.getItem("sently.webpush.vapidPublicKey");
+      if (savedKey) vapidInput.value = savedKey;
+
+      copyBtn.addEventListener("click", async () => {
+        if (!lastJson) return;
+        await navigator.clipboard.writeText(lastJson);
+        setStatus("Copied subscription JSON to clipboard.");
+      });
+
+      subscribeBtn.addEventListener("click", async () => {
+        const vapidPublicKey = vapidInput.value.trim();
+        if (!vapidPublicKey) {
+          setStatus("Paste a VAPID public key first.", true);
+          return;
+        }
+
+        subscribeBtn.disabled = true;
+        copyBtn.disabled = true;
+        lastJson = "";
+        outputEl.textContent = "(working…)";
+
+        try {
+          if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+            throw new Error("This browser does not support Web Push / service workers.");
+          }
+
+          localStorage.setItem("sently.webpush.vapidPublicKey", vapidPublicKey);
+
+          setStatus("Requesting notification permission…");
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted") {
+            throw new Error(`Notification permission was "${permission}" (need "granted").`);
+          }
+
+          setStatus("Registering service worker…");
+          const registration = await navigator.serviceWorker.register("./sw.js", {
+            scope: "./",
+          });
+          await navigator.serviceWorker.ready;
+
+          setStatus("Calling pushManager.subscribe()…");
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+          });
+
+          const json = JSON.stringify(subscription.toJSON(), null, 2);
+          lastJson = json;
+          outputEl.textContent = json;
+          console.log("PushSubscription JSON:\n", json);
+          copyBtn.disabled = false;
+          setStatus("Subscribed. Copy the JSON below into send.ts / a file.");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          outputEl.textContent = message;
+          console.error(error);
+          setStatus(message, true);
+        } finally {
+          subscribeBtn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,92 @@
+---
+title: Push
+description: Send encrypted Web Push notifications through a push transport.
+icon: Bell
+source: "src/push.ts"
+---
+
+Use Web Push for browser notifications after a browser has granted permission and returned a subscription.
+The sender passes the subscription and notification payload to a push transport.
+
+<Callout title="The one rule">Treat subscription endpoints as secrets: they are long-lived delivery tokens.</Callout>
+
+<Steps>
+  <Step title="Create a Push sender">
+
+```ts
+import { createPushSender } from "sently/push";
+import { WebPushTransport } from "sently/transports/webpush";
+
+const push = createPushSender({
+  transport: new WebPushTransport({
+    vapidPublicKey: process.env.VAPID_PUBLIC_KEY!,
+    vapidPrivateKey: process.env.VAPID_PRIVATE_KEY!,
+    subject: "mailto:you@example.com",
+  }),
+});
+```
+
+  </Step>
+  <Step title="Send to a stored browser subscription">
+
+```ts
+const result = await push.send({
+  subscription: {
+    endpoint: "https://fcm.googleapis.com/fcm/send/example",
+    keys: { p256dh: "browser-public-key", auth: "browser-auth-secret" },
+  },
+  title: "Report ready",
+  body: "Your weekly report is ready to view.",
+});
+
+console.log(result.status);
+```
+
+  </Step>
+</Steps>
+
+## Sender configuration
+
+| Option | Type | Meaning |
+| --- | --- | --- |
+| `transport` | `PushTransport` | Required delivery implementation. |
+| `plugins` | `PushPlugin[]` | Optional transforms run before delivery. |
+| `hooks` | `PushHooks` | Optional callbacks for delivery activity. |
+
+## Push and VAPID options
+
+| Option | Type | Meaning |
+| --- | --- | --- |
+| `subscription` | `PushSubscription` | Required browser endpoint plus `p256dh` and `auth` keys. |
+| `title`, `body` | `string` | Required notification content. |
+| `data`, `icon` | `Record<string, unknown>`, `string` | Optional application payload and icon URL. |
+| `ttl` | `number` | Optional delivery lifetime in seconds. |
+| `subject` | `string` | Required Web Push contact URI for the VAPID transport. |
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Why does the transport reject my endpoint?">
+    Web Push validates subscription endpoint hosts before sending. Add only exact private relay hostnames with `allowedEndpointHosts` when needed.
+  </Accordion>
+  <Accordion title="Why is the endpoint redacted in hooks?">
+    The endpoint path can contain a long-lived delivery token, so hook context keeps only a redacted form.
+  </Accordion>
+  <Accordion title="What does verify do?">
+    `push.verify()` delegates to the transport when available; the Web Push transport checks its VAPID credential shape.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Push options](../reference/push-options)
+- [Transport contracts](../reference/transport-contracts)
+- [Web Push interoperability](../guides/webpush-interop)
+- [Hooks](./hooks)
+
+## Next
+
+<Cards>
+  <Card title="Web Push transport" href="/docs/transports/webpush" />
+  <Card title="All transports" href="/docs/transports" />
+</Cards>

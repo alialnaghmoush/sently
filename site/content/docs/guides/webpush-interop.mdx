@@ -1,0 +1,18 @@
+---
+title: Web Push interoperability
+description: Use subscriptions from the browser Push API with the Web Push transport.
+icon: BellRing
+source: "src/transports/webpush.ts"
+---
+
+<Callout title="The one rule">Pass the Push API subscription endpoint and both keys exactly as the browser returned them.</Callout>
+
+The transport accepts the standard `endpoint`, `keys.p256dh`, and `keys.auth` shape and encrypts payloads using Web Push standards.
+
+## Troubleshooting
+
+<Accordions><Accordion title="Can I allow a private push relay?">Provide exact hostnames with `allowedEndpointHosts`.</Accordion></Accordions>
+
+## Next
+
+<Cards><Card title="Web Push transport" href="/docs/transports/webpush" /></Cards>

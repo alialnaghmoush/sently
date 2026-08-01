@@ -1,0 +1,78 @@
+---
+title: Bundle size
+description: Keep imports focused on the channel and transport your app actually uses.
+icon: PackageOpen
+source: "package.json"
+---
+
+sently is split into subpaths so a receipt mailer does not pull SMS, SMTP pooling, or unused providers.
+Measure stacks with `bun run measure:size` in the library repo when you change imports.
+
+<Callout title="The one rule">
+  Import channel senders and provider transports from subpaths — never from a convenience barrel
+  when a focused path exists.
+</Callout>
+
+## Quick start
+
+<Steps>
+
+<Step>
+### Prefer mailer + one transport
+
+```ts
+import { createMailer } from "sently/mailer";
+import { SndrTransport } from "sently/transports/sndr";
+
+const mailer = await createMailer({
+  transport: new SndrTransport({ apiKey: process.env.SNDR_API_KEY! }),
+});
+```
+
+</Step>
+
+<Step>
+### Prefer one webhook parser
+
+```ts
+import { parse, verifySignature } from "sently/webhooks/sndr";
+```
+
+Avoid `import { … } from "sently/webhooks"` in Node/Deno without a bundler — that barrel evaluates every provider module.
+
+</Step>
+
+</Steps>
+
+## Typical stacks
+
+| Stack | Imports | Notes |
+| ----- | ------- | ----- |
+| HTTP email (SNDR) | `sently/mailer` + `sently/transports/sndr` | Small HTTP path. |
+| HTTP email (Resend) | `sently/mailer` + `sently/transports/resend` | Includes attachment helpers. |
+| SMS | `sently/sms` + `sently/transports/twilio-sms` | Channel + one SMS transport. |
+| SMTP | `sently/smtp` | Separate from `sently/mailer`. |
+
+## Troubleshooting
+
+<Accordions>
+
+<Accordion title="Why did importing createMailer from sently get larger?">
+
+With a bundler and `sideEffects: false`, unused re-exports usually shake out. Without a bundler, the main barrel still evaluates its static imports (SMTP factory, Fallback, Cloudflare Email, …). Prefer `sently/mailer` for HTTP-only apps.
+
+</Accordion>
+
+</Accordions>
+
+## Learn more
+
+- [Entrypoints](/docs/get-started/entrypoints) — which path to import
+- [Exports](/docs/reference/exports) — full map
+
+## Next
+
+<Cards>
+  <Card title="Entrypoints" description="Choose a focused import." href="/docs/get-started/entrypoints" />
+  <Card title="SNDR" description="Small HTTP email transport." href="/docs/transports/sndr" />
+</Cards>

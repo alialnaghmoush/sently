@@ -1,7 +1,7 @@
 {
   "name": "sently",
-  "version": "0.8.0",
-  "description": "Runtime-agnostic email library for Node.js, Bun, Deno, and Cloudflare Workers. ESM-native Nodemailer alternative with zero dependencies.",
+  "version": "0.9.0",
+  "description": "Runtime-agnostic messaging library for Node.js, Bun, Deno, and Cloudflare Workers. Channel-first email, SMS, WhatsApp, and push with pluggable provider transports.",
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -10,12 +10,17 @@
     "dist",
     "README.md",
     "LICENSE",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "AGENTS.md",
+    "site/content/docs"
   ],
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
   },
+  "workspaces": [
+    "site"
+  ],
   "scripts": {
     "build": "bun run build.ts",
     "test": "bun test",
@@ -24,6 +29,8 @@
     "format": "biome format src --write",
     "typecheck": "tsc --noEmit",
     "mcp": "bun tools/mcp/index.ts",
+    "site:dev": "bun run --cwd site dev",
+    "site:build": "bun run --cwd site build",
     "verify": "bun run lint && bun run typecheck && bun run build && bun test",
     "prepack": "bun run verify",
     "pack:npm": "npm pack --dry-run --cache ./.npm-cache",
@@ -36,12 +43,14 @@
     "verify:publish": "bun run pack:npm",
     "measure:size": "bun tools/measure-bundle-size.ts",
     "measure:size:md": "bun tools/measure-bundle-size.ts --markdown",
-    "check:size": "bun tools/measure-bundle-size.ts --check"
+    "check:size": "bun tools/measure-bundle-size.ts --check",
+    "g": "gflows"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.16",
     "@modelcontextprotocol/sdk": "1.29.0",
     "@react-email/render": "1.1.2",
+    "gflows": "1.2.1",
     "@types/node": "25.9.1",
     "@types/react": "19.2.15",
     "react": "19.2.6",
@@ -174,6 +183,38 @@
       "import": "./dist/transports/loops.js",
       "types": "./dist/transports/loops.d.ts"
     },
+    "./transports/sndr": {
+      "import": "./dist/transports/sndr.js",
+      "types": "./dist/transports/sndr.d.ts"
+    },
+    "./transports/twilio-sms": {
+      "import": "./dist/transports/twilio-sms.js",
+      "types": "./dist/transports/twilio-sms.d.ts"
+    },
+    "./transports/taqnyat-sms": {
+      "import": "./dist/transports/taqnyat-sms.js",
+      "types": "./dist/transports/taqnyat-sms.d.ts"
+    },
+    "./transports/taqnyat-whatsapp": {
+      "import": "./dist/transports/taqnyat-whatsapp.js",
+      "types": "./dist/transports/taqnyat-whatsapp.d.ts"
+    },
+    "./transports/taqnyat-mail": {
+      "import": "./dist/transports/taqnyat-mail.js",
+      "types": "./dist/transports/taqnyat-mail.d.ts"
+    },
+    "./transports/msegat": {
+      "import": "./dist/transports/msegat.js",
+      "types": "./dist/transports/msegat.d.ts"
+    },
+    "./transports/whatsapp-cloud": {
+      "import": "./dist/transports/whatsapp-cloud.js",
+      "types": "./dist/transports/whatsapp-cloud.d.ts"
+    },
+    "./transports/webpush": {
+      "import": "./dist/transports/webpush.js",
+      "types": "./dist/transports/webpush.d.ts"
+    },
     "./observability": {
       "import": "./dist/observability/console.js",
       "types": "./dist/observability/console.d.ts"
@@ -194,6 +235,18 @@
       "import": "./dist/mailer.js",
       "types": "./dist/mailer.d.ts"
     },
+    "./sms": {
+      "import": "./dist/sms.js",
+      "types": "./dist/sms.d.ts"
+    },
+    "./whatsapp": {
+      "import": "./dist/whatsapp.js",
+      "types": "./dist/whatsapp.d.ts"
+    },
+    "./push": {
+      "import": "./dist/push.js",
+      "types": "./dist/push.d.ts"
+    },
     "./smtp": {
       "import": "./dist/smtp-mailer.js",
       "types": "./dist/smtp-mailer.d.ts"
@@ -213,6 +266,34 @@
     "./webhooks": {
       "import": "./dist/webhooks.js",
       "types": "./dist/webhooks.d.ts"
+    },
+    "./webhooks/brevo": {
+      "import": "./dist/webhooks/brevo.js",
+      "types": "./dist/webhooks/brevo.d.ts"
+    },
+    "./webhooks/mailgun": {
+      "import": "./dist/webhooks/mailgun.js",
+      "types": "./dist/webhooks/mailgun.d.ts"
+    },
+    "./webhooks/postmark": {
+      "import": "./dist/webhooks/postmark.js",
+      "types": "./dist/webhooks/postmark.d.ts"
+    },
+    "./webhooks/resend": {
+      "import": "./dist/webhooks/resend.js",
+      "types": "./dist/webhooks/resend.d.ts"
+    },
+    "./webhooks/sendgrid": {
+      "import": "./dist/webhooks/sendgrid.js",
+      "types": "./dist/webhooks/sendgrid.d.ts"
+    },
+    "./webhooks/ses": {
+      "import": "./dist/webhooks/ses.js",
+      "types": "./dist/webhooks/ses.d.ts"
+    },
+    "./webhooks/sndr": {
+      "import": "./dist/webhooks/sndr.js",
+      "types": "./dist/webhooks/sndr.d.ts"
     },
     "./errors": {
       "import": "./dist/errors.js",

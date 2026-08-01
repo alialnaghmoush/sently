@@ -1,0 +1,12 @@
+{
+  "title": "Get started",
+  "icon": "Rocket",
+  "pages": [
+    "index",
+    "introduction",
+    "installation",
+    "entrypoints",
+    "runtimes",
+    "migrate-nodemailer"
+  ]
+}

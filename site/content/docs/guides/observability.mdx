@@ -1,0 +1,16 @@
+---
+title: Observability
+description: Attach lifecycle hooks or use the console observer for delivery diagnostics.
+icon: ChartNoAxesColumn
+source: "src/observability/console.ts"
+---
+
+<Callout title="The one rule">Capture metadata and durations, not message content or credentials.</Callout>
+
+```ts
+import { consoleObserver } from "sently/observability";
+
+const mailer = await createMailer({ transport, hooks: consoleObserver("[mail]") });
+```
+
+<Cards><Card title="Hooks" href="/docs/channels/hooks" /></Cards>

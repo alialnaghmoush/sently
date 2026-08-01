@@ -1,0 +1,278 @@
+@import "tailwindcss";
+
+/* Register component sources explicitly: automatic detection skips any path a
+ * .gitignore rule matches, so a stray pattern can silently drop whole
+ * directories from the utility build. */
+@source '../components';
+@source '../lib';
+
+@import "@fumadocs/base-ui/css/generated/glass.css";
+@import "@fumadocs/base-ui/css/black.css";
+@import "@fumadocs/base-ui/css/preset.css";
+
+/*
+ * The whole shell aligns on two numbers. The topbar height is what anything
+ * pinned below the header offsets itself by; the left pane width is shared by
+ * the header's brand cell, the docs sidebar, and the docs content inset. Change
+ * either here and the header, sidebar, and article stay flush. Same contract as
+ * better-auth's docs app (see site/NOTICE).
+ */
+:root {
+  --landing-topbar-height: 48px;
+  --landing-left-pane-width: min(22vw, 300px);
+
+  /*
+   * Soft element inks for SVG (collapse diagram). Presentation attributes bind
+   * to these — Tailwind fill/stroke utilities are not in the Fumadocs preset
+   * build and would silently fall back to black. Light theme: mid chroma on
+   * pale cards; dark theme below: pastel on near-black.
+   */
+  --oke-el-flow: oklch(0.52 0.12 230);
+  --oke-el-signal: oklch(0.55 0.12 75);
+  --oke-el-store: oklch(0.5 0.09 195);
+  --oke-el-clock: oklch(0.55 0.12 45);
+  --oke-el-gate: oklch(0.5 0.11 155);
+  --oke-el-vault: oklch(0.52 0.1 95);
+  --oke-el-channel: oklch(0.5 0.1 210);
+  --oke-el-ai: oklch(0.52 0.12 15);
+}
+
+.dark {
+  --oke-el-flow: oklch(0.74 0.09 230);
+  --oke-el-signal: oklch(0.78 0.1 75);
+  --oke-el-store: oklch(0.74 0.08 195);
+  --oke-el-clock: oklch(0.78 0.1 45);
+  --oke-el-gate: oklch(0.74 0.09 155);
+  --oke-el-vault: oklch(0.8 0.09 95);
+  --oke-el-channel: oklch(0.74 0.08 210);
+  --oke-el-ai: oklch(0.76 0.1 15);
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --landing-topbar-height: 44px;
+  }
+}
+
+/* Grid utilities adapted from better-auth docs/app/globals.css */
+@layer utilities {
+  .bg-noise-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 700'%3E%3Cdefs%3E%3Cfilter id='nnnoise-filter' x='-20%25' y='-20%25' width='140%25' height='140%25' filterUnits='objectBoundingBox' primitiveUnits='userSpaceOnUse' color-interpolation-filters='linearRGB'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.167' numOctaves='4' seed='15' stitchTiles='stitch' x='0%25' y='0%25' width='100%25' height='100%25' result='turbulence'%3E%3C/feTurbulence%3E%3CfeSpecularLighting surfaceScale='15' specularConstant='0.4' specularExponent='20' lighting-color='%23fff' x='0%25' y='0%25' width='100%25' height='100%25' in='turbulence' result='specularLighting'%3E%3CfeDistantLight azimuth='3' elevation='100'%3E%3C/feDistantLight%3E%3C/feSpecularLighting%3E%3C/filter%3E%3C/defs%3E%3Crect width='700' height='700' fill='currentColor'%3E%3C/rect%3E%3Crect width='700' height='700' fill='currentColor' filter='url(%23nnnoise-filter)' opacity='0.3'%3E%3C/rect%3E%3C/svg%3E");
+    background-size: cover;
+    background-position: center;
+  }
+
+  .bg-grid-black\/\[0\.02\] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(0 0 0 / 0.02)'%3e%3cpath d='m0 .5h32m-32 32v-32'/%3e%3c/svg%3e");
+  }
+
+  .bg-grid-white\/\[0\.02\] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(255 255 255 / 0.02)'%3e%3cpath d='m0 .5h32m-32 32v-32'/%3e%3c/svg%3e");
+  }
+}
+
+/*
+ * Collapse-diagram change-feed dash. Native stroke-dashoffset — Framer's
+ * pathOffset pair was leaving a frozen fleck on the lit seams.
+ * pathLength="1" on the SVG path makes the dasharray unitless (0–1).
+ */
+@keyframes oke-seam-trace {
+  to {
+    stroke-dashoffset: -1;
+  }
+}
+
+.oke-seam-trace {
+  animation-name: oke-seam-trace;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/*
+ * A lit seam is mounted rather than re-styled — the diagram draws the light on
+ * a small overlay so a hover never rewrites its whole mesh — so it fades in
+ * from a keyframe instead of transitioning. No `to`, so it lands on whatever
+ * opacity the element itself carries.
+ */
+@keyframes oke-seam-lit {
+  from {
+    opacity: 0;
+  }
+}
+
+.oke-seam-lit {
+  animation-name: oke-seam-lit;
+  animation-duration: 280ms;
+  animation-timing-function: ease-out;
+  animation-fill-mode: backwards;
+}
+
+/*
+ * Chip-connector dash: data creeps from the node pin to its label. The
+ * dasharray is 2.5 + 4.5 = 7 units long, so one −7 offset loop is seamless.
+ */
+@keyframes oke-chip-flow {
+  to {
+    stroke-dashoffset: -7;
+  }
+}
+
+.oke-chip-flow {
+  animation-name: oke-chip-flow;
+  animation-duration: 900ms;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/*
+ * 404 unmatched-route probe: a dash walks the trigger → effects line and never
+ * lands. Paired with a soft pulse on the empty effects pin.
+ */
+@keyframes oke-route-probe {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+@keyframes oke-route-miss {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.oke-route-probe {
+  animation-name: oke-route-probe;
+  animation-duration: 1.4s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.oke-route-miss {
+  animation-name: oke-route-miss;
+  animation-duration: 1.8s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/*
+ * Landing provider marquee — two identical rows slide as one loop.
+ * Duration tuned so labels stay readable; fade masks live on the component.
+ */
+@keyframes sently-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.sently-marquee {
+  animation: sently-marquee 48s linear infinite;
+}
+
+.sently-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oke-seam-trace {
+    animation: none;
+    opacity: 0 !important;
+  }
+
+  .oke-seam-lit {
+    animation: none;
+  }
+
+  .oke-chip-flow {
+    animation: none;
+  }
+
+  .oke-route-probe,
+  .oke-route-miss {
+    animation: none;
+  }
+
+  .sently-marquee {
+    animation: none;
+  }
+
+  .sently-marquee > ul {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 0.5rem;
+    padding-right: 0;
+  }
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+/* Docs prose rhythm — slightly denser, easier scan than default Fumadocs gaps */
+#nd-page article {
+  font-size: 0.95rem;
+}
+
+/* Comparison tables in a narrow docs column wrap instead of blowing the layout. */
+#nd-page article :where(table) {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+}
+
+#nd-page article :where(th),
+#nd-page article :where(td) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+#nd-page article h2 {
+  margin-top: 2.25rem;
+}
+
+#nd-page article h3 {
+  margin-top: 1.5rem;
+}
+
+/*
+ * Fumadocs' own chrome is disabled on /docs (nav, sidebar, search toggle, theme
+ * switch), so the grid gets zero sidebar and toc columns to work with and the
+ * inset comes from padding instead. Two variables do the rest of the work:
+ * `--fd-banner-height` feeds Fumadocs' `--fd-docs-row-1`, which keeps the sticky
+ * table of contents clear of the pinned topbar, and `--fd-docs-height` stops the
+ * grid's viewport-height floor from adding the topbar's height to the page.
+ * Same technique as better-auth's `.docs-layout` rule (see site/NOTICE).
+ */
+.docs-layout {
+  --fd-layout-width: 100vw;
+  --fd-layout-offset: 0px;
+  --fd-banner-height: var(--landing-topbar-height);
+  --fd-docs-height: calc(100dvh - var(--landing-topbar-height));
+}
+
+@media (min-width: 64rem) {
+  .docs-layout {
+    --fd-layout-width: min(calc(100vw - var(--landing-left-pane-width)), 1200px);
+    padding-inline-start: var(--landing-left-pane-width);
+  }
+}
+
+/* Sidebar icon alignment (lucide size-4) */
+#nd-sidebar [data-active="true"] {
+  font-weight: 500;
+}
+
+/* Our sidebar owns scrolling; keep its scrollbar from stealing visual weight. */
+.oke-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-fd-border) transparent;
+}

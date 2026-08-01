@@ -1,0 +1,19 @@
+---
+title: Attachments
+description: Attach bytes, strings, or runtime-supported file paths to email.
+icon: Paperclip
+source: "src/core/types.ts"
+---
+
+<Callout title="The one rule">Use `content` for portable attachments; `path` is available only on Node.js and Bun.</Callout>
+
+```ts
+await mailer.send({
+  from: "hello@example.com", to: "person@example.com", subject: "Invoice",
+  attachments: [{ filename: "invoice.txt", content: "Paid" }],
+});
+```
+
+Attachments can set `contentType`, `encoding`, `contentId`, `inline`, and MIME `headers`.
+
+<Cards><Card title="Mail options" href="/docs/reference/mail-options" /></Cards>

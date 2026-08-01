@@ -1,0 +1,9 @@
+{
+  "title": "AI",
+  "icon": "Bot",
+  "pages": [
+    "index",
+    "llms-txt",
+    "mcp"
+  ]
+}

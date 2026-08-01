@@ -1,0 +1,15 @@
+{
+  "title": "Documentation",
+  "icon": "BookOpen",
+  "pages": [
+    "index",
+    "get-started",
+    "quick-start",
+    "channels",
+    "transports",
+    "decorators",
+    "guides",
+    "reference",
+    "ai"
+  ]
+}
