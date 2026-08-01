@@ -2,11 +2,11 @@
   <picture>
     <source
       media="(prefers-color-scheme: dark)"
-      srcset="https://shieldcn.dev/header/grid.svg?title=sently&subtitle=One+API.+Four+channels.+Every+runtime.&logo=https://raw.githubusercontent.com/alialnaghmoush/sently/main/site/public/sentlyIconLogo-w.svg&theme=zinc&size=banner&mode=dark&font=geist&align=left"
+      srcset="https://shieldcn.dev/header/grid.svg?title=sently&subtitle=One+API.+Four+channels.+Every+runtime.&logo=https://raw.githubusercontent.com/alialnaghmoush/sently/dev/site/public/sentlyIconLogo-w.svg&theme=zinc&size=banner&mode=dark&font=geist&align=left"
     />
     <img
       alt="sently — One API. Four channels. Every runtime."
-      src="https://shieldcn.dev/header/grid.svg?title=sently&subtitle=One+API.+Four+channels.+Every+runtime.&logo=https://raw.githubusercontent.com/alialnaghmoush/sently/main/site/public/sentlyIconLogo-k.svg&theme=zinc&size=banner&mode=light&font=geist&align=left"
+      src="https://shieldcn.dev/header/grid.svg?title=sently&subtitle=One+API.+Four+channels.+Every+runtime.&logo=https://raw.githubusercontent.com/alialnaghmoush/sently/dev/site/public/sentlyIconLogo-k.svg&theme=zinc&size=banner&mode=light&font=geist&align=left"
       width="750"
     />
   </picture>
