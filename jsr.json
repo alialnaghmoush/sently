@@ -1,6 +1,6 @@
 {
   "name": "@alialnaghmoush/sently",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Runtime-agnostic messaging library for Node.js, Bun, Deno, and Cloudflare Workers. Channel-first email, SMS, WhatsApp, and push with pluggable provider transports.",
   "license": "MIT",
   "publish": {

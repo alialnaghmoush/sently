@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [0.9.2] — 2026-08-01
+
+### ♻️ Changed
+
+- **`bun run verify`** — runs `site:build` before tests so static-export and
+  docs-site failures block pack/publish
+- **CI Actions** — `actions/checkout` and `actions/setup-node` to v7; Node smoke
+  job on Node 24 (drops the Node 24 force-env workaround)
+
+### 🐛 Fixed
+
+- **Apple touch icon** — mark `apple-icon` as force-static so `output: "export"`
+  can prerender it during `site:build`
+
 ## [0.9.1] — 2026-08-01
 
 ### 🐛 Fixed

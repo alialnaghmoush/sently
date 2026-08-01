@@ -1,5 +1,9 @@
 import { ImageResponse } from "next/og";
 
+/** Required for `output: "export"` — prerender the PNG at build time. */
+export const dynamic = "force-static";
+export const revalidate = false;
+
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 

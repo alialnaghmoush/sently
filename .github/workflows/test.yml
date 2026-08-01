@@ -10,10 +10,8 @@ jobs:
   test-bun:
     name: Unit tests (Bun)
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run build
@@ -24,14 +22,12 @@ jobs:
   test-node:
     name: Smoke test (Node.js)
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@v4.3.0
+      - uses: actions/setup-node@v7
         with:
-          node-version: "22"
+          node-version: "24"
       - run: bun install --frozen-lockfile
       - run: bun run build
       - run: node scripts/smoke.mjs
@@ -41,7 +37,7 @@ jobs:
     name: Smoke test (Deno)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - uses: denoland/setup-deno@v2
         with:
@@ -54,7 +50,7 @@ jobs:
     name: Bundle size budgets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run check:size
@@ -62,8 +58,6 @@ jobs:
   test-integration:
     name: SMTP integration (Mailpit)
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     services:
       mailpit:
         image: axllent/mailpit
@@ -71,7 +65,7 @@ jobs:
           - 1025:1025
           - 8025:8025
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run build
