@@ -16,7 +16,7 @@
   <a href="https://www.npmjs.com/package/sently"><img alt="npm" src="https://shieldcn.dev/npm/sently.svg?size=sm&variant=outline" /></a>
   <a href="https://jsr.io/@alialnaghmoush/sently"><img alt="JSR" src="https://shieldcn.dev/jsr/@alialnaghmoush/sently.svg?size=sm&variant=outline" /></a>
   <a href="https://opensource.org/licenses/MIT"><img alt="MIT" src="https://shieldcn.dev/npm/license/sently.svg?size=sm&variant=outline" /></a>
-  <a href="https://bun.sh"><img alt="Bun" src="https://shieldcn.dev/badge/Bun-ready-000000.svg?logo=bun&size=sm&variant=outline" /></a>
+  <a href="https://bun.sh"><img alt="Bun" src="https://shieldcn.dev/badge/Bun-ready.svg?logo=bun&size=sm&variant=outline" /></a>
   <a href="https://github.com/alialnaghmoush/sently/stargazers"><img alt="stars" src="https://shieldcn.dev/github/stars/alialnaghmoush/sently.svg?size=sm&variant=outline" /></a>
   <a href="https://github.com/alialnaghmoush/sently/actions"><img alt="CI" src="https://shieldcn.dev/github/ci/alialnaghmoush/sently.svg?size=sm&variant=outline" /></a>
 </p>
