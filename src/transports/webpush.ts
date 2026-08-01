@@ -22,6 +22,7 @@
  * });
  * ```
  */
+import { isValidEmail } from "../core/address.js";
 import { decodeBase64Url, encodeBase64Url, encodeUtf8 } from "../core/base64.js";
 import { httpStatusToSentlyCode, SentlyError } from "../core/errors.js";
 import { assertSafePushEndpoint } from "../core/push-endpoint.js";
@@ -43,7 +44,11 @@ export interface WebPushConfig {
    * Treat as a tier-1 secret — inject from env / secrets manager only.
    */
   vapidPrivateKey: string;
-  /** Contact URI for the VAPID `sub` claim (`mailto:` or `https:`). */
+  /**
+   * Contact URI for the VAPID `sub` claim. Must be a `mailto:` address
+   * (e.g. `mailto:you@example.com`) or an `https:` URL
+   * (e.g. `https://example.com/contact`). Validated at construction.
+   */
   subject: string;
   /**
    * Extra exact hostnames allowed for `subscription.endpoint` beyond the
@@ -78,6 +83,35 @@ const RECORD_SIZE = 4096;
  * Includes salt, rs, keyid, and ciphertext+tag.
  */
 const MAX_ENCRYPTED_BODY_BYTES = 4096;
+
+/**
+ * RFC 8292 VAPID `sub` must identify the sender as `mailto:` or `https:`.
+ * Checked at construction so a bare handle like `@oke.local` fails here,
+ * not later as an opaque 403 from a push service.
+ */
+function assertVapidSubject(subject: string): void {
+  if (subject.startsWith("mailto:")) {
+    const email = subject.slice("mailto:".length);
+    if (isValidEmail(email)) {
+      return;
+    }
+  } else if (subject.startsWith("https:")) {
+    try {
+      const url = new URL(subject);
+      if (url.protocol === "https:" && url.hostname.length > 0) {
+        return;
+      }
+    } catch {
+      // fall through to the shared error
+    }
+  }
+
+  throw new WebPushError(
+    `WebPushConfig.subject must be a mailto: address or https: URL identifying you to push services, got: ${JSON.stringify(subject)}`,
+    400,
+    { field: "subject", value: subject },
+  );
+}
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
@@ -277,6 +311,7 @@ export class WebPushTransport implements PushTransport {
 
   /** Creates a Web Push transport with VAPID credentials. */
   constructor(config: WebPushConfig) {
+    assertVapidSubject(config.subject);
     this.vapidPublicKey = config.vapidPublicKey;
     this.vapidPrivateKey = config.vapidPrivateKey;
     this.subject = config.subject;

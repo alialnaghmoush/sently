@@ -15,7 +15,7 @@ Encrypt and send browser notifications with VAPID.
 | --- | --- | --- |
 | `vapidPublicKey` | `string` | required |
 | `vapidPrivateKey` | `string` | required |
-| `subject` | `string` | required |
+| `subject` | `string` | required — `mailto:you@example.com` or `https://example.com/contact` (validated at construction) |
 | `allowedEndpointHosts` | `string[]` | optional |
 
 <Steps>
@@ -38,6 +38,13 @@ await sender.send({ subscription, title: "Hello", body: "World" });
   </Step>
 </Steps>
 
-<Accordions><Accordion title="Should I call the provider SDK?">No. Use the sently sender; provider-specific extras stay on the transport instance.</Accordion></Accordions>
+<Accordions>
+  <Accordion title="Should I call the provider SDK?">
+    No. Use the sently sender; provider-specific extras stay on the transport instance.
+  </Accordion>
+  <Accordion title="Why does construction throw on subject?">
+    VAPID `subject` must be a real `mailto:` address or `https:` URL. Values like `@oke.local` (no prefix) are rejected immediately as `WebPushError` so push services never return a confusing 403 later.
+  </Accordion>
+</Accordions>
 
 <Cards><Card title="Push channel" href="/docs/channels/push" /></Cards>

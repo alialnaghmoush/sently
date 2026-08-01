@@ -72,6 +72,46 @@ function baseOptions(): PushOptions {
 }
 
 describe("WebPushTransport", () => {
+  test("constructor accepts valid mailto: and https: subjects", () => {
+    expect(
+      () =>
+        new WebPushTransport({
+          vapidPublicKey,
+          vapidPrivateKey,
+          subject: "mailto:you@example.com",
+        }),
+    ).not.toThrow();
+
+    expect(
+      () =>
+        new WebPushTransport({
+          vapidPublicKey,
+          vapidPrivateKey,
+          subject: "https://example.com/contact",
+        }),
+    ).not.toThrow();
+  });
+
+  test("constructor rejects invalid subject synchronously", () => {
+    for (const subject of ["@oke.local", "", "you@example.com", "http://example.com"]) {
+      let thrown: unknown;
+      try {
+        new WebPushTransport({
+          vapidPublicKey,
+          vapidPrivateKey,
+          subject,
+        });
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toBeInstanceOf(WebPushError);
+      expect((thrown as WebPushError).message).toContain("WebPushConfig.subject");
+      expect((thrown as WebPushError).message).toContain(JSON.stringify(subject));
+      expect((thrown as WebPushError).statusCode).toBe(400);
+    }
+  });
+
   test("send() sets VAPID Authorization and aes128gcm headers", async () => {
     const captured = installFetchMock(() => new Response(null, { status: 201 }));
 

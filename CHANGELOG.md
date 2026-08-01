@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-08-01
+
+### 🐛 Fixed
+
+- **Web Push `subject` validation** — `WebPushTransport` rejects invalid
+  VAPID `subject` values at construction (`mailto:` / `https:` only) instead
+  of failing later with an opaque push-service 403
+
 ## [1.0.0] — 2026-08-01
 
 First stable release. Channel contracts and Supported transports are semver-frozen;
