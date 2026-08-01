@@ -17,6 +17,7 @@
  * await sms.send({ to: "+15551234567", body: "Hello", from: "+15557654321" });
  * ```
  */
+import { isFallbackHookTransport, isRetryHookTransport } from "./core/decorator-hooks.js";
 import { invokeHook } from "./core/hooks.js";
 import { runPlugins } from "./core/plugin.js";
 import type {
@@ -61,6 +62,7 @@ function buildSmsHookContext(options: SmsOptions, transport: SmsTransport): SmsH
  * Create an SMS sender that wraps an {@link SmsTransport}.
  *
  * Pipeline: plugins → onSend → transport.send → onSuccess / onError.
+ * `onRetry` / `onFallback` wire when the transport is a retry or fallback decorator.
  */
 export function createSmsSender(config: SmsSenderConfig): SmsSender {
   const { transport, plugins, hooks } = config;
@@ -71,6 +73,18 @@ export function createSmsSender(config: SmsSenderConfig): SmsSender {
       const ctx = buildSmsHookContext(processed, transport);
 
       await invokeHook(hooks?.onSend, ctx);
+
+      if (hooks?.onRetry !== undefined && isRetryHookTransport(transport)) {
+        transport.setMailerOnRetry((attempt, error) => {
+          void invokeHook(hooks.onRetry, ctx, attempt, error);
+        });
+      }
+
+      if (hooks?.onFallback !== undefined && isFallbackHookTransport(transport)) {
+        transport.setMailerOnFallback((failedProvider, nextProvider, error) => {
+          void invokeHook(hooks.onFallback, ctx, failedProvider, nextProvider, error);
+        });
+      }
 
       const start = performance.now();
 
@@ -85,6 +99,13 @@ export function createSmsSender(config: SmsSenderConfig): SmsSender {
       } catch (error) {
         await invokeHook(hooks?.onError, ctx, error, performance.now() - start);
         throw error;
+      } finally {
+        if (isRetryHookTransport(transport)) {
+          transport.setMailerOnRetry(undefined);
+        }
+        if (isFallbackHookTransport(transport)) {
+          transport.setMailerOnFallback(undefined);
+        }
       }
     },
 

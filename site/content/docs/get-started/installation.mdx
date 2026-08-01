@@ -5,7 +5,7 @@ icon: Package
 source: "package.json"
 ---
 
-sently is an ESM package for applications that send email, SMS, WhatsApp, or browser push.
+sently is an ESM package for applications that send email, SMS, WhatsApp, or push (Web Push / FCM).
 Install it in the application that owns your delivery credentials and provider transport configuration.
 
 <Callout title="The one rule">Import the narrowest sently entrypoint that contains the sender or transport you use.</Callout>
@@ -52,7 +52,8 @@ const mailer = await createMailer({
 | Email over SMTP | `sently/smtp` |
 | SMS | `sently/sms` |
 | WhatsApp | `sently/whatsapp` |
-| Web Push | `sently/push` |
+| Push (Web Push or FCM) | `sently/push` |
+| Shared send-result mapping | `sently/channel-result` |
 
 ## Troubleshooting
 

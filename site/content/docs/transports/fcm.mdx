@@ -1,0 +1,80 @@
+---
+title: FCM
+description: Send mobile push through Firebase Cloud Messaging HTTP v1.
+icon: Bell
+source: "src/transports/fcm.ts"
+---
+
+Send device-token push through Firebase Cloud Messaging HTTP v1 for native Android and iOS clients.
+Use [Web Push](./webpush) when you have a browser Push API subscription instead.
+
+<Callout title="The one rule">Pass `token` in push options — not a Web Push `subscription`.</Callout>
+
+## Quick start
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createPushSender } from "sently/push";
+import { FcmTransport } from "sently/transports/fcm";
+
+const push = createPushSender({
+  transport: new FcmTransport({
+    projectId: process.env.FCM_PROJECT_ID!,
+    clientEmail: process.env.FCM_CLIENT_EMAIL!,
+    privateKey: process.env.FCM_PRIVATE_KEY!,
+  }),
+});
+```
+
+  </Step>
+  <Step title="Send to a device token">
+
+```ts
+const result = await push.send({
+  token: deviceRegistrationToken,
+  title: "Hello",
+  body: "World",
+});
+console.log(result.messageId, result.status);
+```
+
+  </Step>
+</Steps>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `projectId` | `string` | required |
+| `clientEmail` | `string` | service account email |
+| `privateKey` | `string` | PEM private key (env / secrets only) |
+| `getAccessToken` | `() => Promise<string>` | optional override for tests |
+
+Literal `\n` sequences in `privateKey` env strings are normalized to newlines.
+The transport mints a short-lived OAuth2 token with scope `firebase.messaging` — no Google SDK.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Can I pass a browser subscription?">
+    No. `FcmTransport` requires `token`. Use `WebPushTransport` for VAPID subscriptions.
+  </Accordion>
+  <Accordion title="Where do I get the private key?">
+    Download a Firebase / GCP service account JSON and pass `project_id`, `client_email`, and `private_key` from that file via environment variables.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Push channel](/docs/channels/push)
+- [Push options](/docs/reference/push-options)
+- [Web Push](./webpush)
+
+## Next
+
+<Cards>
+  <Card title="Push channel" href="/docs/channels/push" />
+  <Card title="Web Push" href="/docs/transports/webpush" />
+</Cards>

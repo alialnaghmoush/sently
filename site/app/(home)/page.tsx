@@ -31,8 +31,8 @@ const CHANNELS: ReadonlyArray<{
     href: "/docs/channels/sms",
     title: "SMS",
     sender: "createSmsSender",
-    body: "Twilio, Taqnyat, Msegat — one sender contract.",
-    providers: ["Twilio", "Taqnyat", "Msegat"],
+    body: "Twilio, Taqnyat, Msegat, Unifonic — one sender contract.",
+    providers: ["Twilio", "Taqnyat", "Msegat", "Unifonic"],
   },
   {
     href: "/docs/channels/whatsapp",
@@ -45,8 +45,8 @@ const CHANNELS: ReadonlyArray<{
     href: "/docs/channels/push",
     title: "Push",
     sender: "createPushSender",
-    body: "Web Push with VAPID — browser subscriptions.",
-    providers: ["Web Push"],
+    body: "Web Push (VAPID) or FCM device tokens.",
+    providers: ["Web Push", "FCM"],
   },
 ];
 

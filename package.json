@@ -1,6 +1,6 @@
 {
   "name": "sently",
-  "version": "0.9.2",
+  "version": "0.10.0",
   "description": "Runtime-agnostic messaging library for Node.js, Bun, Deno, and Cloudflare Workers. Channel-first email, SMS, WhatsApp, and push with pluggable provider transports.",
   "type": "module",
   "sideEffects": false,
@@ -207,6 +207,10 @@
       "import": "./dist/transports/msegat.js",
       "types": "./dist/transports/msegat.d.ts"
     },
+    "./transports/unifonic": {
+      "import": "./dist/transports/unifonic.js",
+      "types": "./dist/transports/unifonic.d.ts"
+    },
     "./transports/whatsapp-cloud": {
       "import": "./dist/transports/whatsapp-cloud.js",
       "types": "./dist/transports/whatsapp-cloud.d.ts"
@@ -214,6 +218,14 @@
     "./transports/webpush": {
       "import": "./dist/transports/webpush.js",
       "types": "./dist/transports/webpush.d.ts"
+    },
+    "./transports/fcm": {
+      "import": "./dist/transports/fcm.js",
+      "types": "./dist/transports/fcm.d.ts"
+    },
+    "./channel-result": {
+      "import": "./dist/channel-result.js",
+      "types": "./dist/channel-result.d.ts"
     },
     "./observability": {
       "import": "./dist/observability/console.js",
@@ -294,6 +306,18 @@
     "./webhooks/sndr": {
       "import": "./dist/webhooks/sndr.js",
       "types": "./dist/webhooks/sndr.d.ts"
+    },
+    "./webhooks/twilio-sms": {
+      "import": "./dist/webhooks/twilio-sms.js",
+      "types": "./dist/webhooks/twilio-sms.d.ts"
+    },
+    "./webhooks/whatsapp-cloud": {
+      "import": "./dist/webhooks/whatsapp-cloud.js",
+      "types": "./dist/webhooks/whatsapp-cloud.d.ts"
+    },
+    "./webhooks/unifonic": {
+      "import": "./dist/webhooks/unifonic.js",
+      "types": "./dist/webhooks/unifonic.d.ts"
     },
     "./errors": {
       "import": "./dist/errors.js",

@@ -72,16 +72,29 @@ export function assertSafePushEndpoint(endpoint: string, extraHosts: readonly st
 export async function redactPushEndpoint(endpoint: string): Promise<string> {
   try {
     const url = new URL(endpoint);
-    const bytes = encodeUtf8(endpoint);
-    const digest = await crypto.subtle.digest(
-      "SHA-256",
-      bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
-    );
-    const short = encodeBase64Url(new Uint8Array(digest).subarray(0, 8));
+    const short = await shortHash(endpoint);
     return `${url.origin}/#${short}`;
   } catch {
     return "[invalid-endpoint]";
   }
+}
+
+/**
+ * Redact an FCM device token for hook/observability context.
+ * Returns `fcm:#<8-byte-hash>` so logs never store the raw registration token.
+ */
+export async function redactFcmToken(token: string): Promise<string> {
+  const short = await shortHash(token);
+  return `fcm:#${short}`;
+}
+
+async function shortHash(value: string): Promise<string> {
+  const bytes = encodeUtf8(value);
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
+  );
+  return encodeBase64Url(new Uint8Array(digest).subarray(0, 8));
 }
 
 function isAllowedPushHost(host: string, extraHosts: readonly string[]): boolean {

@@ -18,7 +18,7 @@ Each sender accepts a provider transport, so delivery providers can change witho
 | Email | `createMailer` or `createSMTPMailer` | Sender, recipient, subject, and body. |
 | SMS | `createSmsSender` | Recipient number and body. |
 | WhatsApp | `createWhatsAppSender` | Template or text message. |
-| Push | `createPushSender` | Browser subscription, title, and body. |
+| Push | `createPushSender` | Web Push subscription or FCM token, plus title and body. |
 
   </Step>
   <Step title="Wire in a transport">
@@ -52,7 +52,7 @@ await sms.send({
 | `createSMTPMailer` | Yes | Email configured with SMTP host, port, and authentication. |
 | `createSmsSender` | No | SMS with an `SmsTransport`. |
 | `createWhatsAppSender` | No | WhatsApp with a `WhatsAppTransport`. |
-| `createPushSender` | No | Web Push with a `PushTransport`. |
+| `createPushSender` | No | Web Push or FCM with a `PushTransport`. |
 
 ## Troubleshooting
 

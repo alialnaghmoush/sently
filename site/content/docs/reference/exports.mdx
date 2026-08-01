@@ -17,12 +17,13 @@ The main `sently` package is for shared types and factories — not every provid
 
 | Import | Primary API |
 | ------ | ----------- |
-| `sently` | `createMailer`, `createSMTPMailer`, types, OAuth2, `SentlyError`, `consoleObserver`, `FallbackTransport`, `WeightedFallbackTransport`, `CloudflareEmailTransport` |
+| `sently` | `createMailer`, `createSMTPMailer`, types, OAuth2, `SentlyError`, `consoleObserver`, `toChannelSendResult`, `FallbackTransport`, `WeightedFallbackTransport`, `CloudflareEmailTransport` |
 | `sently/mailer` | `createMailer` only |
 | `sently/smtp` | `createSMTPMailer` |
 | `sently/sms` | `createSmsSender` |
 | `sently/whatsapp` | `createWhatsAppSender` |
 | `sently/push` | `createPushSender` |
+| `sently/channel-result` | `toChannelSendResult`, `ChannelSendResult` |
 | `sently/errors` | `SentlyError` hierarchy |
 | `sently/idempotency` | `IdempotencyTransport` |
 | `sently/dkim` | DKIM signing |
@@ -36,7 +37,7 @@ The main `sently` package is for shared types and factories — not every provid
 
 | Import | Use |
 | ------ | --- |
-| `sently/transports/<name>` | One provider or email decorator (e.g. `sndr`, `resend`, `twilio-sms`) |
+| `sently/transports/<name>` | One provider or decorator (e.g. `sndr`, `unifonic`, `fcm`, `retry`) |
 
 HTTP providers such as SNDR, Resend, and Plunk are **not** re-exported from `sently`.
 
@@ -47,7 +48,8 @@ HTTP providers such as SNDR, Resend, and Plunk are **not** re-exported from `sen
 | `sently/webhooks/<provider>` | One parser (+ verify helper when exported) |
 | `sently/webhooks` | Convenience barrel of all named helpers |
 
-Providers: `brevo`, `mailgun`, `postmark`, `resend`, `sendgrid`, `ses`, `sndr`.
+Email: `brevo`, `mailgun`, `postmark`, `resend`, `sendgrid`, `ses`, `sndr`.
+SMS / WhatsApp: `twilio-sms` (+ verify), `unifonic`, `whatsapp-cloud` (+ verify).
 
 ## Adapters
 

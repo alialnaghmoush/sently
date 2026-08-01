@@ -54,26 +54,27 @@ const mailer = await createSMTPMailer({
 
 | Import | Exports | Use |
 | ------ | ------- | --- |
-| `sently` | Shared factories, types, OAuth2, errors, Fallback / WeightedFallback / Cloudflare Email | General email entrypoint. |
+| `sently` | Shared factories, types, OAuth2, errors, `toChannelSendResult`, Fallback / WeightedFallback / Cloudflare Email | General email + shared helpers. |
 | `sently/mailer` | `createMailer` | Email with an explicit transport (smallest HTTP path). |
 | `sently/smtp` | `createSMTPMailer` | SMTP relay configuration. |
 | `sently/sms` | `createSmsSender` | SMS sender. |
 | `sently/whatsapp` | `createWhatsAppSender` | WhatsApp sender. |
-| `sently/push` | `createPushSender` | Web Push sender. |
+| `sently/push` | `createPushSender` | Push sender (Web Push or FCM). |
+| `sently/channel-result` | `toChannelSendResult` | Shared `{ messageId, provider, accepted }` mapping. |
 
 ## Supporting entrypoints
 
 | Import | Use |
 | ------ | --- |
-| `sently/transports/*` | One provider or email decorator transport. |
-| `sently/webhooks/<provider>` | One webhook parser (smallest graph). |
+| `sently/transports/*` | One provider or decorator transport (retry / fallback work across channels). |
+| `sently/webhooks/<provider>` | One webhook parser (email, SMS, or WhatsApp). |
 | `sently/webhooks` | Convenience barrel of all webhook helpers. |
 | `sently/errors` | Stable sently error classes and codes. |
 | `sently/plugins/template` | Template plugin and simple engine. |
 | `sently/auth/oauth2` | SMTP OAuth2 client. |
 | `sently/pool` | SMTP connection pool. |
 | `sently/dkim` | DKIM signing entrypoint. |
-| `sently/idempotency` | Idempotency transport and memory store. |
+| `sently/idempotency` | Idempotency transport and memory store (email). |
 
 ## Troubleshooting
 

@@ -2,9 +2,9 @@
  * @module
  * FallbackTransport — routes through an ordered list of transports,
  * advancing to the next when the current one fails. Use for provider
- * failover: if your primary provider has an outage, the next takes over.
- * Composes with RetryTransport — wrap each entry in RetryTransport to
- * retry within a provider before failing over to the next.
+ * failover across email, SMS, WhatsApp, or push. Composes with
+ * RetryTransport — wrap each entry in RetryTransport to retry within a
+ * provider before failing over to the next.
  *
  * @example
  * ```ts
@@ -22,9 +22,10 @@
  * );
  * ```
  */
+import type { DecoratedTransport, FallbackAugmentedResult } from "../core/decorated-transport.js";
 import { SentlyError } from "../core/errors.js";
 import { getProviderLabel } from "../core/provider-label.js";
-import type { MailOptions, SendResult, Transport, VerifyResult } from "../core/types.js";
+import type { MailOptions, SendResult, VerifyResult } from "../core/types.js";
 
 /** One failed provider attempt collected during failover. */
 export interface FallbackAttempt {
@@ -125,8 +126,11 @@ type MailerOnFallback = (
 
 /**
  * Decorator transport that fails over through an ordered list of transports.
+ * Defaults preserve email {@link Transport} compatibility.
  */
-export class FallbackTransport implements Transport {
+export class FallbackTransport<TOptions = MailOptions, TResult = SendResult>
+  implements DecoratedTransport<TOptions, FallbackAugmentedResult<TResult>>
+{
   readonly provider = "fallback";
 
   private readonly shouldFallback: (error: unknown) => boolean;
@@ -141,7 +145,7 @@ export class FallbackTransport implements Transport {
    * @throws {Error} When the transports array is empty.
    */
   constructor(
-    private readonly transports: Transport[],
+    private readonly transports: DecoratedTransport<TOptions, TResult>[],
     options?: FallbackOptions,
   ) {
     if (transports.length === 0) {
@@ -155,8 +159,8 @@ export class FallbackTransport implements Transport {
   }
 
   /**
-   * Register a per-send onFallback callback from mailer lifecycle hooks.
-   * @internal Used by {@link MailerImpl}; cleared after each send.
+   * Register a per-send onFallback callback from sender lifecycle hooks.
+   * @internal Cleared after each send.
    */
   setMailerOnFallback(callback: MailerOnFallback | undefined): void {
     this.mailerOnFallback = callback;
@@ -181,12 +185,12 @@ export class FallbackTransport implements Transport {
   }
 
   /** Sends through transports in order until one succeeds. */
-  async send(message: MailOptions): Promise<SendResult> {
+  async send(message: TOptions): Promise<FallbackAugmentedResult<TResult>> {
     const attempts: FallbackAttempt[] = [];
     const skipped: FallbackAttempt[] = [];
 
     for (let i = 0; i < this.transports.length; i++) {
-      const transport = this.transports[i] as Transport;
+      const transport = this.transports[i] as DecoratedTransport<TOptions, TResult>;
       const provider = getProviderLabel(transport);
 
       if (this.isCoolingDown(provider)) {
@@ -216,7 +220,9 @@ export class FallbackTransport implements Transport {
           throw err;
         }
 
-        const nextProvider = getProviderLabel(this.transports[nextIndex] as Transport);
+        const nextProvider = getProviderLabel(
+          this.transports[nextIndex] as DecoratedTransport<TOptions, TResult>,
+        );
         this.onFallback?.(i, err);
         if (this.mailerOnFallback !== undefined) {
           await this.mailerOnFallback(provider, nextProvider, err);
@@ -236,7 +242,9 @@ export class FallbackTransport implements Transport {
 
   private findNextTryIndex(currentIndex: number): number {
     for (let j = currentIndex + 1; j < this.transports.length; j++) {
-      const provider = getProviderLabel(this.transports[j] as Transport);
+      const provider = getProviderLabel(
+        this.transports[j] as DecoratedTransport<TOptions, TResult>,
+      );
       if (!this.isCoolingDown(provider)) {
         return j;
       }

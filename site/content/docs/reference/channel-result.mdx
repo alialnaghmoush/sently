@@ -1,0 +1,82 @@
+---
+title: Channel send result
+description: Map email, SMS, WhatsApp, and push results to a shared accepted shape.
+icon: Boxes
+source: "src/core/channel-result.ts"
+---
+
+Adapters that span channels can normalize every send into
+`{ messageId, provider, accepted }` without inventing per-provider glue.
+Use this after `mailer.send`, `sms.send`, `whatsapp.send`, or `push.send`.
+
+<Callout title="The one rule">
+  Keep channel-specific fields on the original result; use `toChannelSendResult` only for the shared slice.
+</Callout>
+
+## Quick start
+
+<Steps>
+  <Step title="Send on any channel">
+
+```ts
+import { createSmsSender } from "sently/sms";
+import { toChannelSendResult } from "sently/channel-result";
+import { UnifonicTransport } from "sently/transports/unifonic";
+
+const sms = createSmsSender({
+  transport: new UnifonicTransport({
+    appSid: process.env.UNIFONIC_APPSID!,
+    senderId: "MyBrand",
+  }),
+});
+const result = await sms.send({ to: "+15551234567", body: "Hi" });
+```
+
+  </Step>
+  <Step title="Normalize for your adapter">
+
+```ts
+const shared = toChannelSendResult(result);
+// { messageId, provider?, accepted }
+```
+
+  </Step>
+</Steps>
+
+## ChannelSendResult
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `messageId` | `string` | Provider or client message id |
+| `provider` | `string?` | Transport id when set |
+| `accepted` | `boolean` | Provider accepted the send (not end-user delivery) |
+
+## Mapping
+
+| Channel result | `accepted` |
+| --- | --- |
+| Email `SendResult` | `accepted.length > 0` and `rejected.length === 0` |
+| SMS / WhatsApp / Push | `status` in `accepted` / `queued` / `sending` / `sent` / `delivered` / `read` / `success` (case-insensitive) |
+
+Import from `sently/channel-result` or the main `sently` barrel.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Why is accepted true but the user never got the message?">
+    Acceptance means the provider took the message. Use [webhooks](/docs/guides/webhooks) for delivered / failed outcomes.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Webhook events](./webhook-events)
+- [SMS options](./sms-options)
+- [Exports](./exports)
+
+## Next
+
+<Cards>
+  <Card title="Webhook events" href="/docs/reference/webhook-events" />
+  <Card title="Exports" href="/docs/reference/exports" />
+</Cards>

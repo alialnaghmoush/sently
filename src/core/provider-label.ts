@@ -1,10 +1,11 @@
-import type { Transport } from "./types.js";
-
 /**
  * Resolve a stable provider label for observability and diagnostics.
- * Prefers {@link Transport.provider} when set; falls back to constructor name.
+ * Prefers `transport.provider` when set; falls back to constructor name.
  */
-export function getProviderLabel(transport: Transport): string {
+export function getProviderLabel(transport: {
+  readonly provider?: string;
+  readonly constructor: { name: string };
+}): string {
   if (transport.provider !== undefined && transport.provider.length > 0) {
     return transport.provider;
   }

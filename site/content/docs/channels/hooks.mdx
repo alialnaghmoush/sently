@@ -50,21 +50,22 @@ await mailer.send({
 | Channel | Callbacks | Context |
 | --- | --- | --- |
 | Email | `onSend`, `onSuccess`, `onError`, `onRetry`, `onFallback` | `messageId`, recipients, subject, provider. |
-| SMS | `onSend`, `onSuccess`, `onError` | `messageId`, recipient number, provider. |
-| WhatsApp | `onSend`, `onSuccess`, `onError` | `messageId`, recipient number, provider. |
-| Push | `onSend`, `onSuccess`, `onError` | `messageId`, redacted endpoint, provider. |
+| SMS | `onSend`, `onSuccess`, `onError`, `onRetry`, `onFallback` | `messageId`, recipient number, provider. |
+| WhatsApp | `onSend`, `onSuccess`, `onError`, `onRetry`, `onFallback` | `messageId`, recipient number, provider. |
+| Push | `onSend`, `onSuccess`, `onError`, `onRetry`, `onFallback` | `messageId`, redacted endpoint / FCM token fingerprint, provider. |
 
 `onSuccess` receives the delivery result and optional duration in milliseconds. `onError` receives the error and optional duration.
 
 ## Retry and fallback
 
-Email `onRetry` runs only with `RetryTransport`. Email `onFallback` runs only with a fallback transport; both are configured as decorators around an email transport.
+`onRetry` runs only with `RetryTransport`. `onFallback` runs only with a fallback (or weighted fallback) transport.
+Wire either decorator around the channel transport you pass to `createMailer`, `createSmsSender`, `createWhatsAppSender`, or `createPushSender`.
 
 ## Troubleshooting
 
 <Accordions>
   <Accordion title="Why does onRetry not run?">
-    `onRetry` is wired only when the mailer's transport is `RetryTransport`.
+    `onRetry` is wired only when the sender's transport is `RetryTransport`.
   </Accordion>
   <Accordion title="Why does my hook error not stop the send?">
     Hook failures are intentionally swallowed so observability code cannot break message delivery.

@@ -6,6 +6,7 @@ source: "src/transports/weighted-fallback.ts"
 ---
 
 Choose a weighted primary transport and fail over on errors.
+Works with email, SMS, WhatsApp, and push.
 
 <Callout title="The one rule">At least one entry with positive total weight is required.</Callout>
 
@@ -13,22 +14,42 @@ Choose a weighted primary transport and fail over on errors.
 
 Each entry has `transport` and positive `weight`; it accepts fallback options and optional `random`.
 
-<Steps><Step title="Wrap an email transport">
+## Quick start
+
+<Steps>
+  <Step title="Build weighted entries">
 
 ```ts
 import { WeightedFallbackTransport } from "sently/transports/weighted-fallback";
 
-const transport = new WeightedFallbackTransport([{ transport: primary, weight: 80 }, { transport: secondary, weight: 20 }]);
+const transport = new WeightedFallbackTransport([
+  { transport: primary, weight: 80 },
+  { transport: secondary, weight: 20 },
+]);
 ```
 
-</Step><Step title="Create the mailer">
+  </Step>
+  <Step title="Pass it to the channel sender">
 
 ```ts
 const mailer = await createMailer({ transport });
+// or createSmsSender / createWhatsAppSender / createPushSender
 ```
 
-</Step></Steps>
+  </Step>
+</Steps>
 
-<Accordions><Accordion title="Does this replace the inner provider?">No. It delegates sends to the wrapped transport.</Accordion></Accordions>
+## Troubleshooting
 
-<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>
+<Accordions>
+  <Accordion title="Does this replace the inner provider?">
+    No. It delegates sends to the wrapped transports.
+  </Accordion>
+</Accordions>
+
+## Next
+
+<Cards>
+  <Card title="Fallback" href="/docs/decorators/fallback" />
+  <Card title="Decorators" href="/docs/decorators" />
+</Cards>

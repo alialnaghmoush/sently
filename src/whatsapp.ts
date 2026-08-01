@@ -4,7 +4,7 @@
  *
  * Sently-first: apps call {@link createWhatsAppSender}; providers implement
  * {@link WhatsAppTransport}. Multi-product vendors get a separate WhatsApp
- * transport (e.g. future `taqnyat-whatsapp`), not a mega vendor client.
+ * transport (e.g. `taqnyat-whatsapp`), not a mega vendor client.
  *
  * @example
  * ```ts
@@ -21,6 +21,7 @@
  * await wa.send({ to: "15551234567", text: "Hello" });
  * ```
  */
+import { isFallbackHookTransport, isRetryHookTransport } from "./core/decorator-hooks.js";
 import { invokeHook } from "./core/hooks.js";
 import { runPlugins } from "./core/plugin.js";
 import type { VerifyResult } from "./core/types.js";
@@ -68,6 +69,7 @@ function buildWhatsAppHookContext(
  * Create a WhatsApp sender that wraps a {@link WhatsAppTransport}.
  *
  * Pipeline: plugins → onSend → transport.send → onSuccess / onError.
+ * `onRetry` / `onFallback` wire when the transport is a retry or fallback decorator.
  */
 export function createWhatsAppSender(config: WhatsAppSenderConfig): WhatsAppSender {
   const { transport, plugins, hooks } = config;
@@ -78,6 +80,18 @@ export function createWhatsAppSender(config: WhatsAppSenderConfig): WhatsAppSend
       const ctx = buildWhatsAppHookContext(processed, transport);
 
       await invokeHook(hooks?.onSend, ctx);
+
+      if (hooks?.onRetry !== undefined && isRetryHookTransport(transport)) {
+        transport.setMailerOnRetry((attempt, error) => {
+          void invokeHook(hooks.onRetry, ctx, attempt, error);
+        });
+      }
+
+      if (hooks?.onFallback !== undefined && isFallbackHookTransport(transport)) {
+        transport.setMailerOnFallback((failedProvider, nextProvider, error) => {
+          void invokeHook(hooks.onFallback, ctx, failedProvider, nextProvider, error);
+        });
+      }
 
       const start = performance.now();
 
@@ -92,6 +106,13 @@ export function createWhatsAppSender(config: WhatsAppSenderConfig): WhatsAppSend
       } catch (error) {
         await invokeHook(hooks?.onError, ctx, error, performance.now() - start);
         throw error;
+      } finally {
+        if (isRetryHookTransport(transport)) {
+          transport.setMailerOnRetry(undefined);
+        }
+        if (isFallbackHookTransport(transport)) {
+          transport.setMailerOnFallback(undefined);
+        }
       }
     },
 

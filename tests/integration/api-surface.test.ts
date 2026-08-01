@@ -28,7 +28,12 @@ const subpathImports: Array<{ path: string; check: (mod: Record<string, unknown>
       expect(mod.FallbackTransport).toBeDefined();
       expect(mod.WeightedFallbackTransport).toBeDefined();
       expect(mod.CloudflareEmailTransport).toBeDefined();
+      expect(mod.toChannelSendResult).toBeDefined();
     },
+  },
+  {
+    path: "../../dist/channel-result.js",
+    check: (mod) => expect(mod.toChannelSendResult).toBeDefined(),
   },
   {
     path: "../../dist/mailer.js",
@@ -93,8 +98,35 @@ const subpathImports: Array<{ path: string; check: (mod: Record<string, unknown>
       expect(mod.parseResendWebhook).toBeDefined();
       expect(mod.parseSndrWebhook).toBeDefined();
       expect(mod.verifySndrSignature).toBeDefined();
+      expect(mod.parseTwilioSmsWebhook).toBeDefined();
+      expect(mod.parseWhatsAppCloudWebhook).toBeDefined();
+      expect(mod.parseUnifonicWebhook).toBeDefined();
+      expect(mod.toDeliveryEvent).toBeDefined();
     },
   },
+  {
+    path: "../../dist/transports/unifonic.js",
+    check: (mod) => expect(mod.UnifonicTransport).toBeDefined(),
+  },
+  {
+    path: "../../dist/transports/fcm.js",
+    check: (mod) => expect(mod.FcmTransport).toBeDefined(),
+  },
+  {
+    path: "../../dist/webhooks/twilio-sms.js",
+    check: (mod) => {
+      expect(mod.parse).toBeDefined();
+      expect(mod.verifySignature).toBeDefined();
+    },
+  },
+  {
+    path: "../../dist/webhooks/whatsapp-cloud.js",
+    check: (mod) => {
+      expect(mod.parse).toBeDefined();
+      expect(mod.verifySignature).toBeDefined();
+    },
+  },
+
   {
     path: "../../dist/webhooks/sndr.js",
     check: (mod) => {

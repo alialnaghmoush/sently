@@ -23,10 +23,12 @@
     "twilio-sms",
     "taqnyat-sms",
     "msegat",
+    "unifonic",
     "---WhatsApp---",
     "whatsapp-cloud",
     "taqnyat-whatsapp",
     "---Push---",
-    "webpush"
+    "webpush",
+    "fcm"
   ]
 }

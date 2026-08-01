@@ -1,14 +1,16 @@
 ---
 title: Push
-description: Send encrypted Web Push notifications through a push transport.
+description: Send Web Push or FCM notifications through a push transport.
 icon: Bell
 source: "src/push.ts"
 ---
 
-Use Web Push for browser notifications after a browser has granted permission and returned a subscription.
-The sender passes the subscription and notification payload to a push transport.
+Use push for browser Web Push subscriptions or FCM device tokens.
+The sender passes the target and notification payload to a push transport.
 
-<Callout title="The one rule">Treat subscription endpoints as secrets: they are long-lived delivery tokens.</Callout>
+<Callout title="The one rule">Treat subscription endpoints and device tokens as secrets — they are long-lived delivery credentials.</Callout>
+
+## Quick start
 
 <Steps>
   <Step title="Create a Push sender">
@@ -27,10 +29,11 @@ const push = createPushSender({
 ```
 
   </Step>
-  <Step title="Send to a stored browser subscription">
+  <Step title="Send to a browser subscription or FCM token">
 
 ```ts
-const result = await push.send({
+// Web Push
+await push.send({
   subscription: {
     endpoint: "https://fcm.googleapis.com/fcm/send/example",
     keys: { p256dh: "browser-public-key", auth: "browser-auth-secret" },
@@ -39,7 +42,12 @@ const result = await push.send({
   body: "Your weekly report is ready to view.",
 });
 
-console.log(result.status);
+// FCM (with FcmTransport)
+await push.send({
+  token: deviceRegistrationToken,
+  title: "Report ready",
+  body: "Your weekly report is ready to view.",
+});
 ```
 
   </Step>
@@ -53,15 +61,16 @@ console.log(result.status);
 | `plugins` | `PushPlugin[]` | Optional transforms run before delivery. |
 | `hooks` | `PushHooks` | Optional callbacks for delivery activity. |
 
-## Push and VAPID options
+## Options shapes
 
-| Option | Type | Meaning |
+`PushOptions` is a union:
+
+| Shape | Required target | Transport |
 | --- | --- | --- |
-| `subscription` | `PushSubscription` | Required browser endpoint plus `p256dh` and `auth` keys. |
-| `title`, `body` | `string` | Required notification content. |
-| `data`, `icon` | `Record<string, unknown>`, `string` | Optional application payload and icon URL. |
-| `ttl` | `number` | Optional delivery lifetime in seconds. |
-| `subject` | `string` | Required Web Push contact URI for the VAPID transport. |
+| Web Push | `subscription` | `WebPushTransport` |
+| FCM | `token` | `FcmTransport` |
+
+Shared fields: `title`, `body`, optional `data`, `icon`, `ttl`, `messageId`.
 
 ## Troubleshooting
 
@@ -70,23 +79,20 @@ console.log(result.status);
     Web Push validates subscription endpoint hosts before sending. Add only exact private relay hostnames with `allowedEndpointHosts` when needed.
   </Accordion>
   <Accordion title="Why is the endpoint redacted in hooks?">
-    The endpoint path can contain a long-lived delivery token, so hook context keeps only a redacted form.
-  </Accordion>
-  <Accordion title="What does verify do?">
-    `push.verify()` delegates to the transport when available; the Web Push transport checks its VAPID credential shape.
+    Endpoint paths and FCM tokens are long-lived credentials, so hook context keeps only a redacted fingerprint.
   </Accordion>
 </Accordions>
 
 ## Learn more
 
 - [Push options](../reference/push-options)
-- [Transport contracts](../reference/transport-contracts)
-- [Web Push interoperability](../guides/webpush-interop)
+- [Web Push](../transports/webpush)
+- [FCM](../transports/fcm)
 - [Hooks](./hooks)
 
 ## Next
 
 <Cards>
   <Card title="Web Push transport" href="/docs/transports/webpush" />
-  <Card title="All transports" href="/docs/transports" />
+  <Card title="FCM transport" href="/docs/transports/fcm" />
 </Cards>

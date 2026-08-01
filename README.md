@@ -13,13 +13,13 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/sently"><img alt="npm" src="https://shieldcn.dev/npm/sently.svg?size=sm" /></a>
+  <a href="https://www.npmjs.com/package/sently"><img alt="npm" src="https://shieldcn.dev/npm/sently.svg?size=sm&variant=outline" /></a>
   <a href="https://jsr.io/@alialnaghmoush/sently"><img alt="JSR" src="https://shieldcn.dev/jsr/@alialnaghmoush/sently.svg?size=sm&variant=outline" /></a>
-  <a href="https://bundlephobia.com/package/sently"><img alt="bundle" src="https://shieldcn.dev/bundlephobia/minzip/sently.svg?size=sm&variant=secondary" /></a>
-  <a href="https://opensource.org/licenses/MIT"><img alt="MIT" src="https://shieldcn.dev/npm/license/sently.svg?size=sm" /></a>
+  <a href="https://bundlephobia.com/package/sently"><img alt="bundle" src="https://shieldcn.dev/bundlephobia/minzip/sently.svg?size=sm&variant=outline" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img alt="MIT" src="https://shieldcn.dev/npm/license/sently.svg?size=sm&variant=outline" /></a>
   <a href="https://bun.sh"><img alt="Bun" src="https://shieldcn.dev/badge/Bun-ready-000000.svg?logo=bun&size=sm&variant=outline" /></a>
   <a href="https://github.com/alialnaghmoush/sently/stargazers"><img alt="stars" src="https://shieldcn.dev/github/stars/alialnaghmoush/sently.svg?size=sm&variant=outline" /></a>
-  <a href="https://github.com/alialnaghmoush/sently/actions"><img alt="CI" src="https://shieldcn.dev/github/ci/alialnaghmoush/sently.svg?size=sm" /></a>
+  <a href="https://github.com/alialnaghmoush/sently/actions"><img alt="CI" src="https://shieldcn.dev/github/ci/alialnaghmoush/sently.svg?size=sm&variant=outline" /></a>
 </p>
 
 <p align="center">
@@ -67,12 +67,12 @@ await mailer.send({
 
 Same shape for every channel — apps use **sently senders**, not vendor SDKs:
 
-| Channel  | Sender                               | Example transport                          |
-| -------- | ------------------------------------ | ------------------------------------------ |
-| Email    | `createMailer` / `createSMTPMailer`  | `sently/transports/resend`, `sently/smtp`  |
-| SMS      | `createSmsSender`                    | `sently/transports/twilio-sms`             |
-| WhatsApp | `createWhatsAppSender`               | `sently/transports/whatsapp-cloud`         |
-| Push     | `createPushSender`                   | `sently/transports/webpush`                |
+| Channel  | Sender                               | Example transport                                      |
+| -------- | ------------------------------------ | ------------------------------------------------------ |
+| Email    | `createMailer` / `createSMTPMailer`  | `sently/transports/resend`, `sently/smtp`              |
+| SMS      | `createSmsSender`                    | `sently/transports/twilio-sms`, `unifonic`, `taqnyat-sms` |
+| WhatsApp | `createWhatsAppSender`               | `sently/transports/whatsapp-cloud`                     |
+| Push     | `createPushSender`                   | `sently/transports/webpush`, `fcm`                     |
 
 Full walkthrough: [Get started](https://sently.omqkhafi.dev/docs/get-started).
 
@@ -95,12 +95,14 @@ Nodemailer is Node.js–only and ships the full mail stack on every import (~59 
 
 | Import                 | Use when                                      |
 | ---------------------- | --------------------------------------------- |
-| `sently/mailer`        | HTTP / custom email transports (smallest)     |
-| `sently/smtp`          | SMTP host, pool, adapters, DKIM               |
-| `sently/sms`           | SMS                                           |
-| `sently/whatsapp`      | WhatsApp                                      |
-| `sently/push`          | Web Push                                      |
-| `sently/transports/*`  | One provider per subpath                      |
+| `sently/mailer`          | HTTP / custom email transports (smallest)   |
+| `sently/smtp`            | SMTP host, pool, adapters, DKIM             |
+| `sently/sms`             | SMS                                         |
+| `sently/whatsapp`        | WhatsApp                                    |
+| `sently/push`            | Push (Web Push or FCM)                      |
+| `sently/channel-result`  | Shared `{ messageId, provider, accepted }`  |
+| `sently/transports/*`    | One provider or decorator per subpath       |
+| `sently/webhooks/*`      | Email / SMS / WhatsApp delivery parsers     |
 
 ## Documentation
 

@@ -1,0 +1,85 @@
+---
+title: Unifonic
+description: Send SMS through the Unifonic el.cloud REST API.
+icon: Truck
+source: "src/transports/unifonic.ts"
+---
+
+Send SMS through Unifonic’s el.cloud REST API for transactional texts such as OTPs and alerts.
+Wire the transport into `createSmsSender` so app code stays on the SMS channel API.
+
+<Callout title="The one rule">Create this transport under `createSmsSender` — do not call Unifonic from app code directly.</Callout>
+
+## Quick start
+
+<Steps>
+  <Step title="Configure the transport">
+
+```ts
+import { createSmsSender } from "sently/sms";
+import { UnifonicTransport } from "sently/transports/unifonic";
+
+const sender = createSmsSender({
+  transport: new UnifonicTransport({
+    appSid: process.env.UNIFONIC_APPSID!,
+    senderId: "MyBrand",
+  }),
+});
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+const result = await sender.send({ to: "+9665xxxxxxxx", body: "Hello" });
+console.log(result.messageId, result.status);
+```
+
+  </Step>
+</Steps>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `appSid` | `string` | required (`AppSid`) |
+| `senderId` | `string` | required on send unless `options.from` is set |
+| `statusCallback` | `string` | optional public HTTPS DLR URL |
+| `async` | `boolean` | `false` |
+
+`options.from` maps to `SenderID`. `options.messageId` maps to `CorrelationID`.
+Phone numbers are normalized to international digits without `+` or leading `00`.
+
+## Delivery webhooks
+
+Parse Unifonic status callbacks with `sently/webhooks/unifonic` into `DeliveryEvent[]`.
+
+```ts
+import { parse } from "sently/webhooks/unifonic";
+
+const events = parse(await request.json());
+```
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Should I call the Unifonic SDK?">
+    No. Use the sently SMS sender; this transport posts to `el.cloud.unifonic.com` for you.
+  </Accordion>
+  <Accordion title="Why do I get a SenderID error?">
+    Set `senderId` on the transport or pass `from` on each `send`.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [SMS channel](/docs/channels/sms)
+- [Webhooks](/docs/guides/webhooks)
+- [Channel send result](/docs/reference/channel-result)
+
+## Next
+
+<Cards>
+  <Card title="SMS channel" href="/docs/channels/sms" />
+  <Card title="Webhooks" href="/docs/guides/webhooks" />
+</Cards>

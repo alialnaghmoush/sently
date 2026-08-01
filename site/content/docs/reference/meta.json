@@ -9,6 +9,7 @@
     "whatsapp-options",
     "push-options",
     "transport-contracts",
+    "channel-result",
     "errors",
     "webhook-events"
   ]

@@ -24,17 +24,22 @@ const PROVIDERS: ReadonlyArray<string> = [
   "Twilio",
   "Taqnyat",
   "Msegat",
+  "Unifonic",
   "WhatsApp Cloud",
   "Web Push",
+  "FCM",
 ];
 
 /**
  * One marquee chip — icon + uppercase label.
+ * Fixed icon box + leading-none keeps every mark on the same midline.
  */
 function ProviderChip({ name }: { readonly name: string }): ReactNode {
   return (
-    <span className="inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-fd-muted-foreground uppercase whitespace-nowrap">
-      <ProviderIcon name={name} />
+    <span className="flex h-5 items-center gap-2 font-mono text-[11px] leading-none tracking-[0.12em] text-fd-muted-foreground uppercase whitespace-nowrap">
+      <span className="flex size-4 shrink-0 items-center justify-center">
+        <ProviderIcon name={name} />
+      </span>
       {name}
     </span>
   );
@@ -46,9 +51,9 @@ function ProviderChip({ name }: { readonly name: string }): ReactNode {
  */
 export function ProviderMarquee(): ReactNode {
   const row = (
-    <ul className="flex shrink-0 items-center gap-8 pr-8" aria-hidden>
+    <ul className="flex h-5 shrink-0 items-center gap-8 pr-8" aria-hidden>
       {PROVIDERS.map((name) => (
-        <li key={name}>
+        <li key={name} className="flex items-center">
           <ProviderChip name={name} />
         </li>
       ))}
@@ -66,7 +71,7 @@ export function ProviderMarquee(): ReactNode {
           transports
         </span>
       </div>
-      <div className="relative py-4">
+      <div className="relative flex items-center justify-center py-4">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-10 bg-linear-to-r from-fd-background to-transparent sm:w-16 motion-reduce:hidden"
@@ -75,14 +80,14 @@ export function ProviderMarquee(): ReactNode {
           aria-hidden
           className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-10 bg-linear-to-l from-fd-background to-transparent sm:w-16 motion-reduce:hidden"
         />
-        <div className="sently-marquee flex w-max motion-reduce:w-full motion-reduce:flex-wrap motion-reduce:justify-center motion-reduce:gap-x-8 motion-reduce:gap-y-3 motion-reduce:px-5 sm:motion-reduce:px-8">
+        <div className="sently-marquee flex w-max justify-center motion-reduce:w-full motion-reduce:flex-wrap motion-reduce:gap-x-8 motion-reduce:gap-y-3 motion-reduce:px-5 sm:motion-reduce:px-8">
           {row}
           <ul
-            className="flex shrink-0 items-center gap-8 pr-8 motion-reduce:hidden"
+            className="flex h-5 shrink-0 items-center gap-8 pr-8 motion-reduce:hidden"
             aria-hidden
           >
             {PROVIDERS.map((name) => (
-              <li key={`dup-${name}`}>
+              <li key={`dup-${name}`} className="flex items-center">
                 <ProviderChip name={name} />
               </li>
             ))}

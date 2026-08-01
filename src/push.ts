@@ -1,9 +1,9 @@
 /**
  * @module
- * Web Push sender orchestrator — plugins, hooks, and transport.send pipeline.
+ * Push sender orchestrator — plugins, hooks, and transport.send pipeline.
  *
  * Sently-first: apps call {@link createPushSender}; providers implement
- * {@link PushTransport}.
+ * {@link PushTransport} (Web Push or FCM).
  *
  * @example
  * ```ts
@@ -25,9 +25,10 @@
  * });
  * ```
  */
+import { isFallbackHookTransport, isRetryHookTransport } from "./core/decorator-hooks.js";
 import { invokeHook } from "./core/hooks.js";
 import { runPlugins } from "./core/plugin.js";
-import { redactPushEndpoint } from "./core/push-endpoint.js";
+import { redactFcmToken, redactPushEndpoint } from "./core/push-endpoint.js";
 import type {
   PushHookContext,
   PushHooks,
@@ -36,6 +37,7 @@ import type {
   PushSendResult,
   PushTransport,
 } from "./core/push-types.js";
+import { isFcmPushOptions, isWebPushOptions } from "./core/push-types.js";
 import type { VerifyResult } from "./core/types.js";
 
 /** Configuration for {@link createPushSender}. */
@@ -62,9 +64,18 @@ async function buildPushHookContext(
   options: PushOptions,
   transport: PushTransport,
 ): Promise<PushHookContext> {
+  let endpoint: string;
+  if (isFcmPushOptions(options)) {
+    endpoint = await redactFcmToken(options.token);
+  } else if (isWebPushOptions(options)) {
+    endpoint = await redactPushEndpoint(options.subscription.endpoint);
+  } else {
+    endpoint = "[unknown-target]";
+  }
+
   return {
     ...(options.messageId !== undefined ? { messageId: options.messageId } : {}),
-    endpoint: await redactPushEndpoint(options.subscription.endpoint),
+    endpoint,
     provider: transport.provider ?? "push",
   };
 }
@@ -73,6 +84,7 @@ async function buildPushHookContext(
  * Create a push sender that wraps a {@link PushTransport}.
  *
  * Pipeline: plugins → onSend → transport.send → onSuccess / onError.
+ * `onRetry` / `onFallback` wire when the transport is a retry or fallback decorator.
  */
 export function createPushSender(config: PushSenderConfig): PushSender {
   const { transport, plugins, hooks } = config;
@@ -83,6 +95,18 @@ export function createPushSender(config: PushSenderConfig): PushSender {
       const ctx = await buildPushHookContext(processed, transport);
 
       await invokeHook(hooks?.onSend, ctx);
+
+      if (hooks?.onRetry !== undefined && isRetryHookTransport(transport)) {
+        transport.setMailerOnRetry((attempt, error) => {
+          void invokeHook(hooks.onRetry, ctx, attempt, error);
+        });
+      }
+
+      if (hooks?.onFallback !== undefined && isFallbackHookTransport(transport)) {
+        transport.setMailerOnFallback((failedProvider, nextProvider, error) => {
+          void invokeHook(hooks.onFallback, ctx, failedProvider, nextProvider, error);
+        });
+      }
 
       const start = performance.now();
 
@@ -97,6 +121,13 @@ export function createPushSender(config: PushSenderConfig): PushSender {
       } catch (error) {
         await invokeHook(hooks?.onError, ctx, error, performance.now() - start);
         throw error;
+      } finally {
+        if (isRetryHookTransport(transport)) {
+          transport.setMailerOnRetry(undefined);
+        }
+        if (isFallbackHookTransport(transport)) {
+          transport.setMailerOnFallback(undefined);
+        }
       }
     },
 

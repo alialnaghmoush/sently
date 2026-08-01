@@ -2,7 +2,7 @@
  * @module
  * WeightedFallbackTransport — routes each send through a weighted-random
  * primary provider, then fails over through the remaining providers on error.
- * Useful for gradual traffic shifting, migrations, and A/B testing providers.
+ * Works with email, SMS, WhatsApp, and push transports.
  *
  * @example
  * ```ts
@@ -19,7 +19,8 @@
  * );
  * ```
  */
-import type { MailOptions, SendResult, Transport, VerifyResult } from "../core/types.js";
+import type { DecoratedTransport, FallbackAugmentedResult } from "../core/decorated-transport.js";
+import type { MailOptions, SendResult, VerifyResult } from "../core/types.js";
 import {
   type FallbackOptions,
   FallbackTransport,
@@ -27,9 +28,9 @@ import {
 } from "./fallback.js";
 
 /** A transport entry with a relative routing weight. */
-export interface WeightedTransportEntry {
+export interface WeightedTransportEntry<TOptions = MailOptions, TResult = SendResult> {
   /** Transport instance. */
-  transport: Transport;
+  transport: DecoratedTransport<TOptions, TResult>;
   /** Relative weight (e.g. 80 vs 20 → ~80% of sends try this provider first). */
   weight: number;
 }
@@ -38,14 +39,17 @@ type MailerOnFallback = Parameters<FallbackTransport["setMailerOnFallback"]>[0];
 
 /**
  * Weighted provider routing with failover on error.
+ * Defaults preserve email {@link Transport} compatibility.
  */
-export class WeightedFallbackTransport implements Transport {
+export class WeightedFallbackTransport<TOptions = MailOptions, TResult = SendResult>
+  implements DecoratedTransport<TOptions, FallbackAugmentedResult<TResult>>
+{
   readonly provider = "weighted-fallback";
 
-  private readonly entries: WeightedTransportEntry[];
+  private readonly entries: WeightedTransportEntry<TOptions, TResult>[];
   private readonly fallbackOptions: FallbackOptions;
   private readonly random: () => number;
-  private readonly inner: FallbackTransport;
+  private readonly inner: FallbackTransport<TOptions, TResult>;
   private mailerOnFallback: MailerOnFallback | undefined;
 
   /**
@@ -53,7 +57,7 @@ export class WeightedFallbackTransport implements Transport {
    * @throws {Error} When entries is empty or total weight is zero.
    */
   constructor(
-    entries: WeightedTransportEntry[],
+    entries: WeightedTransportEntry<TOptions, TResult>[],
     options?: FallbackOptions & { random?: () => number },
   ) {
     if (entries.length === 0) {
@@ -79,16 +83,18 @@ export class WeightedFallbackTransport implements Transport {
   }
 
   /**
-   * Register a per-send onFallback callback from mailer lifecycle hooks.
-   * @internal Used by {@link MailerImpl}; cleared after each send.
+   * Register a per-send onFallback callback from sender lifecycle hooks.
+   * @internal Cleared after each send.
    */
   setMailerOnFallback(callback: MailerOnFallback | undefined): void {
     this.mailerOnFallback = callback;
   }
 
-  private buildOrder(): Transport[] {
+  private buildOrder(): DecoratedTransport<TOptions, TResult>[] {
     const primaryIndex = this.pickWeightedIndex();
-    const order: Transport[] = [this.entries[primaryIndex]?.transport as Transport];
+    const order: DecoratedTransport<TOptions, TResult>[] = [
+      this.entries[primaryIndex]?.transport as DecoratedTransport<TOptions, TResult>,
+    ];
 
     const remaining = this.entries
       .map((entry, index) => ({ entry, index }))
@@ -107,7 +113,7 @@ export class WeightedFallbackTransport implements Transport {
     let roll = this.random() * total;
 
     for (let i = 0; i < this.entries.length; i++) {
-      const entry = this.entries[i] as WeightedTransportEntry;
+      const entry = this.entries[i] as WeightedTransportEntry<TOptions, TResult>;
       roll -= entry.weight;
       if (roll <= 0) {
         return i;
@@ -118,7 +124,7 @@ export class WeightedFallbackTransport implements Transport {
   }
 
   /** Sends via a weighted-random primary provider, failing over on error. */
-  async send(message: MailOptions): Promise<SendResult> {
+  async send(message: TOptions): Promise<FallbackAugmentedResult<TResult>> {
     const transport = new FallbackTransport(this.buildOrder(), this.fallbackOptions);
     if (this.mailerOnFallback !== undefined) {
       transport.setMailerOnFallback(this.mailerOnFallback);

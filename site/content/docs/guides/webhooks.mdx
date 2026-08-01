@@ -1,12 +1,13 @@
 ---
 title: Webhooks
-description: Parse provider delivery events into a shared EmailEvent shape, with optional signature checks.
+description: Parse provider delivery events into EmailEvent or DeliveryEvent shapes, with optional signature checks.
 icon: Webhook
 source: "src/webhooks.ts"
 ---
 
-Use webhooks when a provider posts delivery updates (delivered, bounced, and similar).
-sently turns each provider payload into `EmailEvent[]` so your app can share one handler.
+Use webhooks when a provider posts delivery updates (delivered, bounced, failed, and similar).
+Email parsers return `EmailEvent[]`. SMS and WhatsApp parsers return `DeliveryEvent[]`.
+Map email events with `toDeliveryEvent` when you want one ingest pipeline.
 
 <Callout title="The one rule">
   Verify the signature against the unmodified raw request body before you trust or act on the event.
@@ -53,7 +54,7 @@ const events = parse(JSON.parse(rawBody));
 
 ```ts
 for (const event of events) {
-  if (event.type === "bounced") {
+  if (event.type === "bounced" || event.type === "failed") {
     // suppress or alert using event.messageId / event.recipient
   }
 }
@@ -65,18 +66,31 @@ for (const event of events) {
 
 ## Provider entrypoints
 
-| Import | Parse export | Verify export |
-| ------ | ------------ | ------------- |
-| `sently/webhooks/brevo` | `parse` | — |
-| `sently/webhooks/mailgun` | `parse` | `verifySignature`, `verifyPayload` |
-| `sently/webhooks/postmark` | `parse` | — |
-| `sently/webhooks/resend` | `parse` | `verifySignature` |
-| `sently/webhooks/sendgrid` | `parse` | — |
-| `sently/webhooks/ses` | `parse` | — |
-| `sently/webhooks/sndr` | `parse` | `verifySignature` |
+| Import | Channel | Parse export | Verify export |
+| ------ | ------- | ------------ | ------------- |
+| `sently/webhooks/brevo` | Email | `parse` → `EmailEvent[]` | — |
+| `sently/webhooks/mailgun` | Email | `parse` | `verifySignature`, `verifyPayload` |
+| `sently/webhooks/postmark` | Email | `parse` | — |
+| `sently/webhooks/resend` | Email | `parse` | `verifySignature` |
+| `sently/webhooks/sendgrid` | Email | `parse` | — |
+| `sently/webhooks/ses` | Email | `parse` | — |
+| `sently/webhooks/sndr` | Email | `parse` | `verifySignature` |
+| `sently/webhooks/twilio-sms` | SMS | `parse` → `DeliveryEvent[]` | `verifySignature` (`X-Twilio-Signature`) |
+| `sently/webhooks/unifonic` | SMS | `parse` → `DeliveryEvent[]` | — |
+| `sently/webhooks/whatsapp-cloud` | WhatsApp | `parse` → `DeliveryEvent[]` | `verifySignature` (`X-Hub-Signature-256`) |
 
-The convenience barrel `sently/webhooks` re-exports named helpers such as `parseSndrWebhook` and `verifySndrSignature`.
+The convenience barrel `sently/webhooks` re-exports named helpers such as `parseSndrWebhook`, `parseTwilioSmsWebhook`, and `toDeliveryEvent`.
 Bundlers tree-shake unused names; Node/Deno without a bundler evaluate every re-export.
+
+## SMS status callbacks
+
+Twilio posts form fields (`MessageSid`, `MessageStatus`, `To`). Pass a parsed object or `URLSearchParams`:
+
+```ts
+import { parse } from "sently/webhooks/twilio-sms";
+
+const events = parse(await request.formData().then((fd) => Object.fromEntries(fd)));
+```
 
 ## SNDR signatures
 
@@ -99,7 +113,9 @@ Most frameworks parse JSON before your handler runs. Read the raw body first (`r
 
 <Accordion title="Which providers are supported?">
 
-Brevo, Mailgun, Postmark, Resend, SendGrid, SES, and SNDR. Import each from its `sently/webhooks/<provider>` subpath.
+Email: Brevo, Mailgun, Postmark, Resend, SendGrid, SES, SNDR.
+SMS / WhatsApp: Twilio SMS, Unifonic, WhatsApp Cloud.
+Import each from its `sently/webhooks/<provider>` subpath.
 
 </Accordion>
 
@@ -107,14 +123,13 @@ Brevo, Mailgun, Postmark, Resend, SendGrid, SES, and SNDR. Import each from its 
 
 ## Learn more
 
-- [Webhook events](/docs/reference/webhook-events) — `EmailEvent` fields and type unions
-- [SNDR transport](/docs/transports/sndr) — send path that produces those message ids
+- [Webhook events](/docs/reference/webhook-events) — `EmailEvent` / `DeliveryEvent` fields
 - [Exports](/docs/reference/exports) — package entrypoints
 
 ## Next
 
 <Cards>
-  <Card title="Webhook events" description="Normalized EmailEvent fields." href="/docs/reference/webhook-events" />
-  <Card title="SNDR" description="Send email through SNDR." href="/docs/transports/sndr" />
+  <Card title="Webhook events" description="Normalized event fields." href="/docs/reference/webhook-events" />
+  <Card title="Channel send result" description="Shared accepted mapping." href="/docs/reference/channel-result" />
   <Card title="Exports" description="Public package entrypoints." href="/docs/reference/exports" />
 </Cards>

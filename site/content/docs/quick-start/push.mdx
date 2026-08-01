@@ -1,14 +1,20 @@
 ---
 title: Push
-description: Send a browser notification through a channel sender.
+description: Send a Web Push or FCM notification through a channel sender.
 icon: Bell
 source: "src/push.ts"
 ---
 
-<Callout title="The one rule">Store the browser subscription and send it back unchanged as `subscription`.</Callout>
+Send a browser Web Push or FCM device notification through `createPushSender`.
+
+<Callout title="The one rule">
+  Use `subscription` with `WebPushTransport`, or `token` with `FcmTransport` — not both shapes on the wrong transport.
+</Callout>
+
+## Quick start
 
 <Steps>
-  <Step title="Create the sender">
+  <Step title="Create a Web Push sender">
 
 ```ts
 import { createPushSender } from "sently/push";
@@ -27,10 +33,21 @@ const push = createPushSender({
   <Step title="Send">
 
 ```ts
-await push.send({ subscription, title: "Update", body: "Your report is ready." });
+await push.send({
+  subscription,
+  title: "Update",
+  body: "Your report is ready.",
+});
 ```
 
   </Step>
 </Steps>
 
-<Cards><Card title="Push channel" href="/docs/channels/push" /></Cards>
+For FCM device tokens, use `FcmTransport` and `token` instead of `subscription` — see [FCM](/docs/transports/fcm).
+
+## Next
+
+<Cards>
+  <Card title="Push channel" href="/docs/channels/push" />
+  <Card title="FCM transport" href="/docs/transports/fcm" />
+</Cards>

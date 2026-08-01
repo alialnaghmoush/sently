@@ -353,6 +353,13 @@ const scenarios: Scenario[] = [
     code: `import { MsegatTransport } from "../src/transports/msegat.ts"; export const keep = MsegatTransport;`,
   },
   {
+    id: "sently/transports/unifonic",
+    category: "transport",
+    label: "transports/unifonic",
+    description: "Unifonic SMS REST (el.cloud)",
+    code: `import { UnifonicTransport } from "../src/transports/unifonic.ts"; export const keep = UnifonicTransport;`,
+  },
+  {
     id: "sently/transports/whatsapp-cloud",
     category: "transport",
     label: "transports/whatsapp-cloud",
@@ -365,6 +372,20 @@ const scenarios: Scenario[] = [
     label: "transports/webpush",
     description: "Web Push VAPID + RFC 8291",
     code: `import { WebPushTransport } from "../src/transports/webpush.ts"; export const keep = WebPushTransport;`,
+  },
+  {
+    id: "sently/transports/fcm",
+    category: "transport",
+    label: "transports/fcm",
+    description: "Firebase Cloud Messaging HTTP v1",
+    code: `import { FcmTransport } from "../src/transports/fcm.ts"; export const keep = FcmTransport;`,
+  },
+  {
+    id: "sently/channel-result",
+    category: "optional",
+    label: "sently/channel-result",
+    description: "Cross-channel send result mapping",
+    code: `import { toChannelSendResult } from "../src/channel-result.ts"; export const keep = toChannelSendResult;`,
   },
   // ─── Adapters (SMTP socket layer; loaded at runtime by default) ───
   {

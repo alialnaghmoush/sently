@@ -34,6 +34,11 @@ export {
   /** OAuth2 client with in-memory token cache and automatic refresh. */
   OAuth2Client,
 } from "./auth/oauth2.js";
+export type { AnySendResult, ChannelSendResult } from "./channel-result.js";
+export {
+  /** Normalize any channel send result to `{ messageId, provider, accepted }`. */
+  toChannelSendResult,
+} from "./channel-result.js";
 export type { SentlyErrorCode, SentlyErrorOptions } from "./core/errors.js";
 export {
   /** Map an HTTP status code to a stable sently error code. */

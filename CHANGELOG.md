@@ -2,6 +2,52 @@
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-08-01
+
+### ✨ Added
+
+- **Channel send result** — `toChannelSendResult` / `ChannelSendResult`
+  (`sently/channel-result`, also on the main barrel) maps email, SMS,
+  WhatsApp, and push results to `{ messageId, provider, accepted }`
+- **Cross-channel decorators** — `RetryTransport`, `FallbackTransport`, and
+  `WeightedFallbackTransport` wrap SMS / WhatsApp / Push transports; SMS /
+  WhatsApp / push senders wire `onRetry` / `onFallback` like email
+- **Unifonic SMS** — `sently/transports/unifonic` (`AppSid` + el.cloud REST
+  send); webhook parser at `sently/webhooks/unifonic`
+- **FCM push** — `sently/transports/fcm` (HTTP v1 + service-account JWT, zero
+  Google SDK)
+- **Non-email webhooks** — `DeliveryEvent` plus parsers for Twilio SMS and
+  WhatsApp Cloud (`sently/webhooks/twilio-sms`, `whatsapp-cloud`);
+  `toDeliveryEvent` maps `EmailEvent` into the shared shape; Twilio and
+  WhatsApp Cloud parsers expose `verifySignature` for inbound authenticity
+- **Docs landing** — homepage transport marquee and channel cards include
+  Unifonic and FCM
+
+### ♻️ Changed
+
+- **`PushOptions`** — union of `WebPushOptions` (`subscription`) and
+  `FcmPushOptions` (`token`); Web Push and FCM transports reject the wrong
+  shape
+- **SMS / WhatsApp / Push results** — optional `providerIndex` when a
+  fallback decorator handles the send
+
+### 🐛 Fixed
+
+- **Unifonic success parsing** — accept OpenAPI `success: "true"` (string) in
+  addition to boolean `true`
+- **Unifonic `statusCallback`** — reject non-HTTPS URLs at construction (el.cloud
+  OpenAPI requires a public HTTPS callback)
+- **Empty FCM token** — reject blank `token` before calling the FCM API
+- **Landing provider strip** — keep transport icons and labels on one vertical
+  midline in the homepage marquee
+
+### 🔒 Security
+
+- **WhatsApp Cloud webhooks** — `verifySignature` for `X-Hub-Signature-256`
+  (HMAC-SHA256 over the raw body with the Meta app secret)
+- **Twilio SMS webhooks** — `verifySignature` for `X-Twilio-Signature`
+  (HMAC-SHA1 over URL + sorted form params with the Auth Token)
+
 ## [0.9.2] — 2026-08-01
 
 ### ♻️ Changed

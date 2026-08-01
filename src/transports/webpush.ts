@@ -31,6 +31,7 @@ import type {
   PushSubscription,
   PushTransport,
 } from "../core/push-types.js";
+import { isWebPushOptions } from "../core/push-types.js";
 import type { VerifyResult } from "../core/types.js";
 
 /** Web Push / VAPID configuration. */
@@ -284,6 +285,14 @@ export class WebPushTransport implements PushTransport {
 
   /** Encrypts and POSTs a notification to the subscription endpoint. */
   async send(options: PushOptions): Promise<PushSendResult> {
+    if (!isWebPushOptions(options)) {
+      throw new WebPushError(
+        "WebPushTransport requires PushOptions.subscription; use FcmTransport for device tokens",
+        400,
+        { hint: "fcm" },
+      );
+    }
+
     try {
       assertSafePushEndpoint(options.subscription.endpoint, this.allowedEndpointHosts);
     } catch (error) {

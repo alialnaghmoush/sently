@@ -6,6 +6,16 @@ import { parse as parseResend } from "../../src/webhooks/resend.js";
 import { parse as parseSendGrid } from "../../src/webhooks/sendgrid.js";
 import { parse as parseSes } from "../../src/webhooks/ses.js";
 import { parse as parseSndr } from "../../src/webhooks/sndr.js";
+import {
+  parse as parseTwilioSms,
+  verifySignature as verifyTwilioSmsSignature,
+} from "../../src/webhooks/twilio-sms.js";
+import { parse as parseUnifonic } from "../../src/webhooks/unifonic.js";
+import { toDeliveryEvent } from "../../src/webhooks/types.js";
+import {
+  parse as parseWhatsAppCloud,
+  verifySignature as verifyWhatsAppCloudSignature,
+} from "../../src/webhooks/whatsapp-cloud.js";
 
 describe("parseResendWebhook", () => {
   test("normalizes a delivered event with top-level created_at", () => {
@@ -338,6 +348,156 @@ describe("parseSndrWebhook", () => {
     ).toMatchObject({
       type: "unknown",
       recipient: "a@example.com",
+    });
+  });
+});
+
+describe("parseTwilioSmsWebhook", () => {
+  test("normalizes a delivered StatusCallback", () => {
+    const events = parseTwilioSms({
+      MessageSid: "SM123",
+      MessageStatus: "delivered",
+      To: "+15551234567",
+    });
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      channel: "sms",
+      provider: "twilio-sms",
+      type: "delivered",
+      messageId: "SM123",
+      recipient: "+15551234567",
+    });
+  });
+
+  test("parses URLSearchParams form bodies", () => {
+    const events = parseTwilioSms(
+      new URLSearchParams({
+        MessageSid: "SM456",
+        MessageStatus: "undelivered",
+        To: "+15557654321",
+        ErrorCode: "30005",
+      }),
+    );
+    expect(events[0]?.type).toBe("failed");
+  });
+
+  test("verifySignature accepts a valid Twilio signature", async () => {
+    const url = "https://example.com/sms/status";
+    const params = { MessageSid: "SM123", MessageStatus: "delivered" };
+    const authToken = "auth_token_test";
+
+    // Compute expected signature the same way Twilio documents.
+    const data =
+      url +
+      Object.keys(params)
+        .sort()
+        .map((key) => key + params[key as keyof typeof params])
+        .join("");
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(authToken),
+      { name: "HMAC", hash: "SHA-1" },
+      false,
+      ["sign"],
+    );
+    const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data));
+    const signature = btoa(String.fromCharCode(...new Uint8Array(mac)));
+
+    expect(await verifyTwilioSmsSignature(url, params, signature, authToken)).toBe(true);
+    expect(await verifyTwilioSmsSignature(url, params, "bad", authToken)).toBe(false);
+  });
+});
+
+describe("parseWhatsAppCloudWebhook", () => {
+  test("normalizes status updates", () => {
+    const events = parseWhatsAppCloud({
+      object: "whatsapp_business_account",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                statuses: [
+                  {
+                    id: "wamid.abc",
+                    status: "delivered",
+                    timestamp: "1705312800",
+                    recipient_id: "15551234567",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      channel: "whatsapp",
+      provider: "whatsapp-cloud",
+      type: "delivered",
+      messageId: "wamid.abc",
+      recipient: "15551234567",
+    });
+  });
+
+  test("verifySignature accepts a valid X-Hub-Signature-256", async () => {
+    const body = '{"object":"whatsapp_business_account"}';
+    const appSecret = "app_secret_test";
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(appSecret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(body));
+    const hex = [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, "0")).join("");
+
+    expect(await verifyWhatsAppCloudSignature(body, `sha256=${hex}`, appSecret)).toBe(true);
+    expect(await verifyWhatsAppCloudSignature(body, `sha256=${"0".repeat(64)}`, appSecret)).toBe(
+      false,
+    );
+  });
+});
+
+describe("parseUnifonicWebhook", () => {
+  test("normalizes DLR-style payloads", () => {
+    const events = parseUnifonic({
+      success: true,
+      data: {
+        MessageID: 42000348806924,
+        Status: "Delivered",
+        Recipient: "966501234567",
+      },
+    });
+
+    expect(events[0]).toMatchObject({
+      channel: "sms",
+      provider: "unifonic",
+      type: "delivered",
+      messageId: "42000348806924",
+      recipient: "966501234567",
+    });
+  });
+});
+
+describe("toDeliveryEvent", () => {
+  test("maps EmailEvent into DeliveryEvent", () => {
+    const email = parseResend({
+      type: "email.delivered",
+      created_at: "2024-01-15T10:00:00.000Z",
+      data: { email_id: "re_abc123", to: ["user@example.com"] },
+    })[0];
+
+    expect(email).toBeDefined();
+    expect(toDeliveryEvent(email!)).toMatchObject({
+      channel: "email",
+      provider: "resend",
+      type: "delivered",
+      messageId: "re_abc123",
     });
   });
 });

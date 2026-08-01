@@ -1,13 +1,21 @@
 ---
 title: Push options
-description: Fields accepted by `PushSender.send`.
+description: Fields accepted by `PushSender.send` for Web Push and FCM.
 icon: Bell
 source: "src/core/push-types.ts"
 ---
 
+`PushOptions` is `WebPushOptions | FcmPushOptions`.
+Pick the shape that matches your transport.
+
+<Callout title="The one rule">
+  Pass `subscription` to `WebPushTransport` and `token` to `FcmTransport`.
+</Callout>
+
+## Shared fields
+
 | Field | Type | Required |
 | --- | --- | --- |
-| `subscription` | `PushSubscription` | yes |
 | `title` | `string` | yes |
 | `body` | `string` | yes |
 | `data` | `Record<string, unknown>` | no |
@@ -15,6 +23,39 @@ source: "src/core/push-types.ts"
 | `ttl` | `number` | no |
 | `messageId` | `string` | no |
 
+## Web Push
+
+| Field | Type | Required |
+| --- | --- | --- |
+| `subscription` | `PushSubscription` | yes |
+
 A subscription contains `endpoint`, `keys.p256dh`, and `keys.auth`.
 
-<Cards><Card title="Push channel" href="/docs/channels/push" /></Cards>
+## FCM
+
+| Field | Type | Required |
+| --- | --- | --- |
+| `token` | `string` | yes |
+| `image` | `string` | no |
+
+FCM stringifies non-string `data` values before send.
+
+## Result
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `messageId` | `string` | Provider or client id |
+| `status` | `string` | e.g. `"accepted"` |
+| `response` | `string` | Often the HTTP status or FCM name |
+| `provider` | `string?` | `"webpush"` / `"fcm"`; set by fallback |
+| `providerIndex` | `number?` | Fallback chain index |
+
+Map any channel result with [channel send result](./channel-result).
+
+## Next
+
+<Cards>
+  <Card title="Push channel" href="/docs/channels/push" />
+  <Card title="FCM transport" href="/docs/transports/fcm" />
+  <Card title="Channel send result" href="/docs/reference/channel-result" />
+</Cards>

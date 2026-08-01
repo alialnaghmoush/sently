@@ -1,14 +1,15 @@
 /**
  * @module
- * Provider webhook parsers — normalize delivery events into {@link EmailEvent}.
+ * Provider webhook parsers — normalize delivery events into {@link EmailEvent}
+ * or {@link DeliveryEvent} (SMS / WhatsApp).
  *
  * Pure parsing only; no server framework required. Signature verification
  * helpers are optional and never required to call `parse`.
  *
  * Prefer per-provider subpaths for the smallest runtime graph
- * (`sently/webhooks/resend`, `sently/webhooks/sndr`, …). This barrel re-exports
- * every parser for convenience — bundlers tree-shake unused named imports, but
- * Node/Deno without a bundler evaluate every re-export.
+ * (`sently/webhooks/resend`, `sently/webhooks/twilio-sms`, …). This barrel
+ * re-exports every parser for convenience — bundlers tree-shake unused named
+ * imports, but Node/Deno without a bundler evaluate every re-export.
  *
  * @example
  * ```ts
@@ -41,4 +42,14 @@ export {
   parse as parseSndrWebhook,
   verifySignature as verifySndrSignature,
 } from "./webhooks/sndr.js";
-export type { EmailEvent } from "./webhooks/types.js";
+export {
+  parse as parseTwilioSmsWebhook,
+  verifySignature as verifyTwilioSmsSignature,
+} from "./webhooks/twilio-sms.js";
+export type { DeliveryChannel, DeliveryEvent, EmailEvent } from "./webhooks/types.js";
+export { toDeliveryEvent } from "./webhooks/types.js";
+export { parse as parseUnifonicWebhook } from "./webhooks/unifonic.js";
+export {
+  parse as parseWhatsAppCloudWebhook,
+  verifySignature as verifyWhatsAppCloudSignature,
+} from "./webhooks/whatsapp-cloud.js";

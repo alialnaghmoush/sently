@@ -1,8 +1,8 @@
 /**
  * @module
- * RetryTransport — decorator that wraps any sently transport
+ * RetryTransport — decorator that wraps any sently channel transport
  * and retries failed sends with configurable backoff.
- * Works with SMTP, Resend, SendGrid, SES, and any custom transport.
+ * Works with email, SMS, WhatsApp, and push transports.
  *
  * @example
  * ```ts
@@ -15,14 +15,9 @@
  * )
  * ```
  */
+import type { DecoratedTransport } from "../core/decorated-transport.js";
 import { SentlyError } from "../core/errors.js";
-import type {
-  MailOptions,
-  RetryConfig,
-  SendResult,
-  Transport,
-  VerifyResult,
-} from "../core/types.js";
+import type { MailOptions, RetryConfig, SendResult, VerifyResult } from "../core/types.js";
 
 const DEFAULT_RETRY_ON = [429, 500, 502, 503, 504];
 
@@ -55,8 +50,11 @@ function shouldRetry(err: unknown, retryOn: number[]): boolean {
 
 /**
  * Decorator transport that retries failed sends with configurable backoff.
+ * Defaults preserve email {@link Transport} compatibility.
  */
-export class RetryTransport implements Transport {
+export class RetryTransport<TOptions = MailOptions, TResult = SendResult>
+  implements DecoratedTransport<TOptions, TResult>
+{
   readonly provider = "retry";
 
   /** Maximum send attempts including the initial try. */
@@ -69,13 +67,13 @@ export class RetryTransport implements Transport {
   private readonly retryOn: number[];
   /** Optional callback invoked before each retry attempt. */
   private readonly onRetry: RetryConfig["onRetry"];
-  /** Additional onRetry callback wired by {@link MailerImpl} hooks per send. */
+  /** Additional onRetry callback wired by sender lifecycle hooks per send. */
   private mailerOnRetry: RetryConfig["onRetry"];
 
   /** Wraps an inner transport with retry logic and optional backoff configuration. */
   constructor(
     /** Transport that performs the actual send on each attempt. */
-    private readonly inner: Transport,
+    private readonly inner: DecoratedTransport<TOptions, TResult>,
     config?: RetryConfig,
     /** Injectable sleep function for testing backoff timing. */
     private readonly _sleep: (ms: number) => Promise<void> = (ms) =>
@@ -90,10 +88,10 @@ export class RetryTransport implements Transport {
   }
 
   /**
-   * Register a per-send onRetry callback from mailer lifecycle hooks.
-   * Do not share one {@link RetryTransport} across multiple mailers — the last
+   * Register a per-send onRetry callback from sender lifecycle hooks.
+   * Do not share one {@link RetryTransport} across multiple senders — the last
    * `setMailerOnRetry` wins; overwriting an active callback logs a dev warning.
-   * @internal Used by {@link MailerImpl}; cleared after each send.
+   * @internal Cleared after each send.
    */
   setMailerOnRetry(callback: RetryConfig["onRetry"] | undefined): void {
     if (
@@ -104,7 +102,7 @@ export class RetryTransport implements Transport {
       const isProduction = typeof process !== "undefined" && process.env?.NODE_ENV === "production";
       if (!isProduction) {
         console.warn(
-          "[sently] RetryTransport.setMailerOnRetry: overwriting an active mailer onRetry callback. Do not share one RetryTransport instance across multiple mailers.",
+          "[sently] RetryTransport.setMailerOnRetry: overwriting an active mailer onRetry callback. Do not share one RetryTransport instance across multiple senders.",
         );
       }
     }
@@ -112,7 +110,7 @@ export class RetryTransport implements Transport {
   }
 
   /** Sends with retries according to configured backoff and retry rules. */
-  async send(options: MailOptions): Promise<SendResult> {
+  async send(options: TOptions): Promise<TResult> {
     let lastError: unknown;
 
     for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
@@ -150,7 +148,7 @@ export class RetryTransport implements Transport {
   }
 
   /** Delegates batch sends to the inner transport when available. */
-  async sendBatch(messages: MailOptions[]): Promise<SendResult[]> {
+  async sendBatch(messages: TOptions[]): Promise<TResult[]> {
     if (this.inner.sendBatch) {
       return this.inner.sendBatch(messages);
     }

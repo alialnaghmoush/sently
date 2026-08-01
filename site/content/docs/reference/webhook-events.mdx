@@ -1,16 +1,28 @@
 ---
 title: Webhook events
-description: Normalized EmailEvent fields returned by every provider webhook parser.
+description: Normalized EmailEvent and DeliveryEvent fields from provider webhook parsers.
 icon: Webhook
 source: "src/webhooks/types.ts"
 ---
 
-Every parser returns `EmailEvent[]` so delivery webhooks can share one application pipeline.
-Verify signatures in the [webhooks guide](/docs/guides/webhooks) before you process events.
+Email parsers return `EmailEvent[]`. SMS and WhatsApp parsers return `DeliveryEvent[]`.
+Use `toDeliveryEvent` to put email events on the same ingest path as SMS / WhatsApp.
 
 <Callout title="The one rule">
   Branch on `event.type` and keep provider-specific details in `event.raw` when you need them.
 </Callout>
+
+## DeliveryEvent
+
+| Field | Type | Meaning |
+| ----- | ---- | ------- |
+| `channel` | `"email" \| "sms" \| "whatsapp" \| "push"` | Messaging channel |
+| `provider` | `string` | Parser id (e.g. `"twilio-sms"`) |
+| `type` | union below | Normalized lifecycle type |
+| `messageId` | `string?` | Provider message id when present |
+| `recipient` | `string?` | Address or phone when present |
+| `timestamp` | `Date?` | Event time when present |
+| `raw` | `unknown` | Original provider payload |
 
 ## EmailEvent
 
@@ -25,15 +37,27 @@ Verify signatures in the [webhooks guide](/docs/guides/webhooks) before you proc
 
 ## Normalized `type` values
 
-| Value | Meaning |
-| ----- | ------- |
-| `delivered` | Accepted / delivered to the mailbox provider. |
-| `bounced` | Hard failure or bounce. |
-| `complained` | Spam complaint. |
-| `opened` | Open tracking. |
-| `clicked` | Click tracking. |
-| `deferred` | Temporary deferral. |
-| `unknown` | Unmapped or informational provider event. |
+| Value | Channels | Meaning |
+| ----- | -------- | ------- |
+| `queued` | SMS | Accepted / queued by the provider |
+| `sent` | SMS / WhatsApp | Handed to the network |
+| `delivered` | All | Delivered (or mailbox accepted for email) |
+| `failed` | SMS / WhatsApp | Permanent failure |
+| `read` | SMS / WhatsApp | Read receipt |
+| `bounced` | Email | Hard failure or bounce |
+| `complained` | Email | Spam complaint |
+| `opened` | Email | Open tracking |
+| `clicked` | Email | Click tracking |
+| `deferred` | Email | Temporary deferral |
+| `unknown` | All | Unmapped or informational event |
+
+## Mapping helpers
+
+```ts
+import { toDeliveryEvent } from "sently/webhooks";
+
+const delivery = toDeliveryEvent(emailEvent);
+```
 
 ## SNDR mapping
 
@@ -51,7 +75,7 @@ SNDR `data.email_id` becomes `messageId`. Recipients come from `data.to` or `dat
 
 <Accordion title="Why is unsubscribed mapped to unknown?">
 
-The shared `EmailEvent.type` union has no unsubscribe value. Keep the vendor payload in `raw` if you need unsubscribe-specific handling.
+The shared email `type` union has no unsubscribe value. Keep the vendor payload in `raw` if you need unsubscribe-specific handling.
 
 </Accordion>
 
@@ -60,7 +84,7 @@ The shared `EmailEvent.type` union has no unsubscribe value. Keep the vendor pay
 ## Learn more
 
 - [Webhooks guide](/docs/guides/webhooks) — verify + parse flow
-- [SNDR transport](/docs/transports/sndr) — sending side
+- [Channel send result](/docs/reference/channel-result) — send-time accepted mapping
 
 ## Next
 

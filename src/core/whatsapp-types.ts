@@ -75,6 +75,11 @@ export interface WhatsAppSendResult {
   response: string;
   /** Transport or provider identifier (e.g. `"whatsapp-cloud"`). */
   provider?: string;
+  /**
+   * Zero-based index of the transport that handled the send in a fallback chain.
+   * Set by {@link FallbackTransport}.
+   */
+  providerIndex?: number;
 }
 
 /** Pluggable WhatsApp delivery backend. */
@@ -120,6 +125,18 @@ export interface WhatsAppHooks {
    * @param durationMs — elapsed milliseconds from send start to failure (optional third argument).
    */
   onError?: (ctx: WhatsAppHookContext, error: unknown, durationMs?: number) => void | Promise<void>;
+  /** Fired before each retry attempt (requires {@link RetryTransport}). */
+  onRetry?: (ctx: WhatsAppHookContext, attempt: number, error: unknown) => void | Promise<void>;
+  /**
+   * Fired when {@link FallbackTransport} fails over to the next provider.
+   * Requires a fallback (or weighted fallback) transport in the WhatsApp stack.
+   */
+  onFallback?: (
+    ctx: WhatsAppHookContext,
+    failedProvider: string,
+    nextProvider: string,
+    error: unknown,
+  ) => void | Promise<void>;
 }
 
 /**

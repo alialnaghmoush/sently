@@ -12,4 +12,22 @@ source: "src/core/whatsapp-types.ts"
 
 Both shapes accept optional `messageId`. Template components can include `header`, `body`, or `button` parameters.
 
-<Cards><Card title="WhatsApp channel" href="/docs/channels/whatsapp" /></Cards>
+## Result
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `messageId` | `string` | Provider or client id |
+| `to` | `string` | Recipient |
+| `status` | `string` | e.g. `"accepted"` |
+| `response` | `string` | Provider text |
+| `provider` | `string?` | Transport id; set by fallback |
+| `providerIndex` | `number?` | Fallback chain index |
+
+Map any channel result with [channel send result](./channel-result).
+
+## Next
+
+<Cards>
+  <Card title="WhatsApp channel" href="/docs/channels/whatsapp" />
+  <Card title="Channel send result" href="/docs/reference/channel-result" />
+</Cards>

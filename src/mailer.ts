@@ -24,6 +24,7 @@
  * ```
  */
 import { extractEmails } from "./core/address.js";
+import { isFallbackHookTransport, isRetryHookTransport } from "./core/decorator-hooks.js";
 import { SentlyError } from "./core/errors.js";
 import { invokeHook } from "./core/hooks.js";
 import { runPlugins } from "./core/plugin.js";
@@ -44,26 +45,6 @@ import type {
 } from "./core/types.js";
 
 export type { MailerHookContext, MailerHooks, TransportMailerOptions };
-
-/** Retry decorator wired by mailer hooks (duck-typed to avoid pulling retry into all bundles). */
-interface RetryHookTransport extends Transport {
-  setMailerOnRetry(callback: ((attempt: number, error: unknown) => void) | undefined): void;
-}
-
-function isRetryHookTransport(transport: Transport): transport is RetryHookTransport {
-  return typeof (transport as RetryHookTransport).setMailerOnRetry === "function";
-}
-
-/** Fallback decorator wired by mailer hooks (duck-typed). */
-interface FallbackHookTransport extends Transport {
-  setMailerOnFallback(
-    callback: ((failedProvider: string, nextProvider: string, error: unknown) => void) | undefined,
-  ): void;
-}
-
-function isFallbackHookTransport(transport: Transport): transport is FallbackHookTransport {
-  return typeof (transport as FallbackHookTransport).setMailerOnFallback === "function";
-}
 
 const TRANSPORT_ONLY_SMTP_CONFIG_MESSAGE =
   "SMTP config passed to transport-only createMailer. Use: import { createSMTPMailer } from 'sently' or import { createSMTPMailer } from 'sently/smtp'.";

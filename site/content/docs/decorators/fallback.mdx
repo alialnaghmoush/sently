@@ -1,34 +1,61 @@
 ---
 title: Fallback
-description: Fail over across ordered email transports.
+description: Fail over through an ordered list of channel transports.
 icon: GitBranch
 source: "src/transports/fallback.ts"
 ---
 
-Fail over across ordered email transports.
+Fail over through an ordered list of transports when the current one errors.
+Works with email, SMS, WhatsApp, and push.
 
-<Callout title="The one rule">Permanent client errors do not fall through by default.</Callout>
+<Callout title="The one rule">Wrap each entry in `RetryTransport` when you want in-provider retries before failover.</Callout>
 
-## Configuration
+## Quick start
 
-Pass a non-empty transport array; options include `shouldFallback`, `onFallback`, and `cooldownMs`.
-
-<Steps><Step title="Wrap an email transport">
+<Steps>
+  <Step title="Build a chain">
 
 ```ts
 import { FallbackTransport } from "sently/transports/fallback";
+import { TaqnyatSmsTransport } from "sently/transports/taqnyat-sms";
+import { UnifonicTransport } from "sently/transports/unifonic";
 
-const transport = new FallbackTransport([primary, secondary], { cooldownMs: 300_000 });
+const transport = new FallbackTransport(
+  [
+    new TaqnyatSmsTransport({ bearerToken: process.env.TAQNYAT_TOKEN!, sender: "MyBrand" }),
+    new UnifonicTransport({ appSid: process.env.UNIFONIC_APPSID!, senderId: "MyBrand" }),
+  ],
+  { cooldownMs: 300_000 },
+);
 ```
 
-</Step><Step title="Create the mailer">
+  </Step>
+  <Step title="Use the matching sender">
 
 ```ts
-const mailer = await createMailer({ transport });
+import { createSmsSender } from "sently/sms";
+
+const sms = createSmsSender({ transport });
 ```
 
-</Step></Steps>
+  </Step>
+</Steps>
 
-<Accordions><Accordion title="Does this replace the inner provider?">No. It delegates sends to the wrapped transport.</Accordion></Accordions>
+## Result fields
 
-<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>
+Successful sends include `provider` and `providerIndex` for the transport that handled the message.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Why did it not fail over on 400?">
+    Permanent client errors (400 / 401 / 403) do not fail over by default — they usually fail on every provider.
+  </Accordion>
+</Accordions>
+
+## Next
+
+<Cards>
+  <Card title="Weighted fallback" href="/docs/decorators/weighted-fallback" />
+  <Card title="Retry" href="/docs/decorators/retry" />
+</Cards>

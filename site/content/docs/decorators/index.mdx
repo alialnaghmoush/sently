@@ -1,25 +1,27 @@
 ---
 title: Decorators
-description: Wrap an email transport with retry, fallback, preview, or idempotency.
+description: Wrap any channel transport with retry, fallback, preview, or idempotency.
 icon: Layers
 source: "src/transports/retry.ts"
 ---
 
-Decorators wrap another email transport. The mailer still calls `send` the same way — only the transport path changes.
+Decorators wrap another transport. The channel sender still calls `send` the same way — only the transport path changes.
+Retry, fallback, and weighted fallback work for email, SMS, WhatsApp, and push.
+Preview and idempotency remain email-oriented.
 
-<Callout title="The one rule">Pass the outermost decorator to `createMailer`. Inner transports stay providers (or other decorators).</Callout>
+<Callout title="The one rule">Pass the outermost decorator to the matching channel sender (`createMailer`, `createSmsSender`, …).</Callout>
 
 ## Available decorators
 
-| Decorator | Import |
-| --- | --- |
-| [Preview](./preview) | `sently/transports/preview` |
-| [Retry](./retry) | `sently/transports/retry` |
-| [Fallback](./fallback) | `sently/transports/fallback` |
-| [Weighted fallback](./weighted-fallback) | `sently/transports/weighted-fallback` |
-| [Idempotency](./idempotency) | `sently/idempotency` |
+| Decorator | Import | Channels |
+| --- | --- | --- |
+| [Preview](./preview) | `sently/transports/preview` | Email |
+| [Retry](./retry) | `sently/transports/retry` | Email, SMS, WhatsApp, Push |
+| [Fallback](./fallback) | `sently/transports/fallback` | Email, SMS, WhatsApp, Push |
+| [Weighted fallback](./weighted-fallback) | `sently/transports/weighted-fallback` | Email, SMS, WhatsApp, Push |
+| [Idempotency](./idempotency) | `sently/idempotency` | Email |
 
-## Typical stack
+## Typical stack (email)
 
 ```ts
 import { createMailer } from "sently/mailer";
@@ -35,10 +37,25 @@ const transport = new FallbackTransport([
 const mailer = await createMailer({ transport });
 ```
 
+## Typical stack (SMS)
+
+```ts
+import { createSmsSender } from "sently/sms";
+import { FallbackTransport } from "sently/transports/fallback";
+import { TaqnyatSmsTransport } from "sently/transports/taqnyat-sms";
+import { UnifonicTransport } from "sently/transports/unifonic";
+
+const sms = createSmsSender({
+  transport: new FallbackTransport([
+    new TaqnyatSmsTransport({ bearerToken: process.env.TAQNYAT_TOKEN!, sender: "MyBrand" }),
+    new UnifonicTransport({ appSid: process.env.UNIFONIC_APPSID!, senderId: "MyBrand" }),
+  ]),
+});
+```
+
 ## Learn more
 
 - [Transports](../transports)
-- [Email channel](../channels/email)
 - [Hooks](../channels/hooks)
 
 ## Next

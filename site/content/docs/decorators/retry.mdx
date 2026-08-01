@@ -1,11 +1,12 @@
 ---
 title: Retry
-description: Retry failed email sends with configurable backoff.
+description: Retry failed sends with configurable backoff on any channel transport.
 icon: RotateCw
 source: "src/transports/retry.ts"
 ---
 
-Retry failed email sends with configurable backoff.
+Retry failed sends with configurable backoff.
+Works with email, SMS, WhatsApp, and push transports.
 
 <Callout title="The one rule">Authentication errors are not retried.</Callout>
 
@@ -13,22 +14,44 @@ Retry failed email sends with configurable backoff.
 
 `maxAttempts`, `backoff`, `baseDelay`, `retryOn`, and `onRetry` are optional.
 
-<Steps><Step title="Wrap an email transport">
+## Quick start
+
+<Steps>
+  <Step title="Wrap a transport">
 
 ```ts
 import { RetryTransport } from "sently/transports/retry";
+import { TaqnyatSmsTransport } from "sently/transports/taqnyat-sms";
 
-const transport = new RetryTransport(new ResendTransport({ apiKey: "..." }), { maxAttempts: 3 });
+const transport = new RetryTransport(
+  new TaqnyatSmsTransport({ bearerToken: "...", sender: "MyBrand" }),
+  { maxAttempts: 3 },
+);
 ```
 
-</Step><Step title="Create the mailer">
+  </Step>
+  <Step title="Pass it to the channel sender">
 
 ```ts
-const mailer = await createMailer({ transport });
+import { createSmsSender } from "sently/sms";
+
+const sms = createSmsSender({ transport });
 ```
 
-</Step></Steps>
+  </Step>
+</Steps>
 
-<Accordions><Accordion title="Does this replace the inner provider?">No. It delegates sends to the wrapped transport.</Accordion></Accordions>
+## Troubleshooting
 
-<Cards><Card title="Email channel" href="/docs/channels/email" /></Cards>
+<Accordions>
+  <Accordion title="Does this replace the inner provider?">
+    No. It delegates sends to the wrapped transport.
+  </Accordion>
+</Accordions>
+
+## Next
+
+<Cards>
+  <Card title="Fallback" href="/docs/decorators/fallback" />
+  <Card title="Hooks" href="/docs/channels/hooks" />
+</Cards>

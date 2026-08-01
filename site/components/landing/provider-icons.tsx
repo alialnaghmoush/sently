@@ -34,7 +34,7 @@ function PathIcon({
       role="img"
       viewBox="0 0 24 24"
       fill="currentColor"
-      className={cn("size-4 shrink-0", className)}
+      className={cn("block size-4 shrink-0", className)}
       aria-hidden
     >
       <path d={path} fillRule={fillRule} />
@@ -50,7 +50,7 @@ function Monogram({ letters, className }: IconProps & { readonly letters: string
     <span
       aria-hidden
       className={cn(
-        "inline-flex size-4 shrink-0 items-center justify-center rounded-[3px] border border-current/35 font-mono text-[8px] font-semibold leading-none tracking-tighter",
+        "flex size-4 shrink-0 items-center justify-center rounded-[3px] border border-current/35 font-mono text-[8px] font-semibold leading-none tracking-tighter",
         letters.length > 2 && "text-[6.5px]",
         className,
       )}
@@ -72,7 +72,7 @@ function SmtpIcon({ className }: IconProps) {
       fill="none"
       stroke="currentColor"
       strokeWidth="1.75"
-      className={cn("size-4 shrink-0", className)}
+      className={cn("block size-4 shrink-0", className)}
       aria-hidden
     >
       <circle cx="12" cy="12" r="8.25" />
@@ -90,7 +90,7 @@ function PushIcon({ className }: IconProps) {
       fill="none"
       stroke="currentColor"
       strokeWidth="1.75"
-      className={cn("size-4 shrink-0", className)}
+      className={cn("block size-4 shrink-0", className)}
       aria-hidden
     >
       <path
@@ -120,8 +120,10 @@ const ICONS: Record<string, (props: IconProps) => ReactNode> = {
   Twilio: (p) => <PathIcon path={TWILIO_PATH} {...p} />,
   Taqnyat: (p) => <Monogram letters="TQ" {...p} />,
   Msegat: (p) => <Monogram letters="MG" {...p} />,
+  Unifonic: (p) => <Monogram letters="UF" {...p} />,
   "WhatsApp Cloud": (p) => <PathIcon path={siWhatsapp.path} {...p} />,
   "Web Push": (p) => <PushIcon {...p} />,
+  FCM: (p) => <Monogram letters="FC" {...p} />,
 };
 
 /**
