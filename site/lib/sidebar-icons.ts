@@ -92,16 +92,15 @@ const TRANSPORT_ICONS: Readonly<Record<string, string>> = {
   "/docs/transports/sparkpost": "SparkPost",
   "/docs/transports/mailtrap": "Mailtrap",
   "/docs/transports/mailpit": "Mailpit",
+  "/docs/transports/inbucket": "Inbucket",
   "/docs/transports/loops": "Loops",
   "/docs/transports/cloudflare-email": "Cloudflare Email",
   "/docs/transports/sndr": "SNDR",
-  "/docs/transports/taqnyat-mail": "Taqnyat",
   "/docs/transports/twilio-sms": "Twilio",
-  "/docs/transports/taqnyat-sms": "Taqnyat",
   "/docs/transports/msegat": "Msegat",
   "/docs/transports/unifonic": "Unifonic",
   "/docs/transports/whatsapp-cloud": "WhatsApp Cloud",
-  "/docs/transports/taqnyat-whatsapp": "Taqnyat",
+  "/docs/transports/taqnyat": "Taqnyat",
   "/docs/transports/webpush": "Web Push",
   "/docs/transports/fcm": "FCM",
 };
@@ -130,7 +129,8 @@ const FOLDER_PATHS: Readonly<Record<string, string>> = {
 function iconForPath(path: string | undefined): ReactNode {
   if (!path) return undefined;
   const provider = TRANSPORT_ICONS[path];
-  if (provider) return createElement(ProviderIcon, { name: provider });
+  // Brand tone so marks like Taqnyat stay orange (not muted-foreground bullets).
+  if (provider) return createElement(ProviderIcon, { name: provider, tone: "brand" });
   const name = PATH_ICONS[path];
   if (!name) return undefined;
   const Icon = icons[name] as LucideIcon | undefined;

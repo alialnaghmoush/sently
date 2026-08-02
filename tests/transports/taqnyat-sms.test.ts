@@ -225,4 +225,97 @@ describe("TaqnyatSmsTransport", () => {
       message: "Activation code is incorrect.",
     });
   });
+
+  test("getBalance() maps account balance payload", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({
+        statusCode: 200,
+        accountStatus: "active",
+        accountExpiryDate: "02-08-2027",
+        balance: "1",
+        currency: "SAR",
+      }),
+    );
+
+    const transport = new TaqnyatSmsTransport({
+      bearerToken: "tok_test",
+      sender: "MyBrand",
+    });
+    const result = await transport.getBalance();
+
+    expect(result).toEqual({
+      accountStatus: "active",
+      balance: "1",
+      currency: "SAR",
+      accountExpiryDate: "02-08-2027",
+      provider: "taqnyat-sms",
+    });
+    expect((captured[0] as CapturedRequest).url).toContain("/account/balance?");
+    expect((captured[0] as CapturedRequest).url).toContain("bearerTokens=tok_test");
+  });
+
+  test("listSenders() returns sender rows", async () => {
+    installFetchMock(() =>
+      Response.json({
+        statusCode: 200,
+        senders: [{ senderName: "Taqnyat.sa", status: "active" }],
+      }),
+    );
+
+    const transport = new TaqnyatSmsTransport({
+      bearerToken: "tok_test",
+      sender: "MyBrand",
+    });
+    await expect(transport.listSenders()).resolves.toEqual([
+      { senderName: "Taqnyat.sa", status: "active" },
+    ]);
+  });
+
+  test("schedule() posts scheduledDatetime and deleteId", async () => {
+    const captured = installFetchMock(() =>
+      Response.json(
+        { statusCode: 201, messageId: 111, cost: 0.15, currency: "SAR" },
+        { status: 201 },
+      ),
+    );
+
+    const transport = new TaqnyatSmsTransport({
+      bearerToken: "tok_test",
+      sender: "MyBrand",
+    });
+    const result = await transport.schedule({
+      to: "+966501234567",
+      body: "Later",
+      scheduledDatetime: "2030-01-01T10:00",
+      deleteId: "demo-1",
+    });
+
+    expect(result.messageId).toBe("111");
+    expect(result.deleteId).toBe("demo-1");
+    expect(JSON.parse(String((captured[0] as CapturedRequest).init.body))).toMatchObject({
+      scheduledDatetime: "2030-01-01T10:00",
+      deleteId: "demo-1",
+      recipients: ["966501234567"],
+    });
+  });
+
+  test("deleteScheduled() DELETEs with deleteId", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({ statusCode: 201, message: "Deleted successfully" }, { status: 201 }),
+    );
+
+    const transport = new TaqnyatSmsTransport({
+      bearerToken: "tok_test",
+      sender: "MyBrand",
+    });
+    await expect(transport.deleteScheduled("demo-1")).resolves.toMatchObject({
+      ok: true,
+      message: "Deleted successfully",
+    });
+
+    const { url, init } = captured[0] as CapturedRequest;
+    expect(init.method).toBe("DELETE");
+    expect(url).toContain("/v1/messages/delete?");
+    expect(url).toContain("deleteId=demo-1");
+  });
 });

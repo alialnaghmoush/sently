@@ -1,3 +1,4 @@
+import { DocsBrandBadge } from "@/components/docs/brand-badge";
 import { DocsPageActions } from "@/components/docs-page-actions";
 import { getMDXComponents } from "@/components/mdx";
 import { getPageImageUrl, getPageMarkdownUrl, source } from "@/lib/source";
@@ -26,7 +27,10 @@ export default async function Page(props: PageProps<"/docs/[[...slug]]">) {
 
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
-      <DocsTitle>{page.data.title}</DocsTitle>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <DocsTitle className="mb-0">{page.data.title}</DocsTitle>
+        <DocsBrandBadge title={page.data.title} />
+      </div>
       <DocsDescription className="mb-0">{page.data.description}</DocsDescription>
       <DocsPageActions markdownUrl={markdownUrl} githubUrl={githubBlobUrl(sourcePath)} />
       <DocsBody>

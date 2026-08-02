@@ -5,46 +5,230 @@ icon: Truck
 source: "src/transports/webpush.ts"
 ---
 
-Encrypt and send browser notifications with VAPID.
+Encrypt and send browser notifications with VAPID — the welcome ping, the
+“report ready” alert, or a silent data sync to a service worker.
 
-<Callout title="The one rule">Create this transport under the matching sently channel sender.</Callout>
+<LiveVerified>
+Browser notification send with VAPID succeeded against a real push service (okengine live verification).
+</LiveVerified>
 
-## Configuration
+<Callout title="The one rule">
+  Create this transport under `createPushSender` and pass a browser
+  `subscription` — not an FCM device token.
+</Callout>
 
-| Option | Type | Default or requirement |
-| --- | --- | --- |
-| `vapidPublicKey` | `string` | required |
-| `vapidPrivateKey` | `string` | required |
-| `subject` | `string` | required — `mailto:you@example.com` or `https://example.com/contact` (validated at construction) |
-| `allowedEndpointHosts` | `string[]` | optional |
+## Quick start
 
 <Steps>
-  <Step title="Configure the transport">
+
+<Step>
+### Generate VAPID keys
+
+```ts
+import { generateVapidKeys } from "sently/transports/webpush";
+
+const { publicKey, privateKey } = await generateVapidKeys();
+// Store privateKey in env / secrets manager. Use publicKey in the browser subscribe call.
+```
+
+</Step>
+
+<Step>
+### Configure the sender
 
 ```ts
 import { createPushSender } from "sently/push";
 import { WebPushTransport } from "sently/transports/webpush";
 
-const sender = createPushSender({ transport: new WebPushTransport({ vapidPublicKey: "...", vapidPrivateKey: "...", subject: "mailto:you@example.com" }) });
+const push = createPushSender({
+  transport: new WebPushTransport({
+    vapidPublicKey: process.env.VAPID_PUBLIC_KEY!,
+    vapidPrivateKey: process.env.VAPID_PRIVATE_KEY!,
+    subject: "mailto:you@example.com",
+  }),
+});
 ```
 
-  </Step>
-  <Step title="Send with the channel API">
+</Step>
+
+<Step>
+### Send
 
 ```ts
-await sender.send({ subscription, title: "Hello", body: "World" });
+await push.send({
+  subscription,
+  title: "Report ready",
+  body: "Your weekly report is ready to view.",
+  urgency: "high",
+  topic: "report-ready",
+});
 ```
 
-  </Step>
+</Step>
+
 </Steps>
+
+## Configuration
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `vapidPublicKey` | `string` | required — base64url uncompressed P-256 (65 bytes) |
+| `vapidPrivateKey` | `string` | required — base64url raw private key (32 bytes) |
+| `subject` | `string` | required — `mailto:you@example.com` or `https://example.com/contact` |
+| `allowedEndpointHosts` | `string[]` | optional — exact hostnames for private push relays |
+
+## Send options (Web Push)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `subscription` | `PushSubscription` | required — `endpoint`, `keys.p256dh`, `keys.auth` |
+| `title` / `body` | `string` | required together for a visible notification |
+| `data` | `Record<string, unknown>` | optional; required for `silent` / data-only |
+| `icon` / `badge` / `image` | `string` | Notification API URLs |
+| `tag` | `string` | replace an existing notification with the same tag |
+| `actions` | `{ action, title, icon? }[]` | action buttons |
+| `requireInteraction` | `boolean` | keep open until the user interacts |
+| `renotify` | `boolean` | re-alert when replacing by `tag` |
+| `ttl` | `number` | seconds (default `2419200` / 28 days) |
+| `urgency` | `"very-low" \| "low" \| "normal" \| "high"` | RFC 8030 `Urgency` header |
+| `topic` | `string` | RFC 8030 `Topic` — 1–32 printable ASCII; collapses pending messages |
+| `silent` | `boolean` | encrypt only `data` (no visible fields); requires `data` |
+| `messageId` | `string` | optional client id |
+
+## Features
+
+Pick a branch. Channel send goes through `push`; key generation is imported from
+`sently/transports/webpush`.
+
+<Tabs items={["Send", "Urgency", "Topic", "Rich", "Silent", "Keys"]}>
+  <Tab value="Send">
+
+Visible notification via the channel sender.
+
+```ts
+await push.send({
+  subscription,
+  title: "Report ready",
+  body: "Your weekly report is ready to view.",
+});
+```
+
+  </Tab>
+  <Tab value="Urgency">
+
+RFC 8030 `Urgency` header — delivery priority hint for the push service.
+
+```ts
+await push.send({
+  subscription,
+  title: "Payment failed",
+  body: "Update your card to keep service running.",
+  urgency: "high",
+});
+```
+
+  </Tab>
+  <Tab value="Topic">
+
+RFC 8030 `Topic` — a newer message replaces a pending one with the same topic.
+
+```ts
+await push.send({
+  subscription,
+  title: "Order update",
+  body: "Your package is out for delivery.",
+  topic: "order-42",
+  ttl: 3600,
+});
+```
+
+  </Tab>
+  <Tab value="Rich">
+
+Notification API fields encrypted into the JSON payload for the service worker.
+
+```ts
+await push.send({
+  subscription,
+  title: "Report ready",
+  body: "Tap to open your weekly report.",
+  icon: "https://example.com/icon.png",
+  badge: "https://example.com/badge.png",
+  image: "https://example.com/hero.png",
+  tag: "report-ready",
+  requireInteraction: true,
+  renotify: true,
+  actions: [{ action: "open", title: "Open" }],
+  data: { reportId: "wk-12" },
+});
+```
+
+  </Tab>
+  <Tab value="Silent">
+
+Data-only / silent push — encrypt `data` without visible notification fields.
+The service worker must handle `push` without calling `showNotification`.
+
+```ts
+await push.send({
+  subscription,
+  silent: true,
+  data: { sync: "inbox", since: "2026-08-02T00:00:00Z" },
+});
+
+// Same shape without the flag: omit title/body and pass data.
+await push.send({
+  subscription,
+  data: { ping: 1 },
+});
+```
+
+  </Tab>
+  <Tab value="Keys">
+
+Generate a VAPID key pair (`generateVapidKeys` — not on `createPushSender`).
+
+```ts
+import { generateVapidKeys } from "sently/transports/webpush";
+
+const { publicKey, privateKey } = await generateVapidKeys();
+// Store privateKey in secrets. Use publicKey in pushManager.subscribe.
+```
+
+  </Tab>
+</Tabs>
+
+Invalid `urgency` / `topic`, `silent` without `data`, or a partial visible
+payload (`title` without `body`) throw `WebPushError` (`provider: "webpush"`)
+with status `400` before fetch.
+
+## Troubleshooting
 
 <Accordions>
   <Accordion title="Should I call the provider SDK?">
-    No. Use the sently sender; provider-specific extras stay on the transport instance.
+    No. Use the sently sender; provider-specific extras stay on the transport module.
   </Accordion>
   <Accordion title="Why does construction throw on subject?">
     VAPID `subject` must be a real `mailto:` address or `https:` URL. Values like `@oke.local` (no prefix) are rejected immediately as `WebPushError` so push services never return a confusing 403 later.
   </Accordion>
+  <Accordion title="Why does silent send fail?">
+    `silent: true` requires `data`. Without it the transport throws `WebPushError` with status `400`.
+  </Accordion>
+  <Accordion title="Why was my topic rejected?">
+    `topic` must be 1–32 printable ASCII characters (no spaces). Invalid values throw before fetch.
+  </Accordion>
 </Accordions>
 
-<Cards><Card title="Push channel" href="/docs/channels/push" /></Cards>
+## Learn more
+
+- [Push channel](/docs/channels/push) — sender, hooks, plugins
+- [Push options](/docs/reference/push-options) — union fields for Web Push and FCM
+- [Web Push interoperability](/docs/guides/webpush-interop) — browser subscription shape
+
+## Next
+
+<Cards>
+  <Card title="Push channel" href="/docs/channels/push" />
+  <Card title="Push options" href="/docs/reference/push-options" />
+  <Card title="FCM" href="/docs/transports/fcm" />
+</Cards>

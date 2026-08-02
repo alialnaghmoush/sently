@@ -1,7 +1,11 @@
 import { afterEach, beforeAll, describe, expect, test } from "bun:test";
-import { encodeBase64Url } from "../../src/core/base64.js";
+import { decodeBase64Url, encodeBase64Url } from "../../src/core/base64.js";
 import type { PushOptions } from "../../src/core/push-types.js";
-import { WebPushError, WebPushTransport } from "../../src/transports/webpush.js";
+import {
+  generateVapidKeys,
+  WebPushError,
+  WebPushTransport,
+} from "../../src/transports/webpush.js";
 
 const originalFetch = globalThis.fetch;
 
@@ -287,5 +291,136 @@ describe("WebPushTransport", () => {
 
     expect(captured[0]?.url).toBe("https://push.myrelay.example/s/token");
     expect(captured[0]?.init.redirect).toBe("manual");
+  });
+
+  test("send() sets Urgency and Topic headers", async () => {
+    const captured = installFetchMock(() => new Response(null, { status: 201 }));
+
+    const transport = new WebPushTransport({
+      vapidPublicKey,
+      vapidPrivateKey,
+      subject: "mailto:you@example.com",
+    });
+
+    await transport.send({
+      ...baseOptions(),
+      urgency: "high",
+      topic: "order-42",
+    });
+
+    const headers = captured[0]?.init.headers as Record<string, string>;
+    expect(headers.Urgency).toBe("high");
+    expect(headers.Topic).toBe("order-42");
+  });
+
+  test("send() rejects invalid urgency and topic", async () => {
+    const transport = new WebPushTransport({
+      vapidPublicKey,
+      vapidPrivateKey,
+      subject: "mailto:you@example.com",
+    });
+
+    await expect(
+      transport.send({ ...baseOptions(), urgency: "urgent" as "high" }),
+    ).rejects.toMatchObject({ name: "WebPushError", statusCode: 400 });
+
+    await expect(
+      transport.send({ ...baseOptions(), topic: "has space" }),
+    ).rejects.toMatchObject({ name: "WebPushError", statusCode: 400 });
+
+    await expect(
+      transport.send({ ...baseOptions(), topic: "x".repeat(33) }),
+    ).rejects.toMatchObject({ name: "WebPushError", statusCode: 400 });
+  });
+
+  test("send() accepts rich notification fields", async () => {
+    installFetchMock(() => new Response(null, { status: 201 }));
+
+    const transport = new WebPushTransport({
+      vapidPublicKey,
+      vapidPrivateKey,
+      subject: "mailto:you@example.com",
+    });
+
+    const result = await transport.send({
+      ...baseOptions(),
+      icon: "https://example.com/icon.png",
+      badge: "https://example.com/badge.png",
+      image: "https://example.com/hero.png",
+      tag: "report-ready",
+      requireInteraction: true,
+      renotify: true,
+      actions: [{ action: "open", title: "Open", icon: "https://example.com/open.png" }],
+    });
+
+    expect(result.status).toBe("accepted");
+  });
+
+  test("send() supports silent and data-only payloads", async () => {
+    installFetchMock(() => new Response(null, { status: 201 }));
+
+    const transport = new WebPushTransport({
+      vapidPublicKey,
+      vapidPrivateKey,
+      subject: "mailto:you@example.com",
+    });
+
+    const { subscription } = baseOptions();
+
+    await expect(
+      transport.send({
+        subscription,
+        silent: true,
+        data: { sync: true },
+      }),
+    ).resolves.toMatchObject({ status: "accepted", provider: "webpush" });
+
+    await expect(
+      transport.send({
+        subscription,
+        data: { ping: 1 },
+      }),
+    ).resolves.toMatchObject({ status: "accepted" });
+  });
+
+  test("send() rejects silent without data and partial visible fields", async () => {
+    const transport = new WebPushTransport({
+      vapidPublicKey,
+      vapidPrivateKey,
+      subject: "mailto:you@example.com",
+    });
+
+    const { subscription } = baseOptions();
+
+    await expect(
+      transport.send({ subscription, silent: true }),
+    ).rejects.toMatchObject({ name: "WebPushError", statusCode: 400 });
+
+    await expect(
+      transport.send({ subscription, title: "Only title" }),
+    ).rejects.toMatchObject({ name: "WebPushError", statusCode: 400 });
+
+    await expect(transport.send({ subscription })).rejects.toMatchObject({
+      name: "WebPushError",
+      statusCode: 400,
+    });
+  });
+
+  test("generateVapidKeys() returns raw web-push key lengths", async () => {
+    const keys = await generateVapidKeys();
+    const pub = decodeBase64Url(keys.publicKey);
+    const priv = decodeBase64Url(keys.privateKey);
+    expect(pub).toHaveLength(65);
+    expect(pub[0]).toBe(0x04);
+    expect(priv).toHaveLength(32);
+
+    expect(
+      () =>
+        new WebPushTransport({
+          vapidPublicKey: keys.publicKey,
+          vapidPrivateKey: keys.privateKey,
+          subject: "mailto:you@example.com",
+        }),
+    ).not.toThrow();
   });
 });

@@ -1,9 +1,9 @@
 # sently
 
-> Runtime-agnostic messaging library for Node.js, Bun, Deno, and Cloudflare Workers.
-> Channel-first email, SMS, WhatsApp, and push (Web Push / FCM). Zero runtime dependencies. ESM only.
-> Thesis: one sender shape, one error model, one retry/fallback path as channels grow — not a hosted orchestration platform.
-> Version: 1.0.x (see package.json). Full handbook: site/content/docs (bun run site:dev).
+> Sently is an open-source TypeScript notification and messaging infrastructure library.
+> One package for Email, SMS, WhatsApp, and Push (Web Push / FCM). Zero runtime dependencies. ESM only.
+> Apps use channel senders; providers are transports under those senders — not a message queue or hosted orchestration platform.
+> Version: 1.0.x (see package.json). Prefer the docs site `/llms.txt` when available; handbook: site/content/docs.
 
 ## Model
 
@@ -93,7 +93,7 @@ await push.send({ token, title: "Hi", body: "Hello" })
 
 ## Transports (exported)
 
-Email: smtp, resend, sendgrid, postmark, mailgun, ses, brevo, mailersend, plunk, sparkpost, mailtrap, mailpit, loops, cloudflare-email, sndr, taqnyat-mail, preview, retry, fallback, weighted-fallback
+Email: smtp, resend, sendgrid, postmark, mailgun, ses, brevo, mailersend, plunk, sparkpost, mailtrap, mailpit, inbucket, loops, cloudflare-email, sndr, taqnyat-mail, preview, retry, fallback, weighted-fallback
 
 SMS: twilio-sms, taqnyat-sms, msegat, unifonic
 

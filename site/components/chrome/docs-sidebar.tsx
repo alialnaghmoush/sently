@@ -108,7 +108,7 @@ function TreeLink({
       )}
     >
       {icon ? (
-        <span className="flex size-5 shrink-0 items-center justify-center [&>svg]:size-[14px]">
+        <span className="flex size-6 shrink-0 items-center justify-center [&>svg]:size-4 [&_svg[aria-label='Taqnyat']]:!size-auto [&_svg[aria-label='Taqnyat']]:!h-auto [&_svg[aria-label='Taqnyat']]:!w-6">
           {icon}
         </span>
       ) : null}
@@ -279,7 +279,7 @@ export function DocsTreeNav({
               )}
             >
               {node.icon ? (
-                <span className="flex size-5 shrink-0 items-center justify-center [&>svg]:size-[16px]">
+                <span className="flex size-6 shrink-0 items-center justify-center [&>svg]:size-[18px] [&_svg[aria-label='Taqnyat']]:!size-auto [&_svg[aria-label='Taqnyat']]:!h-auto [&_svg[aria-label='Taqnyat']]:!w-6">
                   {node.icon}
                 </span>
               ) : null}

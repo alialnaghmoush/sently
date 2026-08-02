@@ -29,6 +29,13 @@
  *   code: "6240",
  *   lang: "en",
  * });
+ * const balance = await taqnyat.getBalance();
+ * await taqnyat.schedule({
+ *   to: "+9665xxxxxxxx",
+ *   body: "Later",
+ *   scheduledDatetime: "2030-01-01T10:00",
+ *   deleteId: "demo-1",
+ * });
  * ```
  */
 import { httpStatusToSentlyCode, SentlyError } from "../core/errors.js";
@@ -97,6 +104,64 @@ export interface TaqnyatOtpVerifyResult {
   /** Provider message when present. */
   message: string;
   /** Raw response body text. */
+  response: string;
+  /** Provider identifier. */
+  provider: "taqnyat-sms";
+}
+
+/** Account balance from {@link TaqnyatSmsTransport.getBalance}. */
+export interface TaqnyatBalance {
+  /** Account status string from Taqnyat (e.g. `active`). */
+  accountStatus: string;
+  /** Balance amount as returned by the API (string). */
+  balance: string;
+  /** Currency code (usually `SAR`). */
+  currency: string;
+  /** Account expiry date when present. */
+  accountExpiryDate?: string;
+  /** Provider identifier. */
+  provider: "taqnyat-sms";
+}
+
+/** One sender row from {@link TaqnyatSmsTransport.listSenders}. */
+export interface TaqnyatSender {
+  /** Sender name exactly as registered. */
+  senderName: string;
+  /** Status string when present (e.g. `active`). */
+  status?: string;
+}
+
+/** Options for {@link TaqnyatSmsTransport.schedule}. */
+export interface TaqnyatScheduleOptions {
+  /** Recipient phone number (E.164 or international digits). */
+  to: string;
+  /** Message body. */
+  body: string;
+  /**
+   * Local schedule time in Taqnyat format, e.g. `2020-09-30T14:26`.
+   * Required by `POST /v1/messages` schedule docs.
+   */
+  scheduledDatetime: string;
+  /** Sender ID override; defaults to transport `sender`. */
+  from?: string;
+  /**
+   * Client delete key used later with {@link deleteScheduled}.
+   * Optional per Taqnyat schedule docs.
+   */
+  deleteId?: string | number;
+  /** Optional client id mapped to `smsId`. */
+  messageId?: string;
+}
+
+/** Result of a successful {@link TaqnyatSmsTransport.schedule} call. */
+export interface TaqnyatScheduleResult {
+  /** Provider message id when present. */
+  messageId: string;
+  /** Echo of {@link TaqnyatScheduleOptions.deleteId} when set. */
+  deleteId?: string;
+  /** Recipient as passed in. */
+  to: string;
+  /** Cost summary when present. */
   response: string;
   /** Provider identifier. */
   provider: "taqnyat-sms";
@@ -328,6 +393,169 @@ export class TaqnyatSmsTransport implements SmsTransport {
       code,
       message: verifyPayloadMessage(result) ?? "Activation process completed successfully",
       response: text,
+      provider: "taqnyat-sms",
+    };
+  }
+
+  /**
+   * Vendor extra: account balance via `GET /account/balance`.
+   * Not part of {@link SmsTransport}.
+   */
+  async getBalance(): Promise<TaqnyatBalance> {
+    const response = await fetch(
+      `https://api.taqnyat.sa/account/balance?bearerTokens=${encodeURIComponent(this.bearerToken)}`,
+      {
+        headers: { Authorization: `Bearer ${this.bearerToken}` },
+      },
+    );
+    const payload = (await response.json()) as {
+      statusCode?: number;
+      accountStatus?: string;
+      balance?: string;
+      currency?: string;
+      accountExpiryDate?: string;
+      message?: string;
+    };
+
+    if (!response.ok || payload.statusCode !== 200) {
+      throw new TaqnyatSmsError(
+        payload.message ?? "Taqnyat balance API error",
+        payload.statusCode ?? response.status,
+        payload,
+      );
+    }
+
+    return {
+      accountStatus: payload.accountStatus ?? "",
+      balance: payload.balance ?? "0",
+      currency: payload.currency ?? "SAR",
+      ...(payload.accountExpiryDate !== undefined
+        ? { accountExpiryDate: payload.accountExpiryDate }
+        : {}),
+      provider: "taqnyat-sms",
+    };
+  }
+
+  /**
+   * Vendor extra: list registered sender names via `GET /v1/messages/senders`.
+   * Not part of {@link SmsTransport}.
+   */
+  async listSenders(): Promise<TaqnyatSender[]> {
+    const response = await fetch(
+      `https://api.taqnyat.sa/v1/messages/senders?bearerTokens=${encodeURIComponent(this.bearerToken)}`,
+      {
+        headers: { Authorization: `Bearer ${this.bearerToken}` },
+      },
+    );
+    const payload = (await response.json()) as {
+      statusCode?: number;
+      senders?: Array<{ senderName?: string; status?: string }>;
+      message?: string;
+    };
+
+    if (!response.ok || payload.statusCode !== 200) {
+      throw new TaqnyatSmsError(
+        payload.message ?? "Taqnyat senders API error",
+        payload.statusCode ?? response.status,
+        payload,
+      );
+    }
+
+    return (payload.senders ?? [])
+      .filter(
+        (row): row is { senderName: string; status?: string } => typeof row.senderName === "string",
+      )
+      .map((row) => ({
+        senderName: row.senderName,
+        ...(row.status !== undefined ? { status: row.status } : {}),
+      }));
+  }
+
+  /**
+   * Vendor extra: schedule an SMS (`POST /v1/messages` + `scheduledDatetime`).
+   * Not part of {@link SmsTransport}.
+   */
+  async schedule(options: TaqnyatScheduleOptions): Promise<TaqnyatScheduleResult> {
+    const recipients = [normalizeTaqnyatPhone(options.to)];
+    const body: Record<string, unknown> = {
+      recipients,
+      body: options.body,
+      sender: options.from ?? this.sender,
+      scheduledDatetime: options.scheduledDatetime,
+    };
+    if (options.deleteId !== undefined) {
+      body.deleteId = options.deleteId;
+    }
+    if (options.messageId !== undefined) {
+      body.smsId = options.messageId;
+    }
+
+    const response = await fetch("https://api.taqnyat.sa/v1/messages", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    const payload = (await response.json()) as {
+      statusCode?: number;
+      messageId?: number;
+      cost?: number;
+      currency?: string;
+      message?: string;
+    };
+
+    if (response.status !== 201) {
+      throw new TaqnyatSmsError(
+        payload.message ?? "Taqnyat schedule SMS API error",
+        payload.statusCode ?? response.status,
+        payload,
+      );
+    }
+
+    return {
+      messageId: String(payload.messageId ?? options.messageId ?? ""),
+      ...(options.deleteId !== undefined ? { deleteId: String(options.deleteId) } : {}),
+      to: options.to,
+      response: `cost: ${payload.cost ?? "?"} ${payload.currency ?? "SAR"}`,
+      provider: "taqnyat-sms",
+    };
+  }
+
+  /**
+   * Vendor extra: delete a scheduled SMS via `DELETE /v1/messages/delete`.
+   * Pass the same `deleteId` used in {@link schedule}.
+   */
+  async deleteScheduled(
+    deleteId: string | number,
+  ): Promise<{ ok: true; message: string; provider: "taqnyat-sms" }> {
+    const url = new URL("https://api.taqnyat.sa/v1/messages/delete");
+    url.searchParams.set("bearerTokens", this.bearerToken);
+    url.searchParams.set("deleteId", String(deleteId));
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${this.bearerToken}` },
+    });
+
+    const payload = (await response.json()) as {
+      statusCode?: number;
+      message?: string;
+    };
+
+    if (response.status !== 201 && payload.statusCode !== 201) {
+      throw new TaqnyatSmsError(
+        payload.message ?? "Taqnyat delete scheduled SMS API error",
+        payload.statusCode ?? response.status,
+        payload,
+      );
+    }
+
+    return {
+      ok: true,
+      message: payload.message ?? "Deleted successfully",
       provider: "taqnyat-sms",
     };
   }

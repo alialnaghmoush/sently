@@ -11,14 +11,16 @@ const inter = localFont({
   display: "swap",
 });
 
+const SITE_DESCRIPTION =
+  "Open-source TypeScript notification and messaging infrastructure for Email, SMS, WhatsApp, and Push — one package, interchangeable providers, Node.js, Bun, Deno, and Cloudflare Workers.";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://sently.dev"),
   title: {
-    default: "sently",
+    default: "sently — TypeScript notification and messaging infrastructure",
     template: "%s | sently",
   },
-  description:
-    "Runtime-agnostic messaging for Node.js, Bun, Deno, and Cloudflare Workers — email, SMS, WhatsApp, and push with pluggable transports.",
+  description: SITE_DESCRIPTION,
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/apple-icon", type: "image/png" }],
@@ -26,15 +28,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "sently",
-    title: "sently",
-    description:
-      "Runtime-agnostic messaging for Node.js, Bun, Deno, and Cloudflare Workers — email, SMS, WhatsApp, and push with pluggable transports.",
+    title: "sently — TypeScript notification and messaging infrastructure",
+    description: SITE_DESCRIPTION,
   },
   twitter: {
     card: "summary",
-    title: "sently",
-    description:
-      "Runtime-agnostic messaging for Node.js, Bun, Deno, and Cloudflare Workers — email, SMS, WhatsApp, and push with pluggable transports.",
+    title: "sently — TypeScript notification and messaging infrastructure",
+    description: SITE_DESCRIPTION,
   },
 };
 

@@ -5,8 +5,12 @@ icon: Truck
 source: "src/transports/sndr.ts"
 ---
 
-Use SNDR when you want an HTTP email API for receipts, sign-in mail, and other app-triggered messages.
-Wire `SndrTransport` into `createMailer` — do not call the vendor SDK from application code.
+Use SNDR for app-triggered email — receipts, sign-in mail, and other transactional sends — over HTTPS JSON.
+Wire `SndrTransport` into `createMailer`; do not call `@rkiza/sndr` from application code.
+
+<LiveVerified>
+Email send against SNDR’s production API succeeded in sently’s opt-in live suite (verified domain + real recipient).
+</LiveVerified>
 
 <Callout title="The one rule">
   Import from `sently/transports/sndr`, pass the transport to `await createMailer(...)`, and send
@@ -55,7 +59,7 @@ console.log(result.messageId); // e.g. em_…
 console.log(result.response); // e.g. queued
 ```
 
-`from` must use a domain verified in the SNDR dashboard.
+`from` must use a domain verified in the [SNDR dashboard](https://www.sndr.sh/) (SPF, DKIM, DMARC).
 
 </Step>
 
@@ -82,10 +86,12 @@ console.log(result.response); // e.g. queued
 | `idempotencyKey` / `messageId` | `Idempotency-Key` | Sent when present. |
 | `data` | `variables` | Only when a template id is set. |
 
+`POST /v1/send` is idempotent when `Idempotency-Key` is supplied.
+
 ## Templates
 
 Set a template with the `x-sndr-template-id` header (or `defaultTemplateId` on the transport).
-Pass template variables through `data`.
+Pass template variables through `data` (`{{ variable }}` placeholders on SNDR).
 
 ```ts
 import { SNDR_TEMPLATE_ID_HEADER } from "sently/transports/sndr";
@@ -105,13 +111,57 @@ await mailer.send({
 
 Failed HTTP responses throw `SndrError` (`SentlyError`) with the API `error.message` when present.
 
+| SNDR `error.code` (common) | Meaning |
+| --- | --- |
+| `invalid_request` | Malformed payload |
+| `unauthenticated` | Missing or invalid API key |
+| `rate_limited` | Slow down |
+| `domain_not_verified` | Verify the sending domain first |
+| `recipient_suppressed` | Address is on the suppression list |
+
+## Webhooks
+
+Import from `sently/webhooks/sndr`. Verify `X-Sndr-Signature` (`t=…,v1=…`) over the **raw** body, then `parse`.
+
+| SNDR event | Normalized `EmailEvent.type` |
+| --- | --- |
+| `email.queued` | `deferred` |
+| `email.delivered` | `delivered` |
+| `email.bounced` | `bounced` |
+| `email.failed` | `unknown` |
+| `email.complained` | `complained` |
+| `email.opened` | `opened` |
+| `email.clicked` | `clicked` |
+| `email.unsubscribed` | `unknown` |
+
+See [Webhooks](/docs/guides/webhooks#sndr-signatures) for the HMAC details.
+
+## What sently covers vs SNDR platform
+
+| Surface | In sently | Notes |
+| --- | --- | --- |
+| Send (`POST /v1/send`) | Yes — `SndrTransport` | Channel: `createMailer` |
+| Templates + variables | Yes | Header / `defaultTemplateId` + `data` |
+| Idempotency | Yes | `idempotencyKey` / `messageId` |
+| Domain verify | Yes — `verify()` | `GET /v1/domains` |
+| Delivery webhooks | Yes — `sently/webhooks/sndr` | Signed parse |
+| Contacts / contact groups / broadcasts | No | SNDR dashboard / their API |
+| Analytics / suppressions admin | No | Use SNDR dashboard |
+| Attachments on HTTP send | Not mapped | Prefer SMTP or ask SNDR if their send API gains attachments |
+
 ## Troubleshooting
 
 <Accordions>
 
 <Accordion title="from domain is not verified">
 
-SNDR rejects sends from unverified domains. Verify DNS in the SNDR dashboard, then retry with that domain in `from`.
+SNDR rejects sends from unverified domains. Add SPF, DKIM, and DMARC in the dashboard Domains page, click Verify, then retry with that domain in `from`.
+
+</Accordion>
+
+<Accordion title="recipient_suppressed">
+
+The address is on SNDR’s suppression list (bounce/complaint). Remove it only if the recipient opted back in; otherwise pick another address.
 
 </Accordion>
 
@@ -128,6 +178,19 @@ No. Use `createMailer` plus `SndrTransport`. Keep vendor extras off the shared e
 </Accordion>
 
 </Accordions>
+
+## Contact & resources
+
+| Contact | Detail |
+| --- | --- |
+| Direct email | [sndr@rkiza.sa](mailto:sndr@rkiza.sa) |
+| Contact form | [sndr.sh/contact](https://www.sndr.sh/contact) |
+| Docs | [sndr.sh/docs](https://www.sndr.sh/docs) |
+| API reference | [API Reference](https://www.sndr.sh/docs/api-reference) |
+| Status | [sndr.sh/status](https://www.sndr.sh/status) |
+| X / Twitter | [@usesndr](https://x.com/usesndr) |
+| LinkedIn | [SNDR company](https://www.linkedin.com/company/104143949) |
+| GitHub | [github.com/rkiza/sndr](https://github.com/rkiza/sndr) |
 
 ## Learn more
 

@@ -1,0 +1,200 @@
+---
+title: Inbucket
+description: Catch outbound email in a local Inbucket instance during development.
+icon: Inbox
+source: "src/transports/inbucket.ts"
+---
+
+Catch outbound email in a local [Inbucket](https://inbucket.org/) instance while you develop.
+Use it for the welcome email or password-reset flow before you point at a production provider.
+
+<LiveVerified>
+Email send against a local Inbucket instance succeeded in sently’s live suite (SMTP capture + REST list/get/source/markSeen/purge).
+</LiveVerified>
+
+<Callout title="The one rule">
+  Use Inbucket only in development — swap to a production transport before you deploy.
+  Vendor extras stay on the `InbucketTransport` instance — never on `createMailer`.
+</Callout>
+
+## Quick start
+
+Start Inbucket (SMTP `2500`, UI `9000`):
+
+```sh
+docker run -d --rm --name inbucket -p 9000:9000 -p 2500:2500 -p 1100:1100 inbucket/inbucket
+```
+
+<Steps>
+  <Step title="Create the transport">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { InbucketTransport } from "sently/transports/inbucket";
+
+const inbucket = new InbucketTransport();
+const mailer = await createMailer({ transport: inbucket });
+```
+
+  </Step>
+  <Step title="Send through the mailer">
+
+```ts
+await mailer.send({
+  from: "dev@example.com",
+  to: "you@example.com",
+  subject: "Hello",
+  text: "Captured by Inbucket",
+});
+```
+
+  </Step>
+  <Step title="Inspect the mailbox">
+
+Open `http://localhost:9000`, or list messages from code.
+Stock Inbucket stores `you@example.com` under mailbox `you`:
+
+```ts
+const mailbox = inbucket.mailboxForAddress("you@example.com");
+const inbox = await inbucket.listMailbox(mailbox);
+console.log(inbox[0]?.subject);
+```
+
+  </Step>
+</Steps>
+
+## Configuration
+
+| Option | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `host` | `string` | `"localhost"` | SMTP hostname |
+| `port` | `number` | `2500` | SMTP port |
+| `secure` | `boolean` | `false` | Implicit TLS on connect |
+| `requireTLS` | `boolean` | `false` | Refuse AUTH without TLS |
+| `auth` | `SMTPAuth` | — | Optional SMTP credentials |
+| `tls` | `TLSOptions` | — | TLS options when TLS is enabled |
+| `connectionTimeout` | `number` | — | Socket connect timeout (ms) |
+| `adapter` | `SocketAdapter` | auto-detected | Runtime TCP adapter |
+| `apiUrl` | `string` | `"http://localhost:9000"` | Web UI / REST API base |
+| `mailboxNaming` | `"local" \| "full" \| "domain"` | `"local"` | How `mailboxForAddress` maps an email |
+
+`provider` is `"inbucket"`. `verify()` checks SMTP; `close()` closes the socket adapter.
+`webUrl` is the UI base (same as `apiUrl`).
+
+## Features
+
+Pick a branch. Channel send goes through `mailer`; everything else is called on `inbucket`.
+Inbucket is mailbox-centric — pass a mailbox name (or derive it with `mailboxForAddress`).
+
+<Tabs items={["Send", "List", "Message", "Source", "Mark seen", "Delete", "Purge"]}>
+  <Tab value="Send">
+
+Transactional send via the channel mailer (SMTP into Inbucket).
+
+```ts
+await mailer.send({
+  from: "dev@example.com",
+  to: "you@example.com",
+  subject: "Welcome",
+  html: "<h1>Hello</h1>",
+  text: "Hello",
+});
+```
+
+  </Tab>
+  <Tab value="List">
+
+List messages in a mailbox (`GET /api/v1/mailbox/{name}`).
+
+```ts
+const mailbox = inbucket.mailboxForAddress("you@example.com");
+const inbox = await inbucket.listMailbox(mailbox);
+console.log(inbox.length, inbox[0]?.subject);
+```
+
+  </Tab>
+  <Tab value="Message">
+
+Full body, headers, and attachments for a message id.
+
+```ts
+const full = await inbucket.getMessage(mailbox, inbox[0]!.id);
+console.log(full.body.text, full.body.html, full.header.Subject);
+```
+
+  </Tab>
+  <Tab value="Source">
+
+Raw RFC822 source (`GET …/source`) for MIME assertions.
+
+```ts
+const source = await inbucket.getSource(mailbox, inbox[0]!.id);
+console.log(source.includes("Subject: Welcome"));
+```
+
+  </Tab>
+  <Tab value="Mark seen">
+
+Mark one message as seen (`PATCH` with `{ seen: true }`).
+
+```ts
+await inbucket.markSeen(mailbox, inbox[0]!.id);
+```
+
+  </Tab>
+  <Tab value="Delete">
+
+Delete one message by id.
+
+```ts
+await inbucket.deleteMessage(mailbox, inbox[0]!.id);
+```
+
+  </Tab>
+  <Tab value="Purge">
+
+Clear every message in a mailbox.
+
+```ts
+await inbucket.purgeMailbox(mailbox);
+```
+
+  </Tab>
+</Tabs>
+
+REST failures throw `InbucketError` (`provider: "inbucket"`).
+Empty mailbox / id arguments throw with status `400`.
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Connection refused on port 2500">
+    Inbucket is not running, or the SMTP port is remapped. Start the container above, or set `host` / `port` to match your install.
+  </Accordion>
+  <Accordion title="listMailbox returns empty after send">
+    Check mailbox naming. Stock Inbucket uses the local-part (`you` for `you@example.com`).
+    If your instance sets `INBUCKET_MAILBOXNAMING=full` or `domain`, match that with `mailboxNaming`.
+  </Accordion>
+  <Accordion title="API helpers fail but send works">
+    SMTP and the UI/API can bind to different hosts. Set `apiUrl` to the web base (default `http://localhost:9000`).
+  </Accordion>
+  <Accordion title="Should I use createSMTPMailer instead?">
+    Yes, if you only need SMTP. `InbucketTransport` adds local defaults and REST helpers for tests and inspection.
+  </Accordion>
+</Accordions>
+
+## Learn more
+
+- [Mailpit](./mailpit) — another local SMTP catcher with a different REST shape
+- [SMTP](./smtp) — generic SMTP when you are not on a catcher
+- [Preview](/docs/decorators/preview) — write `.eml` files to disk instead
+- [Email channel](/docs/channels/email) — `createMailer` contract
+- [Inbucket REST API](https://github.com/inbucket/inbucket/wiki/REST-API) — mailbox endpoints on the catcher
+
+## Next
+
+<Cards>
+  <Card title="Mailpit" href="/docs/transports/mailpit" />
+  <Card title="Email channel" href="/docs/channels/email" />
+  <Card title="Transports" href="/docs/transports" />
+</Cards>

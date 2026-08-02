@@ -100,14 +100,14 @@ export function HeroIntro(): ReactNode {
               aria-hidden
               className="sently-dot-pulse size-1.5 rounded-full bg-fd-foreground/70"
             />
-            v1.0 · ESM-only · zero runtime deps
+            v1.0 · open source · ESM-only · zero runtime deps
           </motion.p>
 
           <motion.h1
             variants={settleVariants}
-            className="max-w-[18ch] text-3xl font-semibold tracking-tight text-balance sm:text-4xl xl:text-[2.85rem] xl:leading-[1.08]"
+            className="max-w-[20ch] text-3xl font-semibold tracking-tight text-balance sm:text-4xl xl:text-[2.85rem] xl:leading-[1.08]"
           >
-            Messaging that runs{" "}
+            Notification infrastructure that runs{" "}
             <span className="text-fd-muted-foreground">everywhere your code does</span>
           </motion.h1>
 
@@ -115,8 +115,24 @@ export function HeroIntro(): ReactNode {
             variants={settleVariants}
             className="max-w-md text-sm leading-relaxed text-pretty text-fd-muted-foreground sm:text-base"
           >
-            Start with email, add SMS and push later — one sender shape, one error model, one
-            retry path. Node, Bun, Deno, and Cloudflare Workers. Zero runtime dependencies.
+            One TypeScript API for Email, SMS, WhatsApp, and Push. Write once — switch providers
+            without rewriting app code.
+          </motion.p>
+
+          <motion.p
+            variants={settleVariants}
+            className="max-w-md font-mono text-[11px] leading-relaxed tracking-[0.04em] text-fd-muted-foreground"
+          >
+            One package —{" "}
+            <span className="text-fd-foreground">sently</span>
+            {" — "}
+            <span className="text-fd-foreground/80">sently/mailer</span>
+            {" · "}
+            <span className="text-fd-foreground/80">sently/sms</span>
+            {" · "}
+            <span className="text-fd-foreground/80">sently/whatsapp</span>
+            {" · "}
+            <span className="text-fd-foreground/80">sently/push</span>
           </motion.p>
 
           <motion.div

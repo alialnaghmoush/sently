@@ -8,8 +8,13 @@ source: "src/transports/mailpit.ts"
 Catch outbound email in a local [Mailpit](https://github.com/axllent/mailpit) instance while you develop.
 Use it for the welcome email or password-reset flow before you point at a production provider.
 
+<LiveVerified>
+Email send against a local Mailpit instance succeeded in sently’s integration suite (SMTP capture + REST list/get).
+</LiveVerified>
+
 <Callout title="The one rule">
   Use Mailpit only in development — swap to a production transport before you deploy.
+  Vendor extras stay on the `MailpitTransport` instance — never on `createMailer`.
 </Callout>
 
 ## Quick start
@@ -72,27 +77,117 @@ console.log(inbox.messages[0]?.Subject);
 | `apiAuth` | `{ user, pass }` | — | Basic auth for the UI/API |
 
 `provider` is `"mailpit"`. `verify()` checks SMTP; `close()` closes the socket adapter.
+`webUrl` is the UI base (same as `apiUrl`).
 
-## REST helpers
+## Features
 
-Vendor extras stay on the transport instance (not on `createMailer`):
+Pick a branch. Channel send goes through `mailer`; everything else is called on `mailpit`.
+Message ids may be a Mailpit id or `"latest"`.
 
-| Method | Mailpit API | Meaning |
-| --- | --- | --- |
-| `messages({ limit?, start? })` | `GET /api/v1/messages` | List captured messages (newest first) |
-| `getMessage(id)` | `GET /api/v1/message/{id}` | Full message body |
-| `deleteMessages(ids)` | `DELETE /api/v1/messages` | Delete by id |
-| `deleteAll()` | `DELETE` with empty `IDs` | Clear the inbox |
-| `webUrl` | — | UI base URL (same as `apiUrl`) |
+<Tabs items={["Send", "List", "Search", "Message", "Headers", "HTML check", "Link check", "Read", "Delete"]}>
+  <Tab value="Send">
+
+Transactional send via the channel mailer (SMTP into Mailpit).
 
 ```ts
-await mailpit.deleteAll();
-await mailer.send({ from: "a@test.com", to: "b@test.com", subject: "T", text: "ok" });
-const list = await mailpit.messages({ limit: 1 });
-const full = await mailpit.getMessage(list.messages[0]!.ID);
+await mailer.send({
+  from: "dev@example.com",
+  to: "you@example.com",
+  subject: "Welcome",
+  html: "<h1>Hello</h1><a href=\"https://example.com\">Go</a>",
+  text: "Hello",
+});
 ```
 
-REST failures throw `MailpitError` (`provider: "mailpit"`). Empty `getMessage("")` throws with status `400`.
+  </Tab>
+  <Tab value="List">
+
+List captured messages (`GET /api/v1/messages`), newest first.
+
+```ts
+const inbox = await mailpit.messages({ limit: 10, start: 0 });
+console.log(inbox.total, inbox.messages[0]?.Subject);
+```
+
+  </Tab>
+  <Tab value="Search">
+
+Find a message with Mailpit’s query syntax (`subject:`, `to:`, `tag:`, …).
+
+```ts
+const found = await mailpit.search("subject:Welcome", { limit: 1 });
+console.log(found.messages[0]?.ID);
+```
+
+  </Tab>
+  <Tab value="Message">
+
+Full body for the message id (or `"latest"`).
+
+```ts
+const full = await mailpit.getMessage("latest");
+console.log(full.Text, full.HTML);
+```
+
+  </Tab>
+  <Tab value="Headers">
+
+Header map for assertions (`Message-Id`, custom headers, …).
+
+```ts
+const headers = await mailpit.getHeaders("latest");
+console.log(headers.Subject, headers["Message-Id"]);
+```
+
+  </Tab>
+  <Tab value="HTML check">
+
+Client HTML/CSS compatibility score from Mailpit’s checker.
+
+```ts
+const html = await mailpit.htmlCheck("latest");
+console.log(html.Total.Supported, html.Total.Unsupported, html.Warnings.length);
+```
+
+Needs an HTML part — plain-text-only messages can return `400`.
+
+  </Tab>
+  <Tab value="Link check">
+
+Probe links and images in the message (`follow` optional).
+
+```ts
+const links = await mailpit.linkCheck("latest", { follow: true });
+console.log(links.Errors, links.Links);
+```
+
+  </Tab>
+  <Tab value="Read">
+
+Mark messages read or unread between assertions.
+
+```ts
+const inbox = await mailpit.messages({ limit: 1 });
+await mailpit.setRead([inbox.messages[0]!.ID], true);
+// empty ids → update every message
+await mailpit.setRead([], false);
+```
+
+  </Tab>
+  <Tab value="Delete">
+
+Delete by id, or clear the whole inbox.
+
+```ts
+await mailpit.deleteMessages(["abc"]);
+await mailpit.deleteAll();
+```
+
+  </Tab>
+</Tabs>
+
+REST failures throw `MailpitError` (`provider: "mailpit"`).
+Empty `getMessage("")` / `search("")` throws with status `400`.
 
 ## Troubleshooting
 
@@ -103,6 +198,9 @@ REST failures throw `MailpitError` (`provider: "mailpit"`). Empty `getMessage(""
   <Accordion title="API helpers fail but send works">
     SMTP and the UI/API can bind to different hosts. Set `apiUrl` (and `apiAuth` if the UI requires Basic auth).
   </Accordion>
+  <Accordion title="htmlCheck returns 400">
+    The message has no HTML part, or Mailpit could not parse it. Send `html` (not only `text`) and retry with `"latest"` or the message id.
+  </Accordion>
   <Accordion title="Should I use createSMTPMailer instead?">
     Yes, if you only need SMTP. `MailpitTransport` adds local defaults and REST helpers for tests and inspection.
   </Accordion>
@@ -110,14 +208,16 @@ REST failures throw `MailpitError` (`provider: "mailpit"`). Empty `getMessage(""
 
 ## Learn more
 
+- [Inbucket](./inbucket) — another local SMTP catcher with a mailbox REST API
 - [SMTP](./smtp) — generic SMTP when you are not on Mailpit
 - [Preview](/docs/decorators/preview) — write `.eml` files to disk instead
 - [Email channel](/docs/channels/email) — `createMailer` contract
+- [Mailpit API](https://mailpit.axllent.org/docs/api-v1/) — full REST surface on the catcher
 
 ## Next
 
 <Cards>
+  <Card title="Inbucket" href="/docs/transports/inbucket" />
   <Card title="Email channel" href="/docs/channels/email" />
-  <Card title="SMTP" href="/docs/transports/smtp" />
   <Card title="Transports" href="/docs/transports" />
 </Cards>

@@ -20,6 +20,8 @@
 :root {
   --landing-topbar-height: 48px;
   --landing-left-pane-width: min(22vw, 300px);
+  /* Fumadocs Callout `type="success"` accent (LiveVerified uses its own green). */
+  --color-fd-success: oklch(0.62 0.17 150);
 
   /*
    * Soft element inks for SVG (collapse diagram). Presentation attributes bind
@@ -38,6 +40,7 @@
 }
 
 .dark {
+  --color-fd-success: oklch(0.78 0.14 150);
   --oke-el-flow: oklch(0.74 0.09 230);
   --oke-el-signal: oklch(0.78 0.1 75);
   --oke-el-store: oklch(0.74 0.08 195);
@@ -347,13 +350,6 @@
 
   .sently-spotlight::after {
     transition: none;
-  }
-
-  .sently-marquee > ul {
-    flex-wrap: wrap;
-    justify-content: center;
-    row-gap: 0.5rem;
-    padding-right: 0;
   }
 }
 

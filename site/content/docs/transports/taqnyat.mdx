@@ -1,0 +1,361 @@
+---
+title: Taqnyat
+description: Send email, SMS, and WhatsApp through Taqnyat — one provider, three channel transports.
+icon: Truck
+source: "src/transports/taqnyat-sms.ts"
+---
+
+Taqnyat is a multi-channel provider. Wire each product into its sently channel sender — do not build a mega Taqnyat client.
+
+<Callout title="The one rule">
+Use `createMailer`, `createSmsSender`, or `createWhatsAppSender` with the matching `sently/transports/taqnyat-*` transport.
+Vendor extras stay on the concrete transport instance — never on the shared channel sender.
+</Callout>
+
+| Channel | Transport | Import |
+| --- | --- | --- |
+| SMS | `TaqnyatSmsTransport` | `sently/transports/taqnyat-sms` |
+| WhatsApp | `TaqnyatWhatsAppTransport` | `sently/transports/taqnyat-whatsapp` |
+| Email | `TaqnyatMailTransport` | `sently/transports/taqnyat-mail` |
+
+## SMS
+
+<LiveVerified>
+SMS send against Taqnyat’s production API succeeded in sently’s opt-in live suite (trial sender + Saudi destination).
+</LiveVerified>
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `bearerToken` | `string` | required |
+| `sender` | `string` | required — active portal sender name (case-sensitive) |
+
+Recipients are normalized to international digits (no `+` / leading `00`).
+
+### Setup
+
+```ts
+import { createSmsSender } from "sently/sms";
+import { TaqnyatSmsTransport } from "sently/transports/taqnyat-sms";
+
+const taqnyat = new TaqnyatSmsTransport({
+  bearerToken: process.env.TAQNYAT_TOKEN!,
+  sender: "Taqnyat.sa",
+});
+const sms = createSmsSender({ transport: taqnyat });
+```
+
+### Features
+
+Pick a branch. Channel send goes through `sms`; everything else is called on `taqnyat`.
+
+<Tabs items={["Send", "OTP", "Balance", "Senders", "Schedule"]}>
+  <Tab value="Send">
+
+Immediate SMS via the channel sender.
+
+```ts
+const result = await sms.send({
+  to: "+9665xxxxxxxx",
+  body: "Hello from sently",
+});
+console.log(result.messageId, result.response);
+```
+
+Optional `from` overrides the transport `sender` for that send.
+
+  </Tab>
+  <Tab value="OTP">
+
+Taqnyat Verify API on the transport (`sendOtp` → user enters code → `verifyOtp`).
+
+```ts
+await taqnyat.sendOtp({
+  to: "+9665xxxxxxxx",
+  requestId: "login-1",
+  lang: "en", // or "ar" (default)
+  note: "Acme login", // optional
+});
+
+await taqnyat.verifyOtp({
+  to: "+9665xxxxxxxx",
+  requestId: "login-1",
+  code: "6240",
+  lang: "en",
+});
+```
+
+Success send code is `5`. Verify accepts `10`, `13`, or `19`.
+
+  </Tab>
+  <Tab value="Balance">
+
+Account balance for preflight and ops (`GET /account/balance`).
+
+```ts
+const balance = await taqnyat.getBalance();
+// { accountStatus, balance, currency, accountExpiryDate?, provider }
+console.log(balance.balance, balance.currency);
+```
+
+  </Tab>
+  <Tab value="Senders">
+
+List registered sender names before you hard-code `sender`.
+
+```ts
+const senders = await taqnyat.listSenders();
+// [{ senderName: "Taqnyat.sa", status: "active" }, ...]
+const active = senders.filter((s) => s.status === "active");
+```
+
+Trial accounts may return an empty list while the portal still allows `Taqnyat.sa`.
+
+  </Tab>
+  <Tab value="Schedule">
+
+Schedule a send, then delete it with the same `deleteId` if you need to cancel.
+
+```ts
+await taqnyat.schedule({
+  to: "+9665xxxxxxxx",
+  body: "Later",
+  scheduledDatetime: "2030-01-01T10:00", // Taqnyat format
+  deleteId: "demo-1",
+});
+
+await taqnyat.deleteScheduled("demo-1");
+```
+
+Useful for dry-runs: schedule → confirm in portal → delete to reclaim cost when the account allows it.
+
+  </Tab>
+</Tabs>
+
+## WhatsApp
+
+<LiveVerified>
+Template send against Taqnyat’s WhatsApp API succeeded in sently’s opt-in live suite (approved sandbox template + authorized number).
+</LiveVerified>
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `bearerToken` | `string` | required |
+
+Business-initiated chats must start with an **approved** template. Session `text` is only allowed after the user replies (24h window).
+Queued accepts may return `statuses: "PENDING"` with no `message_id` yet — still treated as accepted.
+
+### Setup
+
+```ts
+import { createWhatsAppSender } from "sently/whatsapp";
+import { TaqnyatWhatsAppTransport } from "sently/transports/taqnyat-whatsapp";
+
+const transport = new TaqnyatWhatsAppTransport({
+  bearerToken: process.env.TAQNYAT_WHATSAPP_TOKEN!,
+});
+const wa = createWhatsAppSender({ transport });
+```
+
+### Features
+
+Pick a branch. Template/session send goes through `wa`; extras stay on `transport`.
+
+<Tabs items={["Template", "Session text", "Opt-in", "Templates", "Failover"]}>
+  <Tab value="Template">
+
+Business-initiated message with an approved template.
+
+```ts
+await transport.optIn("+9665xxxxxxxx"); // once per recipient when required
+
+const result = await wa.send({
+  to: "+9665xxxxxxxx",
+  template: {
+    name: "demotest1_testr11",
+    language: "ar",
+    // components: [...] // when the template has variables
+  },
+});
+console.log(result.messageId, result.response);
+```
+
+Sandbox: recipient must be on the authorized numbers list.
+
+  </Tab>
+  <Tab value="Session text">
+
+Free-form text only inside an open 24h customer-care session (after the user replies).
+
+```ts
+await wa.send({
+  to: "+9665xxxxxxxx",
+  text: "Thanks — how can we help?",
+});
+```
+
+Do not use this as the first business-initiated message.
+
+  </Tab>
+  <Tab value="Opt-in">
+
+Record consent before template campaigns (`POST` / `DELETE` provision opt-in).
+
+```ts
+await transport.optIn("+9665xxxxxxxx");
+// or several:
+await transport.optIn(["+9665xxxxxxxx", "9665yyyyyyyy"]);
+
+await transport.optOut("+9665xxxxxxxx");
+```
+
+Numbers are normalized the same way as send (`+` / `00` stripped).
+
+  </Tab>
+  <Tab value="Templates">
+
+List, create, and delete WhatsApp templates on the transport.
+
+```ts
+const templates = await transport.listTemplates();
+const approved = templates.filter((t) => t.status === "approved");
+
+const created = await transport.createTemplate({
+  name: "sently_test",
+  language: "ar",
+  category: "UTILITY",
+  components: [{ type: "BODY", text: "Hello from sently" }],
+});
+// { id?, category?, status: "PENDING", provider }
+
+await transport.deleteTemplate({
+  name: "sently_test",
+  id: created.id!,
+});
+```
+
+Meta must approve a template before you can send it.
+
+  </Tab>
+  <Tab value="Failover">
+
+Same WhatsApp send URL with nested SMS and/or email fallback branches.
+
+```ts
+await transport.sendWithFailover(
+  {
+    to: "+9665xxxxxxxx",
+    template: { name: "welcome", language: "ar" },
+  },
+  {
+    sms: {
+      sender: "Taqnyat.sa",
+      campaign: "sently",
+      body: "SMS fallback",
+    },
+    mail: {
+      from: "hi@example.com",
+      to: "user@example.com",
+      campaign: "sently",
+      subject: "Fallback",
+      msg: "Email fallback",
+    },
+  },
+);
+```
+
+Keep `campaign` aligned with email `campaignName` when both channels share a campaign.
+
+  </Tab>
+</Tabs>
+
+## Email
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `bearerToken` | `string` | required |
+| `campaignName` | `string` | required |
+
+`from` should be a sender address your Taqnyat account is allowed to use. See [Sender Approval](https://docs.taqnyat.sa/sender-approval) if email is not enabled in the portal yet.
+
+### Features
+
+<Tabs items={["Send"]}>
+  <Tab value="Send">
+
+Transactional email via the channel mailer.
+
+```ts
+import { createMailer } from "sently/mailer";
+import { TaqnyatMailTransport } from "sently/transports/taqnyat-mail";
+
+const mailer = await createMailer({
+  transport: new TaqnyatMailTransport({
+    bearerToken: process.env.TAQNYAT_MAIL_TOKEN!,
+    campaignName: "sently",
+  }),
+});
+
+await mailer.send({
+  from: "noreply@example.com",
+  to: "person@example.com",
+  subject: "Hello",
+  text: "Hi",
+  // html: "<p>Hi</p>",
+});
+```
+
+Body is `html` when set, otherwise `text` (`msg` on Taqnyat’s API).
+
+  </Tab>
+</Tabs>
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="SMS — Sender Name not active / not accepted">
+    Open the **Senders** branch and call `listSenders()`, or use an active portal sender exactly as shown (trial accounts often use `Taqnyat.sa`).
+  </Accordion>
+  <Accordion title="WhatsApp — sandbox rejects the number">
+    Add the destination under Manage WhatsApp → Sandbox, then use the **Opt-in** branch before business-initiated templates.
+  </Accordion>
+  <Accordion title="WhatsApp — template not approved / not found">
+    Use the **Templates** branch (`listTemplates`) and pick status **approved** — name + language must match exactly.
+  </Accordion>
+  <Accordion title="Email — Error 14 error From">
+    Taqnyat rejected the `from` address. Confirm email is enabled and the sender is approved, then retry with that address.
+  </Accordion>
+  <Accordion title="Error 102 IP not authorized">
+    Developers → Security Settings: authorize your public IP or turn off the IP allowlist.
+  </Accordion>
+  <Accordion title="Should I call the provider SDK?">
+    No. Use the matching sently channel sender; open a feature branch above for vendor extras on the transport.
+  </Accordion>
+</Accordions>
+
+## Contact & resources
+
+Provider contact details from Taqnyat (account setup, packages, and platform guides).
+
+| Contact | Detail |
+| --- | --- |
+| Unified number | [920015404](tel:920015404) |
+| Support email | [support@taqnyat.sa](mailto:support@taqnyat.sa) |
+| Point of contact | [a.ghaith@taqnyat.sa](mailto:a.ghaith@taqnyat.sa) |
+| Packages & pricing | [Offers & packages](https://taqnyat.sa/en/offers/packages/) |
+| Platform explanations | [Technical explanations](https://portal.taqnyat.sa/technical_explanations/en/index.html) |
+
+API reference: [SMS](https://dev.taqnyat.sa/ar/doc/sms/), [WhatsApp](https://dev.taqnyat.sa/ar/doc/whatsapp/), [Verify](https://dev.taqnyat.sa/en/doc/verify/), [Mail](https://dev.taqnyat.sa/ar/doc/mail/).
+
+## Learn more
+
+- [Email channel](/docs/channels/email) — mailer options and send pipeline
+- [Sms channel](/docs/channels/sms) — SMS sender options
+- [Whatsapp channel](/docs/channels/whatsapp) — template and session text
+- [Vendor OTP extras](/docs/guides/vendor-extras-otp) — OTP helpers on concrete transports
+
+## Next
+
+<Cards>
+  <Card title="Transports" href="/docs/transports" />
+  <Card title="Vendor OTP extras" href="/docs/guides/vendor-extras-otp" />
+</Cards>

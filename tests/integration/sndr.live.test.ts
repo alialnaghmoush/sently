@@ -13,7 +13,8 @@
  * `SNDR_FROM` must be on a domain verified in the SNDR dashboard.
  * Omit `SNDR_TO` to run `verify()` only (no send).
  *
- * Run: `SNDR_LIVE=1 bun test tests/integration/sndr.live.test.ts`
+ * Run: `SNDR_LIVE=1 bun run test:live`
+ * (`bun run verify` ignores `*.live.test.ts` and clears LIVE flags.)
  */
 import { describe, expect, test } from "bun:test";
 import { SndrTransport } from "../../src/transports/sndr.js";

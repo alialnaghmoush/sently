@@ -211,6 +211,113 @@ describe("MailpitTransport", () => {
     await expect(transport.getMessage("")).rejects.toBeInstanceOf(MailpitError);
   });
 
+  test("getMessage() allows latest id", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({
+        ID: "latest-id",
+        MessageID: "<msg@local>",
+        From: { Name: "", Address: "dev@example.com" },
+        To: [{ Name: "", Address: "you@example.com" }],
+        Subject: "Latest",
+        Text: "ok",
+        HTML: "",
+        Date: "2026-08-01T12:00:00Z",
+        Attachments: 0,
+      }),
+    );
+
+    const transport = new MailpitTransport();
+    await transport.getMessage("latest");
+
+    expect(captured[0]?.url).toBe("http://localhost:8025/api/v1/message/latest");
+  });
+
+  test("search() queries Mailpit search API", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({ total: 1, unread: 0, count: 1, messages: [] }),
+    );
+
+    const transport = new MailpitTransport();
+    await transport.search("subject:Hello", { limit: 5, start: 1 });
+
+    expect(captured[0]?.url).toBe(
+      "http://localhost:8025/api/v1/search?query=subject%3AHello&limit=5&start=1",
+    );
+  });
+
+  test("search() rejects empty query", async () => {
+    const transport = new MailpitTransport();
+    await expect(transport.search("")).rejects.toBeInstanceOf(MailpitError);
+  });
+
+  test("getHeaders() fetches message headers", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({ Subject: ["Hello"], "Message-Id": ["<msg@local>"] }),
+    );
+
+    const transport = new MailpitTransport();
+    const headers = await transport.getHeaders("abc");
+
+    expect(captured[0]?.url).toBe("http://localhost:8025/api/v1/message/abc/headers");
+    expect(headers.Subject).toEqual(["Hello"]);
+  });
+
+  test("htmlCheck() calls html-check endpoint", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({
+        Platforms: { desktop: ["Apple Mail"] },
+        Total: { Nodes: 2, Partial: 0, Supported: 1, Tests: 1, Unsupported: 0 },
+        Warnings: [],
+      }),
+    );
+
+    const transport = new MailpitTransport();
+    const result = await transport.htmlCheck("latest");
+
+    expect(captured[0]?.url).toBe("http://localhost:8025/api/v1/message/latest/html-check");
+    expect(result.Total.Supported).toBe(1);
+  });
+
+  test("linkCheck() calls link-check endpoint", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({
+        Errors: 0,
+        Links: [{ Status: "OK", StatusCode: 200, URL: "https://example.com" }],
+      }),
+    );
+
+    const transport = new MailpitTransport();
+    const result = await transport.linkCheck("abc");
+
+    expect(captured[0]?.url).toBe("http://localhost:8025/api/v1/message/abc/link-check");
+    expect(result.Links[0]?.URL).toBe("https://example.com");
+  });
+
+  test("linkCheck() passes follow=true", async () => {
+    const captured = installFetchMock(() => Response.json({ Errors: 0, Links: [] }));
+
+    const transport = new MailpitTransport();
+    await transport.linkCheck("abc", { follow: true });
+
+    expect(captured[0]?.url).toBe(
+      "http://localhost:8025/api/v1/message/abc/link-check?follow=true",
+    );
+  });
+
+  test("setRead() PUTs read status for ids", async () => {
+    const captured = installFetchMock(() => new Response('"ok"', { status: 200 }));
+
+    const transport = new MailpitTransport();
+    await transport.setRead(["a", "b"], true);
+
+    expect(captured[0]?.url).toBe("http://localhost:8025/api/v1/messages");
+    expect(captured[0]?.init.method).toBe("PUT");
+    expect(JSON.parse(String(captured[0]?.init.body))).toEqual({
+      IDs: ["a", "b"],
+      Read: true,
+    });
+  });
+
   test("deleteAll() sends empty IDs to clear inbox", async () => {
     const captured = installFetchMock(() => new Response(null, { status: 200 }));
 
@@ -254,6 +361,16 @@ describe("MailpitTransport", () => {
       name: "MailpitError",
       statusCode: 401,
       sentlyCode: "BAD_REQUEST",
+    });
+  });
+
+  test("htmlCheck() throws MailpitError on 4xx", async () => {
+    installFetchMock(() => new Response("no html part", { status: 400 }));
+
+    const transport = new MailpitTransport();
+    await expect(transport.htmlCheck("latest")).rejects.toMatchObject({
+      name: "MailpitError",
+      statusCode: 400,
     });
   });
 });

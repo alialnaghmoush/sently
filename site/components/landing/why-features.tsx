@@ -1,22 +1,13 @@
 /**
- * Why-sently feature grid — scope-creep / unified delivery points in the same
- * gap-px card language as the channels band. Inspired by better-notify's
- * feature strip; claims are sently-specific. Cards settle in on scroll and
- * carry a pointer spotlight (`.sently-spotlight` in global.css).
+ * Why-sently problem→fix grid — same gap-px card language as the channels
+ * band. Cards settle on scroll and carry a pointer spotlight
+ * (`.sently-spotlight` in global.css).
  */
 
 "use client";
 
 import { MotionConfig, motion, type Variants } from "framer-motion";
-import {
-  Boxes,
-  Feather,
-  GitBranch,
-  Layers,
-  Plug,
-  ShieldCheck,
-  type LucideIcon,
-} from "lucide-react";
+import { Boxes, GitBranch, Layers, ShieldCheck, type LucideIcon } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { useClientReducedMotion } from "@/lib/use-client-reduced-motion";
 
@@ -28,34 +19,24 @@ type Feature = {
 
 const FEATURES: ReadonlyArray<Feature> = [
   {
-    title: "One sender shape",
-    body: "Email today, SMS and push tomorrow — createMailer, createSmsSender, createWhatsAppSender, createPushSender. Same call-site pattern as channels grow.",
+    title: "Different SDKs everywhere",
+    body: "Every provider ships its own client. Sently exposes one sender shape per channel instead.",
     icon: Layers,
   },
   {
-    title: "One failure model",
-    body: "SentlyError with codes like RATE_LIMITED and BAD_REQUEST across every channel. Catch by code, not per-vendor string matching.",
+    title: "Per-vendor error shapes",
+    body: "Catch SentlyError codes like RATE_LIMITED — not a different string format per vendor.",
     icon: ShieldCheck,
   },
   {
-    title: "One reliability path",
-    body: "Retry, fallback, and weighted failover wrap any transport without a new API. Same decorators when you add the next channel.",
+    title: "Reliability bolted on later",
+    body: "Retry and fallback wrap any transport. Same decorators when you add the next channel.",
     icon: GitBranch,
   },
   {
-    title: "Pluggable transports",
-    body: "One provider per subpath. Resend today, SES tomorrow — or Twilio then Unifonic — same sender contract.",
-    icon: Plug,
-  },
-  {
-    title: "Every runtime",
-    body: "Node, Bun, Deno, and Cloudflare Workers from one ESM package. Socket adapters where SMTP needs them.",
+    title: "Runtime lock-in",
+    body: "One ESM package on Node, Bun, Deno, and Cloudflare Workers — including SMTP where sockets need adapters.",
     icon: Boxes,
-  },
-  {
-    title: "Small when it matters",
-    body: "Import sently/mailer for HTTP email (~6 KB gzip). Extra channels and providers stay out of Workers and edge bundles until you need them.",
-    icon: Feather,
   },
 ];
 
@@ -82,7 +63,7 @@ function trackSpotlight(event: MouseEvent<HTMLLIElement>): void {
 }
 
 /**
- * Six-up feature grid for the landing "why" band.
+ * Four-up problem→fix grid for the landing "why" band.
  */
 export function WhyFeatures(): ReactNode {
   const reduced = useClientReducedMotion();
@@ -90,7 +71,7 @@ export function WhyFeatures(): ReactNode {
   return (
     <MotionConfig reducedMotion="never">
       <motion.ul
-        className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-fd-border bg-fd-border sm:grid-cols-2 lg:grid-cols-3"
+        className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-fd-border bg-fd-border sm:grid-cols-2"
         variants={list}
         initial={reduced ? false : "hidden"}
         whileInView={reduced ? undefined : "show"}

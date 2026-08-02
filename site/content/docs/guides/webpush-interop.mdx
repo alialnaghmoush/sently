@@ -8,10 +8,18 @@ source: "src/transports/webpush.ts"
 <Callout title="The one rule">Pass the Push API subscription endpoint and both keys exactly as the browser returned them.</Callout>
 
 The transport accepts the standard `endpoint`, `keys.p256dh`, and `keys.auth` shape and encrypts payloads using Web Push standards.
+Generate server keys with `generateVapidKeys()` from `sently/transports/webpush` and use the same public key in `pushManager.subscribe({ applicationServerKey })`.
 
 ## Troubleshooting
 
-<Accordions><Accordion title="Can I allow a private push relay?">Provide exact hostnames with `allowedEndpointHosts`.</Accordion></Accordions>
+<Accordions>
+  <Accordion title="Can I allow a private push relay?">
+    Provide exact hostnames with `allowedEndpointHosts`.
+  </Accordion>
+  <Accordion title="Can I send without showing a notification?">
+    Pass `data` without `title` / `body`, or set `silent: true` with `data`. The service worker must handle `push` without calling `showNotification`.
+  </Accordion>
+</Accordions>
 
 ## Next
 

@@ -2,8 +2,63 @@
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-08-02
+
+### ✨ Added
+
+- **Web Push live verified** — homepage transport strip marks Web Push verified
+  after okengine delivered a real browser notification with VAPID; docs page
+  shows the green `LiveVerified` callout
+- **Web Push brand mark** — React `WebPushLogo` / `WebPushLogoIcon` (blue
+  notification tile + bell + badge); docs title badge + sidebar/marquee use
+  the mark
+- **Web Push protocol knobs** — `urgency` / `topic` headers (RFC 8030), rich
+  Notification fields (`badge`, `image`, `tag`, `actions`, `requireInteraction`,
+  `renotify`), `silent` / data-only payloads, and `generateVapidKeys()` on
+  `sently/transports/webpush`
+- **Inbucket transport** — `sently/transports/inbucket` for local SMTP capture
+  (defaults `localhost:2500` / UI `http://localhost:9000`) with REST helpers
+  `listMailbox`, `getMessage`, `getSource`, `markSeen`, `deleteMessage`,
+  `purgeMailbox`, and `mailboxForAddress`; opt-in live suite via
+  `INBUCKET_LIVE=1`; docs under a new **Email Dev** sidebar group with Mailpit
+- **Mailpit vendor extras** — `search`, `getHeaders`, `htmlCheck`, `linkCheck`,
+  and `setRead` on `MailpitTransport` for local inbox assertions; docs cover
+  the helpers and link to the Mailpit API
+- **Mailpit brand mark** — React `MailpitLogo` / `MailpitLogoIcon` from the
+  official SVG; docs title badge + sidebar/marquee use the mark; Mailpit is
+  live-verified in the transport strip
+- **Taqnyat live suite** — opt-in `tests/integration/taqnyat.live.test.ts`
+  (`TAQNYAT_LIVE=1`) with free preflight before SMS / Mail / WhatsApp sends;
+  live env keys documented in `.env.example`
+- **Taqnyat transport docs** — single `/docs/transports/taqnyat` page under a
+  new **Multi-channel** sidebar group (SMS / WhatsApp / Email sections);
+  green `LiveVerified` on SMS and WhatsApp only
+- **Taqnyat SMS vendor extras** — `getBalance`, `listSenders`, `schedule`,
+  `deleteScheduled` on `TaqnyatSmsTransport` (OTP helpers unchanged)
+- **Taqnyat WhatsApp vendor extras** — `listTemplates`, `createTemplate`,
+  `deleteTemplate`, `optIn` / `optOut`, `sendWithFailover` on
+  `TaqnyatWhatsAppTransport`
+- **Taqnyat brand marks** — React `TaqnyatLogo` / `TaqnyatLogoIcon` replace the
+  `TQ` monogram; marquee uses the full wordmark alone, sidebar uses a square
+  single-dot icon (docs page keeps the brand wordmark)
+- **Transport strip tiers** — homepage marquee legend:
+  color = live verified, muted = available, sponsors reserved;
+  verified chips use the same icon+label rhythm as the rest (brand-colored
+  mark); full wordmarks stay on docs pages; priority marks sit after a ~25%
+  available lead-in
+- **SNDR brand mark** — React `SndrLogo` / `SndrLogoIcon` from
+  [sndr.sh](https://www.sndr.sh/sndr-logo.svg); docs page rewritten with
+  LiveVerified, contact resources, and platform coverage table
+- **SNDR webhooks** — map `email.queued`, `failed`, `complained`, `opened`,
+  and `clicked` into normalized `EmailEvent` types
+
 ### ♻️ Changed
 
+- **Homepage messaging** — clearer TypeScript notification/messaging
+  positioning (Email · SMS · WhatsApp · Push), one-package signal, provider
+  swap strip (`SMTP → SES → Resend`), tighter why cards; no section removals
+- **`/llms.txt`** — agent preamble states notification/messaging library
+  (not a queue); Fumadocs handbook index unchanged underneath
 - **Publish CI** — `.github/workflows/publish.yml` runs only on `v*` tag
   pushes; Verify (typecheck, lint, build, test) and npm / JSR publish jobs
   run in parallel (no longer sequential npm-then-JSR on push to `main`)
@@ -15,6 +70,16 @@
 
 - **`test.yml` workflow** — PR / push CI matrix removed; release Verify lives
   in `publish.yml` on version tags
+
+### 🐛 Fixed
+
+- **Taqnyat WhatsApp queued accept** — treat `statuses: "PENDING"` (and
+  template/text accepts without `message_id` yet) as success instead of an
+  empty id edge case
+- **`bun run verify` never hits provider live suites** — clears `TAQNYAT_LIVE` /
+  `SNDR_LIVE` / `INBUCKET_LIVE` and ignores `**/*.live.test.ts` so a leftover
+  shell export cannot send real SMS / email / WhatsApp during verify; use
+  `bun run test:live` to opt in
 
 ## [1.0.1] — 2026-08-01
 

@@ -10,8 +10,13 @@ import type { EmailEvent } from "./types.js";
 import { emailEvent, mapEventType, parseTimestamp } from "./types.js";
 
 const SNDR_EVENT_MAP: Record<string, EmailEvent["type"]> = {
+  "email.queued": "deferred",
   "email.delivered": "delivered",
   "email.bounced": "bounced",
+  "email.failed": "unknown",
+  "email.complained": "complained",
+  "email.opened": "opened",
+  "email.clicked": "clicked",
   "email.unsubscribed": "unknown",
 };
 

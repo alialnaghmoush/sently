@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Inbucket">
+  <!-- Envelope flap -->
+  <path d="M10 18 L32 34 L54 18" stroke="#0f766e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Envelope body -->
+  <path d="M12 20 H52 V36 C52 36 44 44 32 44 C20 44 12 36 12 36 Z" fill="#0f766e"/>
+  <!-- Bucket rim -->
+  <ellipse cx="32" cy="40" rx="18" ry="5" fill="#14b8a6"/>
+  <!-- Bucket body -->
+  <path d="M14 40 L18 58 C18 58 24 62 32 62 C40 62 46 58 46 58 L50 40 Z" fill="#14b8a6"/>
+  <!-- Bucket highlight -->
+  <path d="M22 44 L24 56" stroke="#99f6e4" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+</svg>

@@ -332,7 +332,13 @@ describe("parseSndrWebhook", () => {
     expect(events[0]?.timestamp).toBeInstanceOf(Date);
   });
 
-  test("maps email.bounced and email.unsubscribed", () => {
+  test("maps SNDR lifecycle events", () => {
+    expect(parseSndr({ type: "email.queued", data: {} })[0]?.type).toBe("deferred");
+    expect(parseSndr({ type: "email.failed", data: {} })[0]?.type).toBe("unknown");
+    expect(parseSndr({ type: "email.complained", data: {} })[0]?.type).toBe("complained");
+    expect(parseSndr({ type: "email.opened", data: {} })[0]?.type).toBe("opened");
+    expect(parseSndr({ type: "email.clicked", data: {} })[0]?.type).toBe("clicked");
+
     expect(
       parseSndr({
         type: "email.bounced",

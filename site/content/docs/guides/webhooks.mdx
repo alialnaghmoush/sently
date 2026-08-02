@@ -99,6 +99,8 @@ The digest is HMAC-SHA256 over `` `${t}.${rawBody}` ``.
 
 **Consequence:** Re-serializing JSON changes whitespace and key order and breaks verification — always use the raw body string.
 
+Normalized event types include queued → `deferred`, delivered, bounced, complained, opened, clicked, and failed / unsubscribed → `unknown`. See [SNDR](/docs/transports/sndr#webhooks).
+
 Default timestamp tolerance is 300 seconds. Pass `{ toleranceSeconds: 0 }` to disable the freshness check.
 
 ## Troubleshooting

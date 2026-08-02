@@ -19,16 +19,10 @@ From the repo root:
 
 ```sh
 bun -e '
-import { encodeBase64Url } from "./src/core/base64.ts";
-const kp = await crypto.subtle.generateKey(
-  { name: "ECDSA", namedCurve: "P-256" },
-  true,
-  ["sign", "verify"],
-);
-const pub = new Uint8Array(await crypto.subtle.exportKey("raw", kp.publicKey));
-const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey);
-console.log("export VAPID_PUBLIC_KEY=" + encodeBase64Url(pub));
-console.log("export VAPID_PRIVATE_KEY=" + jwk.d);
+import { generateVapidKeys } from "./src/transports/webpush.ts";
+const { publicKey, privateKey } = await generateVapidKeys();
+console.log("export VAPID_PUBLIC_KEY=" + publicKey);
+console.log("export VAPID_PRIVATE_KEY=" + privateKey);
 '
 ```
 

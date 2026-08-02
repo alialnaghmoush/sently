@@ -15,10 +15,17 @@ import {
   siWhatsapp,
 } from "simple-icons";
 import type { ReactNode } from "react";
+import { InbucketLogoIcon } from "@/components/brands/inbucket-logo";
+import { MailpitLogoIcon } from "@/components/brands/mailpit-logo";
+import { SndrLogo, SndrLogoIcon } from "@/components/brands/sndr-logo";
+import { TaqnyatLogo, TaqnyatLogoIcon } from "@/components/brands/taqnyat-logo";
+import { WebPushLogoIcon } from "@/components/brands/webpush-logo";
 import { cn } from "@/lib/cn";
 
 type IconProps = {
   readonly className?: string;
+  /** Brand color when live-verified / sponsor; muted for the strip default. */
+  readonly tone?: "brand" | "muted";
 };
 
 /**
@@ -82,26 +89,6 @@ function SmtpIcon({ className }: IconProps) {
   );
 }
 
-/** Web Push bell. */
-function PushIcon({ className }: IconProps) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      className={cn("block size-4 shrink-0", className)}
-      aria-hidden
-    >
-      <path
-        d="M6.5 9.5a5.5 5.5 0 0 1 11 0c0 4.5 1.75 6 1.75 6H4.75s1.75-1.5 1.75-6Z"
-        strokeLinejoin="round"
-      />
-      <path d="M10 18.25a2 2 0 0 0 4 0" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 const ICONS: Record<string, (props: IconProps) => ReactNode> = {
   Resend: (p) => <PathIcon path={siResend.path} {...p} />,
   SendGrid: (p) => <Monogram letters="SG" {...p} />,
@@ -116,24 +103,83 @@ const ICONS: Record<string, (props: IconProps) => ReactNode> = {
   Loops: (p) => <PathIcon path={siLoops.path} {...p} />,
   Plunk: (p) => <Monogram letters="PL" {...p} />,
   Mailtrap: (p) => <PathIcon path={siMailtrap.path} {...p} />,
-  Mailpit: (p) => <Monogram letters="MP" {...p} />,
-  SNDR: (p) => <Monogram letters="SN" {...p} />,
+  Mailpit: (p) => <MailpitLogoIcon tone={p.tone ?? "muted"} className={p.className} />,
+  Inbucket: (p) => <InbucketLogoIcon tone={p.tone ?? "muted"} className={p.className} />,
+  SNDR: (p) => <SndrLogoIcon tone={p.tone ?? "muted"} className={p.className} />,
   Twilio: (p) => <PathIcon path={TWILIO_PATH} {...p} />,
-  Taqnyat: (p) => <Monogram letters="TQ" {...p} />,
+  Taqnyat: (p) => <TaqnyatLogoIcon tone={p.tone ?? "muted"} className={p.className} />,
   Msegat: (p) => <Monogram letters="MG" {...p} />,
   Unifonic: (p) => <Monogram letters="UF" {...p} />,
   "WhatsApp Cloud": (p) => <PathIcon path={siWhatsapp.path} {...p} />,
-  "Web Push": (p) => <PushIcon {...p} />,
+  "Web Push": (p) => <WebPushLogoIcon tone={p.tone ?? "muted"} className={p.className} />,
   FCM: (p) => <Monogram letters="FC" {...p} />,
 };
 
 /**
- * Brand / protocol mark for a transport label.
+ * Full wordmarks used alone (no separate provider label).
+ * Add a provider here when you have a redistributable logotype.
+ */
+const WORDMARKS: Record<string, (props: IconProps) => ReactNode> = {
+  SNDR: (p) => (
+    <SndrLogo
+      tone={p.tone ?? "muted"}
+      className={cn("h-3 w-auto", p.className)}
+      aria-hidden
+    />
+  ),
+  Taqnyat: (p) => (
+    <TaqnyatLogo
+      tone={p.tone ?? "muted"}
+      className={cn(
+        "h-3.5 w-auto",
+        // Brand navy on light; white wordmark on dark (orange dots stay brand).
+        (p.tone ?? "muted") === "brand" && "dark:text-white",
+        p.className,
+      )}
+      aria-hidden
+    />
+  ),
+};
+
+/**
+ * Brand / protocol mark for a transport label (icon slot next to text).
  *
  * @param name - Provider display name (must match marquee list)
  */
-export function ProviderIcon({ name, className }: { readonly name: string; readonly className?: string }) {
+export function ProviderIcon({
+  name,
+  className,
+  tone = "muted",
+}: {
+  readonly name: string;
+  readonly className?: string;
+  readonly tone?: "brand" | "muted";
+}) {
   const Icon = ICONS[name];
   if (!Icon) return <Monogram letters={name.slice(0, 2).toUpperCase()} className={className} />;
-  return Icon({ className });
+  return Icon({ className, tone });
+}
+
+/**
+ * Marquee / strip mark: wordmark alone when available, otherwise icon + expect a label.
+ */
+export function hasProviderWordmark(name: string): boolean {
+  return name in WORDMARKS;
+}
+
+/**
+ * Full wordmark for providers that ship one. Returns null when only an icon exists.
+ */
+export function ProviderWordmark({
+  name,
+  className,
+  tone = "muted",
+}: {
+  readonly name: string;
+  readonly className?: string;
+  readonly tone?: "brand" | "muted";
+}): ReactNode {
+  const Logo = WORDMARKS[name];
+  if (!Logo) return null;
+  return Logo({ className, tone });
 }

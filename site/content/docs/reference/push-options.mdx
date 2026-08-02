@@ -16,9 +16,9 @@ Pick the shape that matches your transport.
 
 | Field | Type | Required |
 | --- | --- | --- |
-| `title` | `string` | yes |
-| `body` | `string` | yes |
-| `data` | `Record<string, unknown>` | no |
+| `title` | `string` | FCM always; Web Push for visible notifications |
+| `body` | `string` | FCM always; Web Push for visible notifications |
+| `data` | `Record<string, unknown>` | no (required for Web Push `silent` / data-only) |
 | `icon` | `string` | no |
 | `ttl` | `number` | no |
 | `messageId` | `string` | no |
@@ -28,14 +28,27 @@ Pick the shape that matches your transport.
 | Field | Type | Required |
 | --- | --- | --- |
 | `subscription` | `PushSubscription` | yes |
+| `urgency` | `"very-low" \| "low" \| "normal" \| "high"` | no — RFC 8030 header |
+| `topic` | `string` | no — 1–32 printable ASCII collapse key |
+| `badge` | `string` | no |
+| `image` | `string` | no |
+| `tag` | `string` | no |
+| `actions` | `{ action, title, icon? }[]` | no |
+| `requireInteraction` | `boolean` | no |
+| `renotify` | `boolean` | no |
+| `silent` | `boolean` | no — encrypt only `data` |
 
 A subscription contains `endpoint`, `keys.p256dh`, and `keys.auth`.
+
+Omit `title` / `body` and pass `data` for a data-only Web Push (or set `silent: true`).
 
 ## FCM
 
 | Field | Type | Required |
 | --- | --- | --- |
 | `token` | `string` | yes |
+| `title` | `string` | yes |
+| `body` | `string` | yes |
 | `image` | `string` | no |
 
 FCM stringifies non-string `data` values before send.
@@ -58,18 +71,22 @@ Map any channel result with [channel send result](./channel-result).
   <Accordion title="Can I send both subscription and token?">
     No. Each call is either Web Push (`subscription`) or FCM (`token`). Match the shape to the transport.
   </Accordion>
+  <Accordion title="Can FCM send silent / data-only the same way?">
+    No. FCM still requires `title` and `body` on this union. Use Web Push `silent` / data-only for background browser sync.
+  </Accordion>
 </Accordions>
 
 ## Learn more
 
 - [Push channel](/docs/channels/push)
-- [Stability policy](/docs/get-started/stability) — union shape is frozen at 1.x
+- [Web Push transport](/docs/transports/webpush)
+- [Stability policy](/docs/get-started/stability) — optional fields may grow in 1.x
 - [Channel send result](./channel-result)
 
 ## Next
 
 <Cards>
   <Card title="Push channel" href="/docs/channels/push" />
-  <Card title="FCM transport" href="/docs/transports/fcm" />
+  <Card title="Web Push transport" href="/docs/transports/webpush" />
   <Card title="Channel send result" href="/docs/reference/channel-result" />
 </Cards>

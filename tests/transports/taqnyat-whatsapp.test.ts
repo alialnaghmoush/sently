@@ -76,6 +76,23 @@ describe("TaqnyatWhatsAppTransport", () => {
     });
   });
 
+  test("send() accepts queued statuses PENDING without message_id", async () => {
+    installFetchMock(() => Response.json({ type: "template", statuses: "PENDING" }));
+
+    const transport = new TaqnyatWhatsAppTransport({ bearerToken: "tok" });
+    const result = await transport.send({
+      to: "+966501234567",
+      template: { name: "demo", language: "ar" },
+    });
+
+    expect(result).toMatchObject({
+      status: "accepted",
+      response: "PENDING",
+      provider: "taqnyat-whatsapp",
+      messageId: "",
+    });
+  });
+
   test("send() throws on documented error shape", async () => {
     installFetchMock(() =>
       Response.json({ message: "100", reason: "The 'to' parameter is required" }, { status: 200 }),
@@ -90,5 +107,117 @@ describe("TaqnyatWhatsAppTransport", () => {
     await expect(transport.send({ to: "+9665", text: "x" })).rejects.toBeInstanceOf(
       TaqnyatWhatsAppError,
     );
+  });
+
+  test("listTemplates() maps waba_templates rows", async () => {
+    installFetchMock(() =>
+      Response.json({
+        waba_templates: [
+          {
+            id: "t1",
+            name: "demotest1_testr11",
+            language: "ar",
+            status: "approved",
+            category: "MARKETING",
+          },
+        ],
+      }),
+    );
+
+    const transport = new TaqnyatWhatsAppTransport({ bearerToken: "tok" });
+    await expect(transport.listTemplates()).resolves.toEqual([
+      {
+        id: "t1",
+        name: "demotest1_testr11",
+        language: "ar",
+        status: "approved",
+        category: "MARKETING",
+      },
+    ]);
+  });
+
+  test("createTemplate() posts template body", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({ id: "15", category: "UTILITY", statuses: "PENDING" }),
+    );
+
+    const transport = new TaqnyatWhatsAppTransport({ bearerToken: "tok" });
+    const result = await transport.createTemplate({
+      name: "sently_test",
+      language: "ar",
+      category: "UTILITY",
+      components: [{ type: "BODY", text: "hi" }],
+    });
+
+    expect(result).toMatchObject({ id: "15", status: "PENDING", provider: "taqnyat-whatsapp" });
+    expect(JSON.parse(String((captured[0] as CapturedRequest).init.body))).toMatchObject({
+      name: "sently_test",
+      language: "ar",
+      allow_category_change: true,
+      category: "UTILITY",
+    });
+  });
+
+  test("optIn() POSTs normalized numbers", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({ type: "Opt-In", statuses: [{ status: "success", state: "enable" }] }),
+    );
+
+    const transport = new TaqnyatWhatsAppTransport({ bearerToken: "tok" });
+    await expect(transport.optIn("+966501234567")).resolves.toMatchObject({
+      ok: true,
+      numbers: ["966501234567"],
+    });
+
+    expect((captured[0] as CapturedRequest).url).toBe(
+      "https://api.taqnyat.sa/wa/v1/provision/optin/",
+    );
+    expect((captured[0] as CapturedRequest).init.method).toBe("POST");
+  });
+
+  test("optOut() DELETEs numbers", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({ type: "Opt-Out", statuses: [{ status: "success", state: "disable" }] }),
+    );
+
+    const transport = new TaqnyatWhatsAppTransport({ bearerToken: "tok" });
+    await transport.optOut(["966501234567"]);
+    expect((captured[0] as CapturedRequest).init.method).toBe("DELETE");
+  });
+
+  test("sendWithFailover() nests sms and mail branches", async () => {
+    const captured = installFetchMock(() =>
+      Response.json({
+        type: "template",
+        statuses: [{ message_id: "wamid.x", recipient: "966501234567" }],
+      }),
+    );
+
+    const transport = new TaqnyatWhatsAppTransport({ bearerToken: "tok" });
+    await transport.sendWithFailover(
+      { to: "+966501234567", template: { name: "welcome", language: "ar" } },
+      {
+        sms: { sender: "Taqnyat.sa", campaign: "sently", body: "fallback sms" },
+        mail: {
+          from: "hi@example.com",
+          to: "user@example.com",
+          campaign: "sently",
+          subject: "fallback",
+          msg: "hello",
+        },
+      },
+    );
+
+    expect(JSON.parse(String((captured[0] as CapturedRequest).init.body))).toMatchObject({
+      type: "template",
+      sms: { sender: "Taqnyat.sa", campaign: "sently", body: "fallback sms" },
+      mail: {
+        from: "hi@example.com",
+        to: "user@example.com",
+        campaign: "sently",
+        subject: "fallback",
+        msg: "hello",
+      },
+    });
   });
 });

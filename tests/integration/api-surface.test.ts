@@ -89,6 +89,13 @@ const subpathImports: Array<{ path: string; check: (mod: Record<string, unknown>
     },
   },
   {
+    path: "../../dist/transports/inbucket.js",
+    check: (mod) => {
+      expect(mod.InbucketTransport).toBeDefined();
+      expect(mod.InbucketError).toBeDefined();
+    },
+  },
+  {
     path: "../../dist/transports/loops.js",
     check: (mod) => expect(mod.LoopsTransport).toBeDefined(),
   },

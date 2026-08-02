@@ -55,7 +55,7 @@ await mailer.send({
 | `pool` | `boolean` | `false` |
 | `dkim` | `DKIMConfig` | optional |
 
-For local capture with defaults and REST helpers, use [Mailpit](./mailpit) instead of hand-wiring `localhost:1025`.
+For local capture with defaults and REST helpers, use [Mailpit](./mailpit) or [Inbucket](./inbucket) instead of hand-wiring SMTP ports.
 
 ## Troubleshooting
 
@@ -67,13 +67,14 @@ For local capture with defaults and REST helpers, use [Mailpit](./mailpit) inste
     Pass an explicit transport, or use `createSMTPMailer` for relay configuration.
   </Accordion>
   <Accordion title="Local development without a real relay">
-    Use [Mailpit](./mailpit) (`sently/transports/mailpit`) or [Preview](/docs/decorators/preview).
+    Use [Mailpit](./mailpit), [Inbucket](./inbucket), or [Preview](/docs/decorators/preview).
   </Accordion>
 </Accordions>
 
 ## Learn more
 
 - [Mailpit](./mailpit) — local SMTP catcher with inbox API
+- [Inbucket](./inbucket) — local SMTP catcher with mailbox REST API
 - [Email channel](/docs/channels/email) — `createMailer` / `createSMTPMailer`
 - [Runtimes](/docs/get-started/runtimes) — socket adapters
 

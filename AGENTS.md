@@ -25,9 +25,10 @@ Providers are transports under those senders. Vendor extras (OTP, account utilit
 ```sh
 bun install
 bun test
+bun run test:live   # opt-in provider live suites (requires *_LIVE=1)
 bun run site:dev
 bun run site:build
-bun run verify
+bun run verify      # never runs *.live.test.ts
 ```
 
 Do not invent APIs. Prefer imports from published subpaths (`sently/mailer`, `sently/sms`, `sently/transports/*`).

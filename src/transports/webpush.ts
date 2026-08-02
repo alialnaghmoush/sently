@@ -31,6 +31,8 @@ import type {
   PushSendResult,
   PushSubscription,
   PushTransport,
+  WebPushOptions,
+  WebPushUrgency,
 } from "../core/push-types.js";
 import { isWebPushOptions } from "../core/push-types.js";
 import type { VerifyResult } from "../core/types.js";
@@ -56,6 +58,24 @@ export interface WebPushConfig {
    */
   allowedEndpointHosts?: string[];
 }
+
+/** Generated VAPID key pair in the common web-push raw format. */
+export interface VapidKeys {
+  /** Base64url-encoded uncompressed P-256 public key (65 bytes). */
+  publicKey: string;
+  /** Base64url-encoded raw P-256 private key (32 bytes) — treat as a secret. */
+  privateKey: string;
+}
+
+const WEB_PUSH_URGENCIES: ReadonlySet<WebPushUrgency> = new Set([
+  "very-low",
+  "low",
+  "normal",
+  "high",
+]);
+
+/** RFC 8030 Topic: printable ASCII, max 32 characters. */
+const TOPIC_PATTERN = /^[\x21-\x7E]{1,32}$/;
 
 /** Error thrown when a push service rejects the request. */
 export class WebPushError extends SentlyError {
@@ -111,6 +131,101 @@ function assertVapidSubject(subject: string): void {
     400,
     { field: "subject", value: subject },
   );
+}
+
+/**
+ * Generate a VAPID key pair in the common web-push raw format
+ * (base64url public + base64url private `d`).
+ *
+ * @example
+ * ```ts
+ * import { generateVapidKeys } from "sently/transports/webpush";
+ *
+ * const { publicKey, privateKey } = await generateVapidKeys();
+ * ```
+ */
+export async function generateVapidKeys(): Promise<VapidKeys> {
+  const keyPair = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, [
+    "sign",
+    "verify",
+  ]);
+  const publicRaw = new Uint8Array(await crypto.subtle.exportKey("raw", keyPair.publicKey));
+  const jwk = (await crypto.subtle.exportKey("jwk", keyPair.privateKey)) as JsonWebKey;
+  if (typeof jwk.d !== "string" || jwk.d.length === 0) {
+    throw new WebPushError("Failed to export VAPID private key", 500, { field: "privateKey" });
+  }
+  return {
+    publicKey: encodeBase64Url(publicRaw),
+    privateKey: jwk.d,
+  };
+}
+
+function assertUrgency(urgency: string): asserts urgency is WebPushUrgency {
+  if (!WEB_PUSH_URGENCIES.has(urgency as WebPushUrgency)) {
+    throw new WebPushError(
+      `Web Push urgency must be very-low, low, normal, or high, got: ${JSON.stringify(urgency)}`,
+      400,
+      { field: "urgency", value: urgency },
+    );
+  }
+}
+
+function assertTopic(topic: string): void {
+  if (!TOPIC_PATTERN.test(topic)) {
+    throw new WebPushError(
+      `Web Push topic must be 1–32 printable ASCII characters, got: ${JSON.stringify(topic)}`,
+      400,
+      { field: "topic", value: topic },
+    );
+  }
+}
+
+/**
+ * Build the JSON object encrypted for the service worker.
+ * Visible notifications need `title` + `body`; silent / data-only send `data` alone.
+ */
+function buildWebPushPayload(options: WebPushOptions): Record<string, unknown> {
+  if (options.silent) {
+    if (options.data === undefined) {
+      throw new WebPushError("silent Web Push requires data", 400, { field: "data" });
+    }
+    return { data: options.data };
+  }
+
+  const hasTitle = typeof options.title === "string" && options.title.length > 0;
+  const hasBody = typeof options.body === "string" && options.body.length > 0;
+
+  if (!hasTitle && !hasBody) {
+    if (options.data === undefined) {
+      throw new WebPushError(
+        "Web Push requires title and body, or data for a data-only / silent send",
+        400,
+        { fields: ["title", "body", "data"] },
+      );
+    }
+    return { data: options.data };
+  }
+
+  if (!hasTitle || !hasBody) {
+    throw new WebPushError("Visible Web Push notifications require both title and body", 400, {
+      fields: ["title", "body"],
+    });
+  }
+
+  return {
+    title: options.title,
+    body: options.body,
+    ...(options.data !== undefined ? { data: options.data } : {}),
+    ...(options.icon !== undefined ? { icon: options.icon } : {}),
+    ...(options.badge !== undefined ? { badge: options.badge } : {}),
+    ...(options.image !== undefined ? { image: options.image } : {}),
+    ...(options.tag !== undefined ? { tag: options.tag } : {}),
+    ...(options.actions !== undefined ? { actions: options.actions } : {}),
+    ...(options.requireInteraction !== undefined
+      ? { requireInteraction: options.requireInteraction }
+      : {}),
+    ...(options.renotify !== undefined ? { renotify: options.renotify } : {}),
+  };
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -344,12 +459,14 @@ export class WebPushTransport implements PushTransport {
       );
     }
 
-    const notification = {
-      title: options.title,
-      body: options.body,
-      ...(options.data !== undefined ? { data: options.data } : {}),
-      ...(options.icon !== undefined ? { icon: options.icon } : {}),
-    };
+    if (options.urgency !== undefined) {
+      assertUrgency(options.urgency);
+    }
+    if (options.topic !== undefined) {
+      assertTopic(options.topic);
+    }
+
+    const notification = buildWebPushPayload(options);
     const plaintext = encodeUtf8(JSON.stringify(notification));
     const encrypted = await encryptAes128Gcm(options.subscription, plaintext);
 
@@ -369,15 +486,23 @@ export class WebPushTransport implements PushTransport {
     );
 
     const ttl = options.ttl ?? DEFAULT_TTL_SECONDS;
+    const headers: Record<string, string> = {
+      Authorization: `vapid t=${jwt}, k=${this.vapidPublicKey}`,
+      "Content-Encoding": "aes128gcm",
+      TTL: String(ttl),
+      "Content-Type": "application/octet-stream",
+    };
+    if (options.urgency !== undefined) {
+      headers.Urgency = options.urgency;
+    }
+    if (options.topic !== undefined) {
+      headers.Topic = options.topic;
+    }
+
     const response = await fetch(options.subscription.endpoint, {
       method: "POST",
       redirect: "manual",
-      headers: {
-        Authorization: `vapid t=${jwt}, k=${this.vapidPublicKey}`,
-        "Content-Encoding": "aes128gcm",
-        TTL: String(ttl),
-        "Content-Type": "application/octet-stream",
-      },
+      headers,
       body: toArrayBuffer(encrypted),
     });
 

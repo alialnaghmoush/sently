@@ -23,10 +23,16 @@ export interface PushSubscription {
 
 /** Shared notification fields for Web Push and FCM. */
 interface PushNotificationFields {
-  /** Notification title. */
-  title: string;
-  /** Notification body text. */
-  body: string;
+  /**
+   * Notification title.
+   * Required for FCM and for visible Web Push; omit with `data` / `silent` for Web Push data-only.
+   */
+  title?: string;
+  /**
+   * Notification body text.
+   * Required for FCM and for visible Web Push; omit with `data` / `silent` for Web Push data-only.
+   */
+  body?: string;
   /** Arbitrary application data attached to the notification. */
   data?: Record<string, unknown>;
   /** Notification icon URL (Web Push / some FCM platforms). */
@@ -37,10 +43,51 @@ interface PushNotificationFields {
   messageId?: string;
 }
 
+/** RFC 8030 `Urgency` values for Web Push delivery priority. */
+export type WebPushUrgency = "very-low" | "low" | "normal" | "high";
+
+/** Browser Notification API action button. */
+export interface WebPushAction {
+  /** Action identifier delivered to the service worker. */
+  action: string;
+  /** Button label. */
+  title: string;
+  /** Optional action icon URL. */
+  icon?: string;
+}
+
 /** Options for sending a Web Push notification (VAPID / browser subscription). */
 export interface WebPushOptions extends PushNotificationFields {
   /** Target browser push subscription. */
   subscription: PushSubscription;
+  /**
+   * RFC 8030 `Urgency` header — delivery priority hint for the push service.
+   * Defaults to omitting the header (service default, typically `normal`).
+   */
+  urgency?: WebPushUrgency;
+  /**
+   * RFC 8030 `Topic` header — collapse key so a newer message replaces a pending
+   * one with the same topic (ASCII, max 32 characters).
+   */
+  topic?: string;
+  /** Notification badge URL (small monochrome icon). */
+  badge?: string;
+  /** Large image URL shown with the notification. */
+  image?: string;
+  /** Tag for replacing an existing notification with the same tag. */
+  tag?: string;
+  /** Action buttons shown on the notification. */
+  actions?: WebPushAction[];
+  /** Keep the notification open until the user interacts. */
+  requireInteraction?: boolean;
+  /** Re-alert when replacing a notification with the same `tag`. */
+  renotify?: boolean;
+  /**
+   * Encrypt only `data` (no visible notification fields). Requires `data`.
+   * Use for background sync without showing a system notification — the service
+   * worker must handle `push` without calling `showNotification`.
+   */
+  silent?: boolean;
 }
 
 /**
@@ -50,6 +97,10 @@ export interface WebPushOptions extends PushNotificationFields {
 export interface FcmPushOptions extends PushNotificationFields {
   /** FCM registration token for the target device. */
   token: string;
+  /** Notification title (required for FCM). */
+  title: string;
+  /** Notification body text (required for FCM). */
+  body: string;
   /** Optional image URL for the notification. */
   image?: string;
 }

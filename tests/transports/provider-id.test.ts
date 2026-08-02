@@ -7,6 +7,7 @@ import { FallbackTransport } from "../../src/transports/fallback.js";
 import { LoopsTransport } from "../../src/transports/loops.js";
 import { MailerSendTransport } from "../../src/transports/mailersend.js";
 import { MailgunTransport } from "../../src/transports/mailgun.js";
+import { InbucketTransport } from "../../src/transports/inbucket.js";
 import { MailpitTransport } from "../../src/transports/mailpit.js";
 import { MailtrapTransport } from "../../src/transports/mailtrap.js";
 import { PlunkTransport } from "../../src/transports/plunk.js";
@@ -55,6 +56,7 @@ describe("Transport.provider", () => {
     { transport: new SparkPostTransport({ apiKey: "sp_test" }), expected: "sparkpost" },
     { transport: new MailtrapTransport({ apiToken: "mt_test" }), expected: "mailtrap" },
     { transport: new MailpitTransport(), expected: "mailpit" },
+    { transport: new InbucketTransport(), expected: "inbucket" },
     { transport: new LoopsTransport({ apiKey: "loops_test" }), expected: "loops" },
     {
       transport: new SMTPTransport({

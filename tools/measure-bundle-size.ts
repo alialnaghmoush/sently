@@ -304,6 +304,13 @@ const scenarios: Scenario[] = [
     code: `import { MailpitTransport } from "../src/transports/mailpit.ts"; export const keep = MailpitTransport;`,
   },
   {
+    id: "sently/transports/inbucket",
+    category: "transport",
+    label: "transports/inbucket",
+    description: "Inbucket local SMTP + REST helpers",
+    code: `import { InbucketTransport } from "../src/transports/inbucket.ts"; export const keep = InbucketTransport;`,
+  },
+  {
     id: "sently/transports/loops",
     category: "transport",
     label: "transports/loops",

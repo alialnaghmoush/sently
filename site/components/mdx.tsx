@@ -8,6 +8,7 @@ import { Tab, Tabs } from "@fumadocs/base-ui/components/tabs";
 import { TypeTable } from "@fumadocs/base-ui/components/type-table";
 import type { MDXComponents } from "mdx/types";
 import type { ComponentProps, HTMLAttributes } from "react";
+import { LiveVerified } from "@/components/docs/live-verified";
 import { cn } from "@/lib/cn";
 
 /**
@@ -47,6 +48,7 @@ export function getMDXComponents(components?: MDXComponents) {
     Accordion,
     Accordions,
     Callout,
+    LiveVerified,
     Card,
     Cards,
     File,

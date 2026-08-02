@@ -70,7 +70,9 @@ await push.send({
 | Web Push | `subscription` | `WebPushTransport` |
 | FCM | `token` | `FcmTransport` |
 
-Shared fields: `title`, `body`, optional `data`, `icon`, `ttl`, `messageId`.
+Shared fields include `title`, `body`, and optional `data` / `icon` / `ttl`.
+Web Push also accepts `urgency`, `topic`, rich Notification fields, and silent /
+data-only sends — see [Push options](../reference/push-options).
 
 ## Troubleshooting
 

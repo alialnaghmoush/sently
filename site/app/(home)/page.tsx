@@ -77,7 +77,7 @@ const START_HERE: ReadonlyArray<{
   {
     href: "/docs/get-started/introduction",
     title: "Introduction",
-    body: "One sender shape as you add email, SMS, WhatsApp, and push.",
+    body: "What sently is — and what it is not.",
   },
   {
     href: "/docs/get-started/installation",
@@ -87,13 +87,13 @@ const START_HERE: ReadonlyArray<{
   {
     href: "/docs/channels",
     title: "Channels",
-    body: "Email, SMS, WhatsApp, and push — same sender model.",
+    body: "Email, SMS, WhatsApp, and push docs.",
   },
 ];
 
 export default function HomePage() {
   return (
-    <div id="hero" className="relative text-fd-foreground">
+    <main id="hero" className="relative text-fd-foreground">
       <section className="overflow-x-clip border-b border-fd-border">
         <div className="flex flex-col lg:flex-row">
           <HeroIntro />
@@ -110,15 +110,15 @@ export default function HomePage() {
           <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
             <Reveal>
               <div className="flex h-full flex-col justify-center gap-4">
+                <h2 className="text-xl font-semibold tracking-tight text-balance sm:text-2xl">
+                  Channel senders, not vendor SDKs
+                </h2>
                 <p className="text-sm leading-relaxed text-pretty text-fd-muted-foreground sm:text-base">
-                  Most teams start with one channel — often email — then add SMS and push. Without
-                  a shared layer, each vendor SDK brings its own auth, retries, and error shapes.
-                </p>
-                <p className="text-sm leading-relaxed text-pretty text-fd-muted-foreground sm:text-base">
-                  Apps use{" "}
-                  <strong className="font-medium text-fd-foreground">sently channel senders</strong>.
-                  Providers are transports under those senders — swap Resend for SES, or Twilio for
-                  Unifonic, without rewriting call sites.
+                  Apps call <code className="text-fd-foreground">createMailer</code>,{" "}
+                  <code className="text-fd-foreground">createSmsSender</code>,{" "}
+                  <code className="text-fd-foreground">createWhatsAppSender</code>, or{" "}
+                  <code className="text-fd-foreground">createPushSender</code>. Providers are
+                  transports under those senders.
                 </p>
               </div>
             </Reveal>
@@ -135,10 +135,9 @@ export default function HomePage() {
       <Band label="why">
         <div className="flex flex-col gap-8">
           <Reveal>
-            <BandHeading title="One model as channels grow">
-              One sender shape, one error type, one retry and fallback path — across email, SMS,
-              WhatsApp, and push. Bundle size stays small on the edge; that is supporting evidence,
-              not the reason to adopt.
+            <BandHeading title="Why teams outgrow a single SDK">
+              The pain is not sending once — it is keeping call sites stable as channels and
+              providers change.
             </BandHeading>
           </Reveal>
           <WhyFeatures />
@@ -148,9 +147,8 @@ export default function HomePage() {
           <Reveal delay={0.05}>
             <p className="max-w-3xl text-sm leading-relaxed text-pretty text-fd-muted-foreground">
               <strong className="font-medium text-fd-foreground">A library, not a platform.</strong>{" "}
-              sently is the channel-delivery layer. Preference centers, digests, workflow builders,
-              and in-app inboxes — custom logic or tools like Novu, Knock, or Courier — sit on top
-              of sently, not instead of it.
+              Preference centers, digests, and workflow builders (custom or Novu, Knock, Courier)
+              sit on top of sently — not instead of it.
             </p>
           </Reveal>
         </div>
@@ -159,10 +157,10 @@ export default function HomePage() {
       <Band label="pipeline">
         <div className="flex flex-col gap-6">
           <Reveal>
-            <BandHeading title="One flow. Every channel.">
-              Every send follows the same path: pick a channel sender, pass a transport, call{" "}
-              <code className="text-fd-foreground">send</code>. Hooks observe; decorators strengthen
-              the path without a new API.
+            <BandHeading title="App → channel sender → transport">
+              Pass a provider transport into the sender, then call{" "}
+              <code className="text-fd-foreground">send</code>. Hooks observe; decorators add retry
+              and fallback without a new API.
             </BandHeading>
           </Reveal>
           <SendPipeline />
@@ -172,10 +170,9 @@ export default function HomePage() {
       <Band label="channels">
         <div className="flex flex-col gap-6">
           <Reveal>
-            <BandHeading title="Same model. Any channel.">
-              Pick a sender for the channel. Pass a transport for the provider. Vendor extras (OTP
-              helpers, account utilities) stay on the concrete transport — never on the shared
-              contract.
+            <BandHeading title="Four channels. Same shape.">
+              Vendor extras (OTP helpers, account utilities) stay on the concrete transport — never
+              on the shared sender contract.
             </BandHeading>
           </Reveal>
           <Reveal delay={0.05}>
@@ -223,17 +220,17 @@ export default function HomePage() {
         </div>
       </Band>
 
-      <Band label="entrypoints">
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+      <Band label="budgets">
+        <div className="flex flex-col gap-6">
           <Reveal>
-            <BandHeading title="Import only what you need">
-              HTTP email from <code className="text-fd-foreground">sently/mailer</code>. SMTP from{" "}
-              <code className="text-fd-foreground">sently/smtp</code>. SMS, WhatsApp, and push from
-              their own subpaths. Each transport is a separate entry so unused providers stay out
-              of the bundle.
+            <BandHeading title="Measured, not marketed">
+              Four hard caps CI fails on — HTTP stack, SMTP, SMS, and push — then channel
+              entrypoints and <code className="text-fd-foreground">sently/transports/*</code> as
+              pickable imports. Every figure is from{" "}
+              <code className="text-fd-foreground">bundle-size-budgets.json</code>.
             </BandHeading>
           </Reveal>
-          <Reveal delay={0.08}>
+          <Reveal delay={0.05}>
             <EntrypointsGraph />
           </Reveal>
         </div>
@@ -242,9 +239,8 @@ export default function HomePage() {
       <Band label="start here">
         <div className="flex flex-col gap-8">
           <Reveal>
-            <BandHeading title="Learn the channel model once">
-              Sender → transport → send. The same shape for every channel; only the options and
-              providers change.
+            <BandHeading title="Start here">
+              Install, pick a channel, send. Details live in the handbook.
             </BandHeading>
           </Reveal>
           <Reveal delay={0.05}>
@@ -290,8 +286,8 @@ export default function HomePage() {
                 Send your first message in five minutes
               </h2>
               <p className="max-w-xl text-sm leading-relaxed text-pretty text-fd-muted-foreground sm:text-base">
-                Install sently, pick a channel sender, pass a transport. The first send is five
-                lines — the fiftieth looks exactly the same.
+                Install sently, pick a channel sender, pass a transport. Five lines to the first
+                send.
               </p>
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 <Link
@@ -310,6 +306,6 @@ export default function HomePage() {
           </div>
         </Reveal>
       </Band>
-    </div>
+    </main>
   );
 }
