@@ -13,13 +13,14 @@
  * `SNDR_FROM` must be on a domain verified in the SNDR dashboard.
  * Omit `SNDR_TO` to run `verify()` only (no send).
  *
- * Run: `SNDR_LIVE=1 bun run test:live`
- * (`bun run verify` ignores `*.live.test.ts` and clears LIVE flags.)
+ * Run locally: `SNDR_LIVE=1 bun run test:live`
+ * (`bun test` / CI ignore `*.live.test.ts`; live suites refuse CI.)
  */
 import { describe, expect, test } from "bun:test";
 import { SndrTransport } from "../../src/transports/sndr.js";
 
-const live = process.env.SNDR_LIVE === "1";
+const inCi = process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true";
+const live = !inCi && process.env.SNDR_LIVE === "1";
 const apiKey = process.env.SNDR_API_KEY?.trim();
 const from = process.env.SNDR_FROM?.trim();
 const to = process.env.SNDR_TO?.trim();

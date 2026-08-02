@@ -17,14 +17,15 @@
  * # INBUCKET_SMTP_PORT=2500
  * ```
  *
- * Run: `INBUCKET_LIVE=1 bun run test:live`
- * (`bun run verify` ignores `*.live.test.ts` and clears LIVE flags.)
+ * Run locally: `INBUCKET_LIVE=1 bun run test:live`
+ * (`bun test` / CI ignore `*.live.test.ts`; live suites refuse CI.)
  */
 import { describe, expect, test } from "bun:test";
 import { createMailer } from "../../src/mailer.js";
 import { InbucketTransport } from "../../src/transports/inbucket.js";
 
-const live = process.env.INBUCKET_LIVE === "1";
+const inCi = process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true";
+const live = !inCi && process.env.INBUCKET_LIVE === "1";
 const apiUrl = process.env.INBUCKET_API_URL?.trim() || "http://localhost:9000";
 const host = process.env.INBUCKET_SMTP_HOST?.trim() || "localhost";
 const port = Number(process.env.INBUCKET_SMTP_PORT?.trim() || "2500");

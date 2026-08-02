@@ -21,8 +21,8 @@
  * Free preflight (balance / approved template) runs inside each paid send test
  * and refuses the send if readiness checks fail.
  *
- * Run: `TAQNYAT_LIVE=1 bun run test:live`
- * (`bun run verify` ignores `*.live.test.ts` and clears LIVE flags.)
+ * Run locally: `TAQNYAT_LIVE=1 bun run test:live`
+ * (`bun test` / CI ignore `*.live.test.ts`; live suites refuse CI.)
  */
 import { describe, expect, test } from "bun:test";
 import { createMailer } from "../../src/mailer.js";
@@ -32,7 +32,8 @@ import { TaqnyatSmsTransport } from "../../src/transports/taqnyat-sms.js";
 import { TaqnyatWhatsAppTransport } from "../../src/transports/taqnyat-whatsapp.js";
 import { createWhatsAppSender } from "../../src/whatsapp.js";
 
-const live = process.env.TAQNYAT_LIVE === "1";
+const inCi = process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true";
+const live = !inCi && process.env.TAQNYAT_LIVE === "1";
 
 const smsToken = process.env.TAQNYAT_TOKEN?.trim();
 const smsSender = process.env.TAQNYAT_SENDER?.trim();

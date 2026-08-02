@@ -1,6 +1,6 @@
 {
   "name": "@alialnaghmoush/sently",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Runtime-agnostic channel-delivery library for Node.js, Bun, Deno, and Cloudflare Workers. One sender shape, one error model, and one retry path across email, SMS, WhatsApp, and push — with pluggable provider transports.",
   "license": "MIT",
   "publish": {

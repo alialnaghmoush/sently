@@ -36,7 +36,8 @@ jobs:
           - check: Build
             run: bun run build
           - check: Test
-            run: bun test
+            # api-surface / v0.8 suites import dist — build first (matrix jobs do not share artifacts)
+            run: bun run build && bun test
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2

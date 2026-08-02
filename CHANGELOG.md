@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-08-02
+
+### 🐛 Fixed
+
+- **Publish CI Test job** — build `dist` before `bun test` so parallel Verify no
+  longer fails api-surface suites that import published bundles
+- **`bun test` skips live suites** — clears `TAQNYAT_LIVE` / `SNDR_LIVE` /
+  `INBUCKET_LIVE` and ignores `**/*.live.test.ts`; `bun run test:live` is
+  local-only (refuses `CI` / `GITHUB_ACTIONS`)
+
 ## [1.1.0] — 2026-08-02
 
 ### ✨ Added
