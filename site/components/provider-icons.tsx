@@ -15,6 +15,7 @@ import {
   siWhatsapp,
 } from "simple-icons";
 import type { ReactNode } from "react";
+import { HostingerLogoIcon } from "@/components/brands/hostinger-logo";
 import { InbucketLogoIcon } from "@/components/brands/inbucket-logo";
 import { MailpitLogoIcon } from "@/components/brands/mailpit-logo";
 import { SndrLogo, SndrLogoIcon } from "@/components/brands/sndr-logo";
@@ -106,6 +107,7 @@ const ICONS: Record<string, (props: IconProps) => ReactNode> = {
   Mailpit: (p) => <MailpitLogoIcon tone={p.tone ?? "muted"} className={p.className} />,
   Inbucket: (p) => <InbucketLogoIcon tone={p.tone ?? "muted"} className={p.className} />,
   SNDR: (p) => <SndrLogoIcon tone={p.tone ?? "muted"} className={p.className} />,
+  Hostinger: (p) => <HostingerLogoIcon tone={p.tone ?? "muted"} className={p.className} />,
   Twilio: (p) => <PathIcon path={TWILIO_PATH} {...p} />,
   Taqnyat: (p) => <TaqnyatLogoIcon tone={p.tone ?? "muted"} className={p.className} />,
   Msegat: (p) => <Monogram letters="MG" {...p} />,

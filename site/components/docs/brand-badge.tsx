@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { HostingerLogo } from "@/components/brands/hostinger-logo";
 import { InbucketLogo } from "@/components/brands/inbucket-logo";
 import { MailpitLogo } from "@/components/brands/mailpit-logo";
 import { SndrLogo } from "@/components/brands/sndr-logo";
@@ -23,6 +24,10 @@ const BADGES: Record<string, BrandBadge> = {
   SNDR: {
     shell: "bg-zinc-950 ring-fd-border/60 dark:bg-zinc-900",
     mark: <SndrLogo className="h-6 w-auto text-white" />,
+  },
+  Hostinger: {
+    shell: "bg-white ring-fd-border/60 dark:bg-zinc-950",
+    mark: <HostingerLogo className="h-5 w-auto" />,
   },
   Mailpit: {
     shell: "bg-zinc-950 ring-fd-border/60 dark:bg-zinc-900",

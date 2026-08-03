@@ -38,6 +38,7 @@ const entrypoints = [
   'src/transports/inbucket.ts',
   'src/transports/loops.ts',
   'src/transports/sndr.ts',
+  'src/transports/hostinger.ts',
   'src/transports/twilio-sms.ts',
   'src/transports/taqnyat-sms.ts',
   'src/transports/taqnyat-whatsapp.ts',

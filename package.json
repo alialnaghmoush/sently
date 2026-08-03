@@ -1,6 +1,6 @@
 {
   "name": "sently",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Runtime-agnostic channel-delivery library for Node.js, Bun, Deno, and Cloudflare Workers. One sender shape, one error model, and one retry path across email, SMS, WhatsApp, and push — with pluggable provider transports.",
   "type": "module",
   "sideEffects": false,
@@ -84,6 +84,7 @@
     "ses",
     "aws-ses",
     "brevo",
+    "hostinger",
     "twilio",
     "dkim",
     "oauth2",
@@ -204,6 +205,10 @@
     "./transports/sndr": {
       "import": "./dist/transports/sndr.js",
       "types": "./dist/transports/sndr.d.ts"
+    },
+    "./transports/hostinger": {
+      "import": "./dist/transports/hostinger.js",
+      "types": "./dist/transports/hostinger.d.ts"
     },
     "./transports/twilio-sms": {
       "import": "./dist/transports/twilio-sms.js",

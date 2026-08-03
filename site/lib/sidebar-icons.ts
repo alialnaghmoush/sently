@@ -96,6 +96,7 @@ const TRANSPORT_ICONS: Readonly<Record<string, string>> = {
   "/docs/transports/loops": "Loops",
   "/docs/transports/cloudflare-email": "Cloudflare Email",
   "/docs/transports/sndr": "SNDR",
+  "/docs/transports/hostinger": "Hostinger",
   "/docs/transports/twilio-sms": "Twilio",
   "/docs/transports/msegat": "Msegat",
   "/docs/transports/unifonic": "Unifonic",

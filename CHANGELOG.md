@@ -1,6 +1,26 @@
 # Changelog
 
-## [Unreleased]
+## [1.2.0] — 2026-08-03
+
+### ✨ Added
+
+- **Hostinger transport** — `sently/transports/hostinger` sends from a managed
+  Hostinger mailbox through the Hostinger Mail API (Bearer token +
+  mailbox resource ID); `listMailboxes()` discovers mailbox IDs and `verify()`
+  checks token scope; vendor extras `sendReply` / `sendForward` thread by
+  folder + IMAP UID; `hostingerSmtpConfig()` fills ready SMTP settings for
+  `createSMTPMailer` (`smtp.hostinger.com`, ports 465/587)
+- **Hostinger brand mark** — React `HostingerLogo` (full wordmark from
+  hostinger.com) / `HostingerLogoIcon` (purple H); docs title badge uses the
+  wordmark, sidebar/marquee use the H mark
+- **Hostinger docs** — Mail API + SMTP feature tabs (send, HTML, attachments,
+  CC/BCC, reply/forward, mailboxes, verify, SSL/STARTTLS/pool) at the same
+  depth as Taqnyat; links to Hostinger developers / Mail API / SMTP tutorial;
+  green `LiveVerified` on SMTP (production relay previously proven); homepage
+  marquee marks Hostinger verified
+- **Taqnyat Email live verified** — opt-in live suite delivered a real message
+  via `mailSend.php` with an approved portal sender; docs show the green
+  `LiveVerified` callout for Email alongside SMS and WhatsApp
 
 ## [1.1.1] — 2026-08-02
 

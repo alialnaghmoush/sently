@@ -39,8 +39,8 @@ const CHANNELS: ReadonlyArray<{
     href: "/docs/channels/email",
     title: "Email",
     sender: "createMailer",
-    body: "SMTP or HTTP providers — Resend, SES, SendGrid, and more.",
-    providers: ["Resend", "SMTP", "SES", "SendGrid", "Postmark", "Mailgun"],
+    body: "SMTP or HTTP providers — Resend, Hostinger, SES, SendGrid, and more.",
+    providers: ["Resend", "Hostinger", "SMTP", "SES", "SendGrid", "Postmark"],
     icon: Mail,
   },
   {

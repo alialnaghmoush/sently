@@ -232,24 +232,18 @@ describe("Taqnyat live API — Mail", () => {
     const mailer = await createMailer({ transport });
     const stamp = new Date().toISOString();
 
-    try {
-      const result = await mailer.send({
-        from: mailFrom!,
-        to: mailTo!,
-        subject: `sently Taqnyat mail live ${stamp}`,
-        text: "Sent by tests/integration/taqnyat.live.test.ts",
-        html: "<p>Sent by <code>tests/integration/taqnyat.live.test.ts</code></p>",
-      });
-      console.log("[taqnyat-mail send]", result);
+    const result = await mailer.send({
+      from: mailFrom!,
+      to: mailTo!,
+      subject: `sently Taqnyat mail live ${stamp}`,
+      text: "Sent by tests/integration/taqnyat.live.test.ts",
+      html: "<p>Sent by <code>tests/integration/taqnyat.live.test.ts</code></p>",
+    });
+    console.log("[taqnyat-mail send]", result);
 
-      expect(result.messageId.length).toBeGreaterThan(0);
-      expect(result.accepted).toContain(mailTo!);
-      expect(result.provider).toBe("taqnyat-mail");
-    } catch (error) {
-      // Error 14 = sender email not accepted (portal Sender Approval / verified from).
-      console.error("[taqnyat-mail send] FAILED", error);
-      throw error;
-    }
+    expect(result.messageId.length).toBeGreaterThan(0);
+    expect(result.accepted).toContain(mailTo!);
+    expect(result.provider).toBe("taqnyat-mail");
   });
 });
 

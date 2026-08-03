@@ -13,6 +13,7 @@ import { siBun, siCloudflareworkers, siDeno, siNodedotjs } from "simple-icons";
 import { AiOnboardButton } from "@/components/landing/ai-onboard-button";
 import { HeroSignalMap } from "@/components/landing/hero-signal-map";
 import { useClientReducedMotion } from "@/lib/use-client-reduced-motion";
+import { SENTLY_VERSION } from "@/lib/version";
 
 const EASE = { type: "spring", stiffness: 420, damping: 38, mass: 0.9 } as const;
 
@@ -94,13 +95,24 @@ export function HeroIntro(): ReactNode {
         >
           <motion.p
             variants={settleVariants}
-            className="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-fd-muted-foreground uppercase"
+            className="flex flex-wrap items-center gap-x-2.5 gap-y-2 font-mono text-[11px] tracking-[0.12em] text-fd-muted-foreground uppercase"
           >
-            <span
-              aria-hidden
-              className="sently-dot-pulse size-1.5 rounded-full bg-fd-foreground/70"
-            />
-            v1.0 · open source · ESM-only · zero runtime deps
+            <Link
+              href="/changelog"
+              title="What's new in this release"
+              className="group/version inline-flex items-center gap-2 rounded-full border border-fd-border bg-fd-card px-2.5 py-1 text-fd-foreground transition-colors hover:border-fd-foreground/25 hover:bg-fd-secondary/40"
+            >
+              <span
+                aria-hidden
+                className="sently-dot-pulse size-1.5 rounded-full bg-fd-foreground/70"
+              />
+              v{SENTLY_VERSION}
+              <ArrowRight
+                aria-hidden
+                className="-mr-0.5 size-3 text-fd-muted-foreground/60 transition-all duration-300 group-hover/version:translate-x-0.5 group-hover/version:text-fd-foreground/80"
+              />
+            </Link>
+            <span>open source · ESM-only · zero runtime deps</span>
           </motion.p>
 
           <motion.h1

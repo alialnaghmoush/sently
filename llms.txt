@@ -93,7 +93,7 @@ await push.send({ token, title: "Hi", body: "Hello" })
 
 ## Transports (exported)
 
-Email: smtp, resend, sendgrid, postmark, mailgun, ses, brevo, mailersend, plunk, sparkpost, mailtrap, mailpit, inbucket, loops, cloudflare-email, sndr, taqnyat-mail, preview, retry, fallback, weighted-fallback
+Email: smtp, resend, sendgrid, postmark, mailgun, ses, brevo, mailersend, plunk, sparkpost, mailtrap, mailpit, inbucket, loops, cloudflare-email, sndr, hostinger, taqnyat-mail, preview, retry, fallback, weighted-fallback
 
 SMS: twilio-sms, taqnyat-sms, msegat, unifonic
 

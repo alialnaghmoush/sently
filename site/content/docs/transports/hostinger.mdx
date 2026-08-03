@@ -1,0 +1,435 @@
+---
+title: Hostinger
+description: Send email from a Hostinger mailbox through the Mail API or ready SMTP config.
+icon: Truck
+source: "src/transports/hostinger.ts"
+---
+
+Hostinger Email gives you a branded mailbox. Wire it into sently two ways — the Mail API over HTTPS, or the SMTP relay with Hostinger defaults already filled in.
+
+<Callout title="The one rule">
+Use `createMailer` with `HostingerTransport` for the Mail API, or `createSMTPMailer` with `hostingerSmtpConfig` for SMTP.
+Vendor extras (`listMailboxes`, `sendReply`, `sendForward`) stay on the transport instance — never on the channel sender.
+</Callout>
+
+| Path | Import | When to use |
+| --- | --- | --- |
+| Mail API | `sently/transports/hostinger` → `HostingerTransport` | Tokens, Agentic Mail, reply/forward threading |
+| SMTP | `hostingerSmtpConfig` + `sently/smtp` | Classic relay, clients, apps that already speak SMTP |
+
+Official references: [Hostinger API](https://developers.hostinger.com/), [Mail API](https://api.mail.hostinger.com/), [SMTP ports](https://www.hostinger.com/tutorials/smtp-port/).
+
+## Mail API
+
+| Option | Type | Default or requirement |
+| --- | --- | --- |
+| `token` | `string` | required — Agentic Mail API token (shown once) |
+| `mailbox` | `string` | required — mailbox resource ID, e.g. `AC1a2b3c4d5e6f7g` |
+| `baseUrl` | `string` | `https://api.mail.hostinger.com` |
+
+The API sends **from the managed mailbox**. `from` only contributes the sender display name. A copy is saved to the Sent folder on every successful send (`204 No Content`).
+
+### Setup
+
+<Steps>
+  <Step title="Create an API token">
+
+In hPanel open **Emails → your domain → Agentic Mail → API access**, create a token scoped to the mailbox, and copy it — it is shown only once.
+
+  </Step>
+  <Step title="Discover the mailbox resource ID">
+
+```ts
+import { HostingerTransport } from "sently/transports/hostinger";
+
+const hostinger = new HostingerTransport({
+  token: process.env.HOSTINGER_API_TOKEN!,
+  mailbox: "AC_placeholder", // replaced after listMailboxes()
+});
+
+const mailboxes = await hostinger.listMailboxes();
+// [{ resourceId: "AC1a2b3c4d5e6f7g", address: "you@yourdomain.com" }]
+```
+
+  </Step>
+  <Step title="Create the mailer and send">
+
+```ts
+import { createMailer } from "sently/mailer";
+import { HostingerTransport } from "sently/transports/hostinger";
+
+const hostinger = new HostingerTransport({
+  token: process.env.HOSTINGER_API_TOKEN!,
+  mailbox: process.env.HOSTINGER_MAILBOX_ID!,
+});
+const mailer = await createMailer({ transport: hostinger });
+
+const result = await mailer.send({
+  from: "Acme <you@yourdomain.com>",
+  to: "person@example.com",
+  subject: "Hello",
+  text: "Sent through the Hostinger Mail API",
+});
+console.log(result.response); // Message sent and saved to the Sent folder
+```
+
+  </Step>
+</Steps>
+
+### Features
+
+Pick a branch. Channel send goes through `mailer`; extras stay on `hostinger`.
+
+<Tabs items={["Send", "HTML", "Attachments", "CC / BCC", "Reply", "Forward", "Mailboxes", "Verify"]}>
+  <Tab value="Send">
+
+Transactional email via the channel mailer.
+
+```ts
+await mailer.send({
+  from: "you@yourdomain.com",
+  to: "person@example.com",
+  subject: "Order confirmed",
+  text: "Thanks for your order.",
+});
+```
+
+At least one of `to`, `cc`, or `bcc` must be present. There is no batch endpoint — `sendBulk` sends one by one.
+
+  </Tab>
+  <Tab value="HTML">
+
+Send HTML, plain text, or both. A display name on `from` becomes API `displayName`.
+
+```ts
+await mailer.send({
+  from: "Acme Billing <billing@yourdomain.com>",
+  to: "person@example.com",
+  subject: "Invoice ready",
+  text: "Your invoice is ready.",
+  html: "<p>Your invoice is <strong>ready</strong>.</p>",
+});
+```
+
+`replyTo`, custom `headers`, and `priority` are not mapped by the Mail API — use SMTP if you need them.
+
+  </Tab>
+  <Tab value="Attachments">
+
+Attachments are base64-encoded for you. Inline images use `contentId` → API `cid`.
+
+```ts
+await mailer.send({
+  from: "you@yourdomain.com",
+  to: "person@example.com",
+  subject: "Report",
+  html: '<p>Logo: <img src="cid:logo" /></p>',
+  attachments: [
+    {
+      filename: "report.pdf",
+      content: pdfBytes,
+      contentType: "application/pdf",
+    },
+    {
+      filename: "logo.png",
+      content: logoBytes,
+      contentType: "image/png",
+      contentId: "logo",
+      inline: true,
+    },
+  ],
+});
+```
+
+  </Tab>
+  <Tab value="CC / BCC">
+
+Carbon-copy and blind carbon-copy map to API `cc` / `bcc` arrays.
+
+```ts
+await mailer.send({
+  from: "you@yourdomain.com",
+  to: "person@example.com",
+  cc: ["ops@example.com", "lead@example.com"],
+  bcc: "audit@example.com",
+  subject: "Weekly update",
+  text: "Status for the week.",
+});
+```
+
+  </Tab>
+  <Tab value="Reply">
+
+Reply to a mailbox message by folder + IMAP UID. Flags the source `\Answered`.
+
+```ts
+await hostinger.sendReply(
+  {
+    from: "you@yourdomain.com",
+    to: "person@example.com",
+    subject: "Re: Support request",
+    text: "Thanks — we are looking into it.",
+  },
+  { folder: "INBOX", uid: 42 },
+);
+```
+
+Mutually exclusive with **Forward**. Call this on the transport, not on `mailer`.
+
+  </Tab>
+  <Tab value="Forward">
+
+Forward a mailbox message by folder + IMAP UID. Flags the source `$forwarded`.
+
+```ts
+await hostinger.sendForward(
+  {
+    from: "you@yourdomain.com",
+    to: "team@example.com",
+    subject: "Fwd: Support request",
+    text: "Passing this along.",
+  },
+  { folder: "INBOX", uid: 42 },
+);
+```
+
+Mutually exclusive with **Reply**.
+
+  </Tab>
+  <Tab value="Mailboxes">
+
+List every mailbox the token can manage — required to learn the `resourceId`.
+
+```ts
+const mailboxes = await hostinger.listMailboxes();
+for (const box of mailboxes) {
+  console.log(box.resourceId, box.address);
+}
+```
+
+Resource IDs look like `AC1a2b3c4d5e6f7g`. Pass the matching one as `mailbox` in the transport config.
+
+  </Tab>
+  <Tab value="Verify">
+
+Check the token and that the configured `mailbox` is in its scope — without sending mail.
+
+```ts
+const check = await hostinger.verify();
+// { ok: true, provider: "hostinger",
+//   message: "API token is valid — sending as you@yourdomain.com" }
+
+const viaMailer = await mailer.verify(); // same check through the channel sender
+```
+
+  </Tab>
+</Tabs>
+
+### Mail options mapping
+
+| Mail option | Hostinger field | Notes |
+| --- | --- | --- |
+| `from` name | `displayName` | Address is the managed mailbox |
+| `to` / `cc` / `bcc` | `to` / `cc` / `bcc` | Email arrays |
+| `subject` | `subject` | |
+| `text` / `html` | `text` / `html` | Either or both |
+| `attachments` | `attachments` | Base64 `content`, optional `contentType` / `cid` |
+| `messageId` | — | Kept on `SendResult` (API returns empty body) |
+| `replyTo` / `headers` / `priority` | — | Not supported on the Mail API |
+
+## SMTP
+
+<LiveVerified>
+SMTP send against Hostinger’s production relay (`smtp.hostinger.com`) succeeded previously with a real mailbox — SSL port 465 and STARTTLS port 587.
+</LiveVerified>
+
+Ready Hostinger relay settings — no host/port guesswork. Pass `hostingerSmtpConfig(...)` straight into `createSMTPMailer`.
+
+| Setting | Value |
+| --- | --- |
+| Host | `smtp.hostinger.com` |
+| Port `465` | SSL/TLS on connect — **default** |
+| Port `587` | STARTTLS |
+| Username | Full mailbox address |
+| Password | Mailbox password from hPanel |
+
+Hostinger supports ports **465** and **587** only — not `2525` ([SMTP ports guide](https://www.hostinger.com/tutorials/smtp-port/)).
+
+### Setup
+
+<Steps>
+  <Step title="Copy SMTP credentials from hPanel">
+
+**Emails → your domain → Configuration settings → Manual Configuration** — take the outgoing server host, port, and mailbox password.
+
+  </Step>
+  <Step title="Create the SMTP mailer">
+
+```ts
+import { createSMTPMailer } from "sently/smtp";
+import { hostingerSmtpConfig } from "sently/transports/hostinger";
+
+const mailer = await createSMTPMailer(
+  hostingerSmtpConfig({
+    user: "you@yourdomain.com",
+    pass: process.env.HOSTINGER_SMTP_PASSWORD!,
+  }),
+);
+```
+
+  </Step>
+  <Step title="Send with the channel API">
+
+```ts
+await mailer.send({
+  from: "you@yourdomain.com",
+  to: "person@example.com",
+  subject: "Hello",
+  text: "Sent through Hostinger SMTP",
+});
+```
+
+  </Step>
+</Steps>
+
+### Features
+
+<Tabs items={["SSL 465", "STARTTLS 587", "Pool", "Full MIME"]}>
+  <Tab value="SSL 465">
+
+Default — implicit TLS on connect.
+
+```ts
+const mailer = await createSMTPMailer(
+  hostingerSmtpConfig({
+    user: "you@yourdomain.com",
+    pass: process.env.HOSTINGER_SMTP_PASSWORD!,
+    // port: 465, // default
+  }),
+);
+```
+
+Exports: `HOSTINGER_SMTP_HOST`, `HOSTINGER_SMTP_PORT_SSL` (`465`).
+
+  </Tab>
+  <Tab value="STARTTLS 587">
+
+Plain connect, then upgrade with STARTTLS.
+
+```ts
+const mailer = await createSMTPMailer(
+  hostingerSmtpConfig({
+    user: "you@yourdomain.com",
+    pass: process.env.HOSTINGER_SMTP_PASSWORD!,
+    port: 587,
+  }),
+);
+```
+
+`secure` is set to `false` automatically. Constant: `HOSTINGER_SMTP_PORT_STARTTLS`.
+
+  </Tab>
+  <Tab value="Pool">
+
+Reuse SMTP connections under load.
+
+```ts
+const mailer = await createSMTPMailer(
+  hostingerSmtpConfig({
+    user: "you@yourdomain.com",
+    pass: process.env.HOSTINGER_SMTP_PASSWORD!,
+    pool: true,
+    maxConnections: 3,
+  }),
+);
+```
+
+  </Tab>
+  <Tab value="Full MIME">
+
+SMTP carries the full MIME message — `replyTo`, custom headers, `priority`, DKIM, and attachments work as on any other SMTP relay.
+
+```ts
+await mailer.send({
+  from: "Acme <you@yourdomain.com>",
+  to: "person@example.com",
+  replyTo: "support@yourdomain.com",
+  subject: "Hello",
+  html: "<p>Hi</p>",
+  headers: { "X-Campaign": "welcome" },
+  priority: "high",
+});
+```
+
+See [SMTP](./smtp) for pooling, DKIM, and adapter details.
+
+  </Tab>
+</Tabs>
+
+### Config helper
+
+| Option | Type | Default |
+| --- | --- | --- |
+| `user` | `string` | required — full mailbox address |
+| `pass` | `string` | required — mailbox password |
+| `port` | `465 \| 587` | `465` |
+| `pool` | `boolean` | unset |
+| `maxConnections` | `number` | unset (SMTP default `5` when pooled) |
+
+## Mail API vs SMTP
+
+| Need | Prefer |
+| --- | --- |
+| Agentic Mail token / mailbox resource ID | Mail API |
+| Reply / forward by IMAP UID | Mail API (`sendReply` / `sendForward`) |
+| `replyTo`, custom headers, `priority`, DKIM | SMTP |
+| Existing SMTP client / form stack | SMTP |
+| Sent-folder copy via Hostinger’s API | Mail API (automatic) |
+
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="401 — Missing or invalid credentials">
+    The Mail API token is wrong or revoked. Create a fresh token under Agentic Mail → API access; tokens are shown only once.
+  </Accordion>
+  <Accordion title="403 — Token is not authorized to manage the requested mailbox">
+    The `mailbox` resource ID is outside the token's scope. Open the **Mailboxes** branch (`listMailboxes`) or recreate the token with access to that mailbox.
+  </Accordion>
+  <Accordion title="422 — Request payload failed validation">
+    At least one of `to`, `cc`, or `bcc` must be present. The error's `params` map names the fields that failed. Reply and Forward are mutually exclusive.
+  </Accordion>
+  <Accordion title="502 — Upstream service unavailable">
+    Hostinger’s upstream mail service returned an unexpected response. Retry with a [Retry](/docs/decorators/retry) decorator, or fall back to SMTP.
+  </Accordion>
+  <Accordion title="SMTP auth fails">
+    Username must be the **full** mailbox address. Copy the password from hPanel → Configuration settings → Manual Configuration. Use port `465` (`secure: true`) or `587` only.
+  </Accordion>
+  <Accordion title="Should I call the provider SDK?">
+    No. Use the matching sently channel sender; open a feature branch above for vendor extras on the transport.
+  </Accordion>
+</Accordions>
+
+## Contact & resources
+
+| Resource | Link |
+| --- | --- |
+| Developers portal | [developers.hostinger.com](https://developers.hostinger.com/) |
+| Mail API reference | [api.mail.hostinger.com](https://api.mail.hostinger.com/) |
+| SMTP ports tutorial | [hostinger.com/tutorials/smtp-port](https://www.hostinger.com/tutorials/smtp-port/) |
+| Business email product | [hostinger.com/business-email](https://www.hostinger.com/business-email) |
+| hPanel | Emails → domain → Agentic Mail / Configuration settings |
+
+## Learn more
+
+- [Email channel](/docs/channels/email) — mailer options and send pipeline
+- [SMTP](./smtp) — relay pooling, DKIM, adapters
+- [Retry](/docs/decorators/retry) — wrap any transport on 429 / 5xx
+- [Support matrix](/docs/get-started/support-matrix) — Supported vs Available
+
+## Next
+
+<Cards>
+  <Card title="Email channel" href="/docs/channels/email" />
+  <Card title="SMTP" href="/docs/transports/smtp" />
+  <Card title="Transports" href="/docs/transports" />
+</Cards>

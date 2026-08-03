@@ -58,6 +58,7 @@ const PROVIDERS: ReadonlyArray<ProviderEntry> = orderProviders([
   { name: "Mailpit", status: "verified" },
   { name: "Inbucket", status: "verified" },
   { name: "SNDR", status: "verified" },
+  { name: "Hostinger", status: "verified" },
   { name: "Twilio", status: "available" },
   { name: "Taqnyat", status: "verified" },
   { name: "Msegat", status: "available" },

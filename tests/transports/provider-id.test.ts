@@ -4,6 +4,7 @@ import { IdempotencyTransport } from "../../src/idempotency.js";
 import { BrevoTransport } from "../../src/transports/brevo.js";
 import { CloudflareEmailTransport } from "../../src/transports/cloudflare-email.js";
 import { FallbackTransport } from "../../src/transports/fallback.js";
+import { HostingerTransport } from "../../src/transports/hostinger.js";
 import { LoopsTransport } from "../../src/transports/loops.js";
 import { MailerSendTransport } from "../../src/transports/mailersend.js";
 import { MailgunTransport } from "../../src/transports/mailgun.js";
@@ -58,6 +59,10 @@ describe("Transport.provider", () => {
     { transport: new MailpitTransport(), expected: "mailpit" },
     { transport: new InbucketTransport(), expected: "inbucket" },
     { transport: new LoopsTransport({ apiKey: "loops_test" }), expected: "loops" },
+    {
+      transport: new HostingerTransport({ token: "hst_test", mailbox: "AC1a2b3c4d5e6f7g" }),
+      expected: "hostinger",
+    },
     {
       transport: new SMTPTransport({
         host: "smtp.example.com",

@@ -107,6 +107,15 @@ const subpathImports: Array<{ path: string; check: (mod: Record<string, unknown>
     },
   },
   {
+    path: "../../dist/transports/hostinger.js",
+    check: (mod) => {
+      expect(mod.HostingerTransport).toBeDefined();
+      expect(mod.HostingerError).toBeDefined();
+      expect(mod.hostingerSmtpConfig).toBeDefined();
+      expect(mod.HOSTINGER_SMTP_HOST).toBe("smtp.hostinger.com");
+    },
+  },
+  {
     path: "../../dist/webhooks.js",
     check: (mod) => {
       expect(mod.parseResendWebhook).toBeDefined();
