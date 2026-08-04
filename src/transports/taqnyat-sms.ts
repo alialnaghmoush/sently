@@ -188,16 +188,48 @@ export class TaqnyatSmsError extends SentlyError {
   }
 }
 
-function verifyPayloadCode(payload: Record<string, unknown>): number | undefined {
-  const raw = payload.code ?? payload.statusCode ?? payload.status;
-  if (typeof raw === "number") return raw;
+function asVerifyCode(raw: unknown): number | undefined {
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
   if (typeof raw === "string" && /^-?\d+$/.test(raw)) return Number(raw);
   return undefined;
 }
 
+/**
+ * Resolve the Verify result code.
+ *
+ * Live `returnJson: 1` responses wrap the docs table code in `Data.result`:
+ * `{ status: 1, ResponseStatus: "success", Data: { result: 5, MessageEn: "…" } }`.
+ * Top-level `status` here is a transport envelope (not the docs table) — reading
+ * it as the OTP code falsely maps success to "invalid apiKey" (code 1).
+ * Flat shapes (`{ code: 5 }`) from docs samples / older responses still work.
+ */
+function verifyPayloadCode(payload: Record<string, unknown>): number | undefined {
+  const data = payload.Data;
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const nested = asVerifyCode((data as Record<string, unknown>).result);
+    if (nested !== undefined) return nested;
+  }
+  const flat = asVerifyCode(payload.code ?? payload.statusCode ?? payload.result);
+  if (flat !== undefined) return flat;
+  // Only treat top-level `status` as the result code when this is not the
+  // envelope form (which always carries `ResponseStatus`).
+  if (payload.ResponseStatus === undefined) {
+    return asVerifyCode(payload.status);
+  }
+  return undefined;
+}
+
 function verifyPayloadMessage(payload: Record<string, unknown>): string | undefined {
+  const data = payload.Data;
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const nested = data as Record<string, unknown>;
+    if (typeof nested.MessageEn === "string") return nested.MessageEn;
+    if (typeof nested.MessageAr === "string") return nested.MessageAr;
+    if (typeof nested.message === "string") return nested.message;
+  }
   if (typeof payload.message === "string") return payload.message;
   if (typeof payload.MessageEn === "string") return payload.MessageEn;
+  if (typeof payload.Error === "string") return payload.Error;
   return undefined;
 }
 

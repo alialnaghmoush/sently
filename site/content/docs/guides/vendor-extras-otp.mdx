@@ -13,7 +13,8 @@ const otp = await msegat.sendOtp({ to: "+9665...", lang: "En" });
 await msegat.verifyOtp({ id: otp.id, code: "1234", lang: "En" });
 ```
 
-Taqnyat SMS also exposes `sendOtp` and `verifyOtp` on its transport.
+Taqnyat SMS also exposes `sendOtp` and `verifyOtp` on its transport — live verified
+end-to-end against production (`sendOtp` → handset → `verifyOtp`).
 See [Taqnyat](/docs/transports/taqnyat#sms-vendor-extras) for balance, senders, schedule, WhatsApp templates, opt-in, and failover extras.
 
 <Cards><Card title="Msegat" href="/docs/transports/msegat" /><Card title="Taqnyat" href="/docs/transports/taqnyat#sms" /></Cards>

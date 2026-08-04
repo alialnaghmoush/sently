@@ -26,13 +26,13 @@
  * });
  * ```
  *
- * @example SMTP
+ * @example SMTP — same name, SMTP-shaped config (no `new`)
  * ```ts
  * import { createSMTPMailer } from "sently/smtp";
- * import { hostingerSmtpConfig } from "sently/transports/hostinger";
+ * import { HostingerTransport } from "sently/transports/hostinger";
  *
  * const mailer = await createSMTPMailer(
- *   hostingerSmtpConfig({
+ *   HostingerTransport({
  *     user: "you@yourdomain.com",
  *     pass: process.env.HOSTINGER_SMTP_PASSWORD!,
  *   }),
@@ -54,7 +54,7 @@ import { resolveAttachments } from "./resolve-attachments.js";
 /** Hostinger SMTP hostname. */
 export const HOSTINGER_SMTP_HOST = "smtp.hostinger.com";
 
-/** SSL/TLS-on-connect submission port (default for {@link hostingerSmtpConfig}). */
+/** SSL/TLS-on-connect submission port (default for {@link HostingerTransport} SMTP). */
 export const HOSTINGER_SMTP_PORT_SSL = 465;
 
 /** STARTTLS submission port. */
@@ -75,7 +75,7 @@ export interface HostingerConfig {
 
 /**
  * Ready SMTP options for Hostinger Email.
- * Pass the result of {@link hostingerSmtpConfig} to `createSMTPMailer`.
+ * Pass `HostingerTransport({ user, pass })` to `createSMTPMailer`.
  */
 export interface HostingerSmtpOptions {
   /** Full mailbox address — this is the SMTP username. */
@@ -130,21 +130,8 @@ interface HostingerSendExtras {
  * Build a ready {@link SMTPConfig} for Hostinger Email.
  *
  * Defaults to port `465` with `secure: true`. Hostinger supports `465` and
- * `587` only — not `2525`.
- *
- * @example
- * ```ts
- * import { createSMTPMailer } from "sently/smtp";
- * import { hostingerSmtpConfig } from "sently/transports/hostinger";
- *
- * const mailer = await createSMTPMailer(
- *   hostingerSmtpConfig({
- *     user: "you@yourdomain.com",
- *     pass: process.env.HOSTINGER_SMTP_PASSWORD!,
- *     // port: 587, // STARTTLS instead of SSL
- *   }),
- * );
- * ```
+ * `587` only — not `2525`. Prefer `HostingerTransport({ user, pass })`; this
+ * alias stays for 1.x compatibility.
  */
 export function hostingerSmtpConfig(options: HostingerSmtpOptions): SMTPConfig {
   const port = options.port ?? HOSTINGER_SMTP_PORT_SSL;
@@ -176,15 +163,10 @@ export class HostingerError extends SentlyError {
 }
 
 /**
- * Hostinger Mail API transport.
- *
- * Sends through `POST /api/v1/mailboxes/{mailbox}/send`. There is no batch
- * endpoint — {@link Mailer.sendBulk} falls back to individual sends.
- *
- * For SMTP relay, use {@link hostingerSmtpConfig} with `createSMTPMailer`
- * instead of this class.
+ * Hostinger Mail API transport instance type (`new` / call with API config).
+ * Constructed by the {@link HostingerTransport} overload — not exported directly.
  */
-export class HostingerTransport implements Transport {
+class HostingerTransportImpl implements Transport {
   readonly provider = "hostinger";
 
   /** Hostinger Mail API token for Bearer authentication. */
@@ -365,3 +347,40 @@ export class HostingerTransport implements Transport {
     }
   }
 }
+
+/**
+ * Hostinger Mail API transport instance (returned by {@link HostingerTransport}
+ * overloads for `{ token, mailbox }` config).
+ */
+export type HostingerMailTransport = HostingerTransportImpl;
+
+/**
+ * Function-overloaded constructor for `HostingerTransport`:
+ * - `new` / call with {@link HostingerConfig} → {@link HostingerMailTransport}
+ * - call with {@link HostingerSmtpOptions} → {@link SMTPConfig}
+ */
+export interface HostingerTransportOverloads {
+  new (config: HostingerConfig): HostingerMailTransport;
+  (config: HostingerConfig): HostingerMailTransport;
+  (config: HostingerSmtpOptions): SMTPConfig;
+}
+
+/**
+ * Hostinger email — one name, two shapes (function overloading).
+ *
+ * - **Mail API** — `new HostingerTransport({ token, mailbox })` (or the same
+ *   call without `new`) → a `Transport` for `createMailer`.
+ * - **SMTP** — `HostingerTransport({ user, pass })` → a ready `SMTPConfig`
+ *   for `createSMTPMailer`.
+ *
+ * IntelliSense narrows options and the return type by the config shape.
+ */
+export const HostingerTransport = function (
+  this: HostingerTransportImpl | undefined,
+  config: HostingerConfig | HostingerSmtpOptions,
+) {
+  if ("token" in config) {
+    return new HostingerTransportImpl(config);
+  }
+  return hostingerSmtpConfig(config);
+} as unknown as HostingerTransportOverloads;

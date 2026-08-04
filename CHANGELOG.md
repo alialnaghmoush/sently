@@ -1,5 +1,32 @@
 # Changelog
 
+## [Unreleased]
+
+## [1.2.1] — 2026-08-04
+
+### ✨ Added
+
+- **Taqnyat Verify OTP live verified** — production `sendOtp` → handset code →
+  `verifyOtp` confirmed; docs OTP tab shows the green `LiveVerified` callout
+  alongside SMS, WhatsApp, and Email
+
+### ♻️ Changed
+
+- **Hostinger SMTP unified** — SMTP settings now come from the same name via
+  function overloading: `HostingerTransport({ user, pass })` returns a ready
+  `SMTPConfig` for `createSMTPMailer`, while `new HostingerTransport({ token,
+  mailbox })` stays the Mail API transport; IntelliSense narrows options and
+  the return type by config shape; `hostingerSmtpConfig()` remains as a 1.x
+  compatibility alias
+
+### 🐛 Fixed
+
+- **Taqnyat Verify OTP parsing** — live `returnJson: 1` responses put the docs
+  result code in `Data.result` and use top-level `status: 1` as a transport
+  envelope; `sendOtp` / `verifyOtp` now read `Data.result` (and
+  `Data.MessageEn` / `Data.MessageAr`) so a successful send is no longer
+  misreported as code `1` (invalid apiKey)
+
 ## [1.2.0] — 2026-08-03
 
 ### ✨ Added

@@ -302,6 +302,31 @@ describe("HostingerTransport", () => {
   test("defaults to the Hostinger Mail API base URL constant", () => {
     expect(HOSTINGER_API_BASE_URL).toBe("https://api.mail.hostinger.com");
   });
+
+  test("call with API config returns a working transport (no `new`)", () => {
+    const transport = HostingerTransport({ token: "hst_test", mailbox: "AC1a2b3c4d5e6f7g" });
+    expect(transport.provider).toBe("hostinger");
+  });
+
+  test("call with SMTP options returns a ready SMTPConfig", () => {
+    expect(
+      HostingerTransport({ user: "you@yourdomain.com", pass: "secret" }),
+    ).toEqual({
+      host: HOSTINGER_SMTP_HOST,
+      port: HOSTINGER_SMTP_PORT_SSL,
+      secure: true,
+      auth: { user: "you@yourdomain.com", pass: "secret" },
+    });
+  });
+
+  test("SMTP overload matches hostingerSmtpConfig alias", () => {
+    const options = {
+      user: "you@yourdomain.com",
+      pass: "secret",
+      port: HOSTINGER_SMTP_PORT_STARTTLS,
+    } as const;
+    expect(HostingerTransport(options)).toEqual(hostingerSmtpConfig(options));
+  });
 });
 
 describe("hostingerSmtpConfig", () => {

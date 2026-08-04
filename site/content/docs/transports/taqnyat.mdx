@@ -68,6 +68,10 @@ Optional `from` overrides the transport `sender` for that send.
 
 Taqnyat Verify API on the transport (`sendOtp` → user enters code → `verifyOtp`).
 
+<LiveVerified>
+Verify OTP end-to-end against Taqnyat’s production API: `sendOtp` returned `Data.result: 5`, the handset received the code, and `verifyOtp` completed successfully (live suite + manual confirm).
+</LiveVerified>
+
 ```ts
 await taqnyat.sendOtp({
   to: "+9665xxxxxxxx",
@@ -84,7 +88,7 @@ await taqnyat.verifyOtp({
 });
 ```
 
-Success send code is `5`. Verify accepts `10`, `13`, or `19`.
+Success send code is `5` (`Data.result` on live `returnJson` responses). Verify accepts `10`, `13`, or `19`.
 
   </Tab>
   <Tab value="Balance">
@@ -313,11 +317,36 @@ Body is `html` when set, otherwise `text` (`msg` on Taqnyat’s API).
   </Tab>
 </Tabs>
 
+## Account verification & sender names
+
+Portal onboarding from Taqnyat — required before a custom SMS `sender` is active. Not part of the sently API; complete these in the Taqnyat portal.
+
+### Account verification
+
+1. Fill out the contract, sign it, and stamp it.
+2. If the organization is subject to tax, attach the tax certificate.
+
+### New sender name
+
+| Rule | Detail |
+| --- | --- |
+| Authorization | Fill out the sender-name authorization form, sign it, and stamp it |
+| Name relation | Sender name must relate to the organization; otherwise attach a supporting document that explains the link |
+| Fee | SAR 230, renewed annually |
+| Service name | Max **11** characters |
+| Promotional name | Max **8** characters, with `-AD` appended at the end |
+| Dual registration | Names ≤ 8 characters can be registered as both service and promotional for one SAR 230 fee (counts as one name) |
+
+<Callout title="Tip">
+Use the **Senders** tab above (`listSenders`) after registration to confirm the name is active before hard-coding `sender`.
+</Callout>
+
 ## Troubleshooting
 
 <Accordions>
   <Accordion title="SMS — Sender Name not active / not accepted">
     Open the **Senders** branch and call `listSenders()`, or use an active portal sender exactly as shown (trial accounts often use `Taqnyat.sa`).
+    Custom names need portal registration first — see [Account verification & sender names](#account-verification--sender-names).
   </Accordion>
   <Accordion title="WhatsApp — sandbox rejects the number">
     Add the destination under Manage WhatsApp → Sandbox, then use the **Opt-in** branch before business-initiated templates.

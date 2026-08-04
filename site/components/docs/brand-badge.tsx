@@ -18,7 +18,7 @@ type BrandBadge = {
  */
 const BADGES: Record<string, BrandBadge> = {
   Taqnyat: {
-    shell: "bg-white ring-fd-border/60",
+    shell: "bg-white ring-fd-border/60 dark:bg-zinc-950",
     mark: <TaqnyatLogo className="h-7 w-auto" />,
   },
   SNDR: {

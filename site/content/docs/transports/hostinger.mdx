@@ -8,14 +8,14 @@ source: "src/transports/hostinger.ts"
 Hostinger Email gives you a branded mailbox. Wire it into sently two ways — the Mail API over HTTPS, or the SMTP relay with Hostinger defaults already filled in.
 
 <Callout title="The one rule">
-Use `createMailer` with `HostingerTransport` for the Mail API, or `createSMTPMailer` with `hostingerSmtpConfig` for SMTP.
-Vendor extras (`listMailboxes`, `sendReply`, `sendForward`) stay on the transport instance — never on the channel sender.
+One name, two shapes: `new HostingerTransport({ token, mailbox })` → `createMailer` (Mail API); `HostingerTransport({ user, pass })` → `createSMTPMailer` (SMTP, no `new`).
+IntelliSense narrows options and the return type by config shape. Vendor extras (`listMailboxes`, `sendReply`, `sendForward`) stay on the Mail API instance — never on the channel sender.
 </Callout>
 
-| Path | Import | When to use |
-| --- | --- | --- |
-| Mail API | `sently/transports/hostinger` → `HostingerTransport` | Tokens, Agentic Mail, reply/forward threading |
-| SMTP | `hostingerSmtpConfig` + `sently/smtp` | Classic relay, clients, apps that already speak SMTP |
+| Path | Call | Returns | Wire into |
+| --- | --- | --- | --- |
+| Mail API | `new HostingerTransport({ token, mailbox })` | Transport | `createMailer` |
+| SMTP | `HostingerTransport({ user, pass })` | `SMTPConfig` | `createSMTPMailer` |
 
 Official references: [Hostinger API](https://developers.hostinger.com/), [Mail API](https://api.mail.hostinger.com/), [SMTP ports](https://www.hostinger.com/tutorials/smtp-port/).
 
@@ -243,7 +243,7 @@ const viaMailer = await mailer.verify(); // same check through the channel sende
 SMTP send against Hostinger’s production relay (`smtp.hostinger.com`) succeeded previously with a real mailbox — SSL port 465 and STARTTLS port 587.
 </LiveVerified>
 
-Ready Hostinger relay settings — no host/port guesswork. Pass `hostingerSmtpConfig(...)` straight into `createSMTPMailer`.
+Ready Hostinger relay settings — no host/port guesswork. Pass `HostingerTransport({ user, pass })` straight into `createSMTPMailer`.
 
 | Setting | Value |
 | --- | --- |
@@ -267,10 +267,10 @@ Hostinger supports ports **465** and **587** only — not `2525` ([SMTP ports gu
 
 ```ts
 import { createSMTPMailer } from "sently/smtp";
-import { hostingerSmtpConfig } from "sently/transports/hostinger";
+import { HostingerTransport } from "sently/transports/hostinger";
 
 const mailer = await createSMTPMailer(
-  hostingerSmtpConfig({
+  HostingerTransport({
     user: "you@yourdomain.com",
     pass: process.env.HOSTINGER_SMTP_PASSWORD!,
   }),
@@ -301,7 +301,7 @@ Default — implicit TLS on connect.
 
 ```ts
 const mailer = await createSMTPMailer(
-  hostingerSmtpConfig({
+  HostingerTransport({
     user: "you@yourdomain.com",
     pass: process.env.HOSTINGER_SMTP_PASSWORD!,
     // port: 465, // default
@@ -318,7 +318,7 @@ Plain connect, then upgrade with STARTTLS.
 
 ```ts
 const mailer = await createSMTPMailer(
-  hostingerSmtpConfig({
+  HostingerTransport({
     user: "you@yourdomain.com",
     pass: process.env.HOSTINGER_SMTP_PASSWORD!,
     port: 587,
@@ -335,7 +335,7 @@ Reuse SMTP connections under load.
 
 ```ts
 const mailer = await createSMTPMailer(
-  hostingerSmtpConfig({
+  HostingerTransport({
     user: "you@yourdomain.com",
     pass: process.env.HOSTINGER_SMTP_PASSWORD!,
     pool: true,
@@ -366,7 +366,9 @@ See [SMTP](./smtp) for pooling, DKIM, and adapter details.
   </Tab>
 </Tabs>
 
-### Config helper
+### SMTP options
+
+Options for `HostingerTransport({ user, pass })` (the SMTP overload):
 
 | Option | Type | Default |
 | --- | --- | --- |
@@ -375,6 +377,8 @@ See [SMTP](./smtp) for pooling, DKIM, and adapter details.
 | `port` | `465 \| 587` | `465` |
 | `pool` | `boolean` | unset |
 | `maxConnections` | `number` | unset (SMTP default `5` when pooled) |
+
+`hostingerSmtpConfig(...)` still works as a 1.x compatibility alias for the same options.
 
 ## Mail API vs SMTP
 

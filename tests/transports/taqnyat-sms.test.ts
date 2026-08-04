@@ -184,6 +184,65 @@ describe("TaqnyatSmsTransport", () => {
     ]);
   });
 
+  test("sendOtp() reads Data.result from live returnJson envelope (not status)", async () => {
+    // Live Taqnyat Verify wraps the docs-table code in Data.result; top-level
+    // status:1 is the envelope and must NOT be treated as "invalid apiKey".
+    installFetchMock(() =>
+      Response.json({
+        status: 1,
+        ResponseStatus: "success",
+        Data: {
+          id: "",
+          result: 5,
+          MessageAr: "تم ارسال رمز التحقق لرقم الجوال 3258********",
+          MessageEn: "Verification code sent to mobile number ********3258",
+        },
+        Error: null,
+      }),
+    );
+
+    const transport = new TaqnyatSmsTransport({
+      bearerToken: "tok_test",
+      sender: "MyBrand",
+    });
+
+    const result = await transport.sendOtp({
+      to: "+966501234567",
+      requestId: "login-1",
+      lang: "en",
+    });
+
+    expect(result.code).toBe(5);
+    expect(result.requestId).toBe("login-1");
+  });
+
+  test("sendOtp() surfaces Data.result failure codes from the envelope", async () => {
+    installFetchMock(() =>
+      Response.json({
+        status: 1,
+        ResponseStatus: "success",
+        Data: {
+          result: 1,
+          MessageEn: "invalid apiKey",
+        },
+        Error: null,
+      }),
+    );
+
+    const transport = new TaqnyatSmsTransport({
+      bearerToken: "bad",
+      sender: "MyBrand",
+    });
+
+    await expect(
+      transport.sendOtp({ to: "+966501234567", requestId: "login-1" }),
+    ).rejects.toMatchObject({
+      name: "TaqnyatSmsError",
+      statusCode: 1,
+      message: "invalid apiKey",
+    });
+  });
+
   test("verifyOtp() accepts code 10", async () => {
     installFetchMock(() =>
       Response.json({ code: 10, message: "Activation process completed successfully." }),
@@ -203,6 +262,36 @@ describe("TaqnyatSmsTransport", () => {
 
     expect(result.ok).toBe(true);
     expect(result.code).toBe(10);
+  });
+
+  test("verifyOtp() reads Data.result from live returnJson envelope", async () => {
+    installFetchMock(() =>
+      Response.json({
+        status: 1,
+        ResponseStatus: "success",
+        Data: {
+          result: 10,
+          MessageEn: "Activation process completed successfully.",
+        },
+        Error: null,
+      }),
+    );
+
+    const transport = new TaqnyatSmsTransport({
+      bearerToken: "tok_test",
+      sender: "MyBrand",
+    });
+
+    const result = await transport.verifyOtp({
+      to: "+966501234567",
+      requestId: "login-1",
+      code: "6240",
+      lang: "en",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.code).toBe(10);
+    expect(result.message).toBe("Activation process completed successfully.");
   });
 
   test("verifyOtp() throws on incorrect code 11", async () => {

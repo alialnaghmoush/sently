@@ -113,6 +113,12 @@ const subpathImports: Array<{ path: string; check: (mod: Record<string, unknown>
       expect(mod.HostingerError).toBeDefined();
       expect(mod.hostingerSmtpConfig).toBeDefined();
       expect(mod.HOSTINGER_SMTP_HOST).toBe("smtp.hostinger.com");
+
+      expect(mod.HostingerTransport({ token: "t", mailbox: "m" }).provider).toBe("hostinger");
+      expect(mod.HostingerTransport({ user: "u", pass: "p" })).toMatchObject({
+        host: "smtp.hostinger.com",
+        secure: true,
+      });
     },
   },
   {

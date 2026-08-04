@@ -70,7 +70,7 @@ export function TaqnyatLogo({
       aria-label="Taqnyat"
       className={cn(
         "block h-8 w-auto",
-        !muted && "text-[#214376]",
+        !muted && "text-[#214376] dark:text-[#9BB4D4]",
         className,
       )}
       {...props}
