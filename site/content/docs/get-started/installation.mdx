@@ -15,6 +15,8 @@ Install it in the application that owns your delivery credentials and provider t
 
 ```bash
 bun add sently
+# or
+bunx jsr add @omqkhafi/sently
 ```
 
   </Step>
@@ -34,11 +36,15 @@ const mailer = await createMailer({
   </Step>
 </Steps>
 
+<Callout title="JSR scope">
+  Use `@omqkhafi/sently`. `@alialnaghmoush/sently` stays on the registry but will not receive new versions. npm `sently` is unchanged.
+</Callout>
+
 ## Install and runtime requirements
 
 | Requirement | Details |
 | --- | --- |
-| Package manager | Bun: `bun add sently`. |
+| Package manager | Bun: `bun add sently`. JSR: `bunx jsr add @omqkhafi/sently`. |
 | Module format | Use ESM imports. |
 | Node.js | Version 18 or later. |
 | Bun | Version 1 or later. |
@@ -63,6 +69,9 @@ const mailer = await createMailer({
   </Accordion>
   <Accordion title="Should I import every transport from the main package?">
     No. Provider transports are exported from their own `sently/transports/*` subpaths.
+  </Accordion>
+  <Accordion title="I already installed @alialnaghmoush/sently">
+    Replace it with `@omqkhafi/sently` (`bunx jsr add @omqkhafi/sently`). Imports stay `sently/…`.
   </Accordion>
 </Accordions>
 

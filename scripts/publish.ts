@@ -99,7 +99,7 @@ function syncVersion(): string {
   let jsr = readJsrJson();
   if (!jsr) {
     jsr = {
-      name: "@alialnaghmoush/sently",
+      name: "@omqkhafi/sently",
       version,
       description: pkg.description,
       exports: "./src/index.ts",

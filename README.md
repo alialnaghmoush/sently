@@ -2,11 +2,11 @@
   <picture>
     <source
       media="(prefers-color-scheme: dark)"
-      srcset="https://shieldcn.dev/header/grid.svg?title=sently&subtitle=One+API.+Four+channels.+Every+runtime.&logo=https://raw.githubusercontent.com/alialnaghmoush/sently/dev/site/public/sentlyIconLogo-w.svg&theme=zinc&size=banner&mode=dark&font=geist&align=left"
+      srcset="https://shieldcn.dev/header/grid.svg?title=sently&subtitle=One+API.+Four+channels.+Every+runtime.&logo=https://raw.githubusercontent.com/omqkhafi/sently/dev/site/public/sentlyIconLogo-w.svg&theme=zinc&size=banner&mode=dark&font=geist&align=left"
     />
     <img
       alt="sently — One API. Four channels. Every runtime."
-      src="https://shieldcn.dev/header/grid.svg?title=sently&subtitle=One+API.+Four+channels.+Every+runtime.&logo=https://raw.githubusercontent.com/alialnaghmoush/sently/dev/site/public/sentlyIconLogo-k.svg&theme=zinc&size=banner&mode=light&font=geist&align=left"
+      src="https://shieldcn.dev/header/grid.svg?title=sently&subtitle=One+API.+Four+channels.+Every+runtime.&logo=https://raw.githubusercontent.com/omqkhafi/sently/dev/site/public/sentlyIconLogo-k.svg&theme=zinc&size=banner&mode=light&font=geist&align=left"
       width="750"
     />
   </picture>
@@ -14,11 +14,11 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/sently"><img alt="npm" src="https://shieldcn.dev/npm/sently.svg?size=sm&variant=outline" /></a>
-  <a href="https://jsr.io/@alialnaghmoush/sently"><img alt="JSR" src="https://shieldcn.dev/jsr/@alialnaghmoush/sently.svg?size=sm&variant=outline" /></a>
+  <a href="https://jsr.io/@omqkhafi/sently"><img alt="JSR" src="https://shieldcn.dev/jsr/@omqkhafi/sently.svg?size=sm&variant=outline" /></a>
   <a href="https://opensource.org/licenses/MIT"><img alt="MIT" src="https://shieldcn.dev/npm/license/sently.svg?size=sm&variant=outline" /></a>
   <a href="https://bun.sh"><img alt="Bun" src="https://shieldcn.dev/badge/Bun-ready.svg?logo=bun&size=sm&variant=outline" /></a>
-  <a href="https://github.com/alialnaghmoush/sently/stargazers"><img alt="stars" src="https://shieldcn.dev/github/stars/alialnaghmoush/sently.svg?size=sm&variant=outline" /></a>
-  <a href="https://github.com/alialnaghmoush/sently/actions"><img alt="CI" src="https://shieldcn.dev/github/ci/alialnaghmoush/sently.svg?size=sm&variant=outline" /></a>
+  <a href="https://github.com/omqkhafi/sently/stargazers"><img alt="stars" src="https://shieldcn.dev/github/stars/omqkhafi/sently.svg?size=sm&variant=outline" /></a>
+  <a href="https://github.com/omqkhafi/sently/actions"><img alt="CI" src="https://shieldcn.dev/github/ci/omqkhafi/sently.svg?size=sm&variant=outline" /></a>
 </p>
 
 <p align="center">
@@ -52,8 +52,10 @@
 
 ```bash
 bun add sently                                     # npm / Bun / yarn / pnpm
-bunx jsr add @alialnaghmoush/sently                # JSR
+bunx jsr add @omqkhafi/sently                      # JSR
 ```
+
+JSR consumers on `@alialnaghmoush/sently`: switch to `@omqkhafi/sently`. The old scope will not receive new versions. npm `sently` is unchanged.
 
 Optional peers (React Email only): `react`, `@react-email/render`.
 
@@ -137,4 +139,4 @@ More detail: [Compare](https://sently.omqkhafi.dev/docs/guides/compare) · [Stab
 
 Local docs: `bun run site:dev`. Verify: `bun run verify`.
 
-Semver-stable channel contracts. Published on [npm](https://www.npmjs.com/package/sently) (provenance + Trusted Publishing) and [JSR](https://jsr.io/@alialnaghmoush/sently). MIT.
+Semver-stable channel contracts. Published on [npm](https://www.npmjs.com/package/sently) (provenance + Trusted Publishing) and [JSR](https://jsr.io/@omqkhafi/sently). MIT.

@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.2.2] — 2026-08-19
+
+### ♻️ Changed
+
+- **Repository owner** — GitHub, docs, and npm Trusted Publisher coordinates
+  moved from `alialnaghmoush/sently` to `omqkhafi/sently`
+- **JSR scope** — the published package is now `@omqkhafi/sently`;
+  `@alialnaghmoush/sently` stays on the registry but will not receive new
+  versions. README and install docs tell consumers to switch with
+  `bunx jsr add @omqkhafi/sently`
+
 ## [1.2.1] — 2026-08-04
 
 ### ✨ Added

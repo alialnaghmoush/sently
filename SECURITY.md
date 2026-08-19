@@ -6,7 +6,7 @@ sently is a messaging library that holds provider API keys and tokens in the ins
 
 **Do not open a public GitHub issue for security reports.**
 
-Use [GitHub Security Advisories](https://github.com/alialnaghmoush/sently/security/advisories/new) for this repository so the report stays private until a fix is ready.
+Use [GitHub Security Advisories](https://github.com/omqkhafi/sently/security/advisories/new) for this repository so the report stays private until a fix is ready.
 
 Include:
 
@@ -45,7 +45,7 @@ npm publishes from CI (`.github/workflows/publish.yml`) use:
 On [npmjs.com/package/sently](https://www.npmjs.com/package/sently) → **Settings** → **Trusted Publisher**:
 
 1. Bind **GitHub Actions**
-2. Repository: `alialnaghmoush/sently`
+2. Repository: `omqkhafi/sently`
 3. Workflow: `publish.yml` (`.github/workflows/publish.yml`)
 4. Environment: `production` (must match the workflow `environment`)
 5. Confirm the npm package repository URL matches `package.json` → `repository`

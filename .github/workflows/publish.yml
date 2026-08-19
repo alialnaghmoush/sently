@@ -1,10 +1,10 @@
 # CI and publish for sently: verify in parallel, then publish npm and JSR in parallel.
 #
 # Setup:
-# - JSR: Link this repo to the package in JSR settings (https://jsr.io/@alialnaghmoush/sently).
+# - JSR: Link this repo to the package in JSR settings (https://jsr.io/@omqkhafi/sently).
 # - npm Trusted Publishing (preferred): on https://www.npmjs.com/package/sently → Settings →
 #   Trusted Publisher → GitHub Actions:
-#     repository: alialnaghmoush/sently
+#     repository: omqkhafi/sently
 #     workflow: publish.yml
 #     environment: production
 # - npm token fallback (temporary): repo secret NPM_TOKEN — used only if OIDC publish fails.

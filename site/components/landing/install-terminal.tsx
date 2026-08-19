@@ -38,9 +38,9 @@ const TABS: ReadonlyArray<TerminalTab> = [
   {
     id: "jsr",
     label: "JSR",
-    commands: ["bunx jsr add @alialnaghmoush/sently"],
+    commands: ["bunx jsr add @omqkhafi/sently"],
     output: [
-      { label: "scope", value: "@alialnaghmoush/sently" },
+      { label: "scope", value: "@omqkhafi/sently" },
       { label: "next", value: "pick a channel sender + transport" },
     ],
   },

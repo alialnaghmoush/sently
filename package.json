@@ -1,6 +1,6 @@
 {
   "name": "sently",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Runtime-agnostic channel-delivery library for Node.js, Bun, Deno, and Cloudflare Workers. One sender shape, one error model, and one retry path across email, SMS, WhatsApp, and push — with pluggable provider transports.",
   "type": "module",
   "sideEffects": false,
@@ -99,11 +99,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alialnaghmoush/sently.git"
+    "url": "git+https://github.com/omqkhafi/sently.git"
   },
-  "homepage": "https://github.com/alialnaghmoush/sently#readme",
+  "homepage": "https://github.com/omqkhafi/sently#readme",
   "bugs": {
-    "url": "https://github.com/alialnaghmoush/sently/issues"
+    "url": "https://github.com/omqkhafi/sently/issues"
   },
   "exports": {
     ".": {

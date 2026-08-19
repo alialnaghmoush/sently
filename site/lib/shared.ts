@@ -12,7 +12,7 @@ export const docsContentRoute = "/llms.mdx/docs";
 
 /** GitHub coordinates for Edit / source links. */
 export const gitConfig = {
-  user: "alialnaghmoush",
+  user: "omqkhafi",
   repo: "sently",
   branch: "main",
 } as const;
